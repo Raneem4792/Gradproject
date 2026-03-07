@@ -41,11 +41,18 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
     HapticFeedback.selectionClick();
     setState(() => _navIndex = i);
 
-    if (i == 2) {
+    if (i == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const IncomingMealRequestsPage()),
+      );
+    } else if (i == 2) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const ProviderDashboardPage()),
       );
+    } else if (i == 3) {
+      Navigator.pushNamed(context, '/providerProfile');
     }
   }
 
@@ -54,7 +61,6 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
     return Scaffold(
       backgroundColor: bg,
 
-      // ✅ App bar حقيقي مثل الصورة
       appBar: const _ProviderMainAppBar(),
 
       body: SafeArea(
