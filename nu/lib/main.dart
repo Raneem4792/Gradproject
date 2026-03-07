@@ -3,7 +3,9 @@ import 'pilgrim_home_screen.dart';
 import 'provider_home_screen.dart';
 import 'signup_page.dart';
 import 'login_page.dart';
-
+import 'provider_history_screen.dart';
+import 'provider_manage_meals_screen.dart';
+import 'provider_mangae_campaign_screen.dart';
 
 void main() {
   runApp(const NusuqApp());
@@ -23,13 +25,18 @@ class NusuqApp extends StatelessWidget {
       ),
 
       // يبدأ التطبيق بصفحة التسجيل
-      initialRoute: SignUpScreen.routeName,
+      initialRoute: ProviderHomeScreen.routeName,
 
       routes: {
         SignUpScreen.routeName: (_) => const SignUpScreen(),
         LoginScreen.routeName: (_) => const LoginScreen(),
         PilgrimHomeScreen.routeName: (_) => const PilgrimHomeScreen(),
         ProviderHomeScreen.routeName: (_) => const ProviderHomeScreen(),
+        ProviderHistoryScreen.routeName: (_) => const ProviderHistoryScreen(),
+        ProviderMealManagementScreen.routeName: (_) =>
+            const ProviderMealManagementScreen(),
+        ProviderCampaignManagementScreen.routeName: (_) =>
+            const ProviderCampaignManagementScreen(),
       },
     );
   }

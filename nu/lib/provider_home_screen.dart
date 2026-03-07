@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'incoming_meal_requests_page.dart';
 import 'provider_dashboard_page.dart';
+import 'provider_history_screen.dart';
+import 'provider_manage_meals_screen.dart';
+import 'provider_mangae_campaign_screen.dart';
 
 class ProviderHomeScreen extends StatefulWidget {
   static const String routeName = '/provider-home';
@@ -41,9 +44,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
     if (i == 2) {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => const ProviderDashboardPage(),
-        ),
+        MaterialPageRoute(builder: (_) => const ProviderDashboardPage()),
       );
     }
   }
@@ -63,9 +64,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
-              _ProviderTopBlock(
-                providerName: "Provider Name",
-              ),
+              _ProviderTopBlock(providerName: "Provider Name"),
               SizedBox(height: 14),
 
               _RequestsCard(
@@ -140,7 +139,11 @@ class _ProviderMainAppBar extends StatelessWidget
           onPressed: () {
             // TODO: notifications
           },
-          icon: const Icon(Icons.notifications, color: Colors.black87, size: 20),
+          icon: const Icon(
+            Icons.notifications,
+            color: Colors.black87,
+            size: 20,
+          ),
         ),
         IconButton(
           onPressed: () {
@@ -160,9 +163,7 @@ class _ProviderMainAppBar extends StatelessWidget
 class _ProviderTopBlock extends StatelessWidget {
   final String providerName;
 
-  const _ProviderTopBlock({
-    required this.providerName,
-  });
+  const _ProviderTopBlock({required this.providerName});
 
   static const Color primaryDark = Color(0xFF062C26);
   static const Color primary = Color(0xFF0D4C4A);
@@ -393,7 +394,12 @@ class ProviderServicesList extends StatelessWidget {
           title: "Order History",
           subtitle: "Review previous orders",
           icon: Icons.history,
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProviderHistoryScreen()),
+            );
+          },
         ),
         const SizedBox(height: 12),
         _ServiceListCard(
@@ -403,9 +409,7 @@ class ProviderServicesList extends StatelessWidget {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => const ProviderDashboardPage(),
-              ),
+              MaterialPageRoute(builder: (_) => const ProviderDashboardPage()),
             );
           },
         ),
@@ -414,14 +418,28 @@ class ProviderServicesList extends StatelessWidget {
           title: "Manage Meal",
           subtitle: "Add / edit your meals",
           icon: Icons.restaurant_menu,
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ProviderMealManagementScreen(),
+              ),
+            );
+          },
         ),
         const SizedBox(height: 12),
         _ServiceListCard(
           title: "Manage Campaign",
           subtitle: "Update campaign settings",
           icon: Icons.campaign,
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ProviderCampaignManagementScreen(),
+              ),
+            );
+          },
         ),
       ],
     );
@@ -516,8 +534,14 @@ class _ProviderBottomNav extends StatelessWidget {
       type: BottomNavigationBarType.fixed,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
-        BottomNavigationBarItem(icon: Icon(Icons.inbox_rounded), label: "Requests"),
-        BottomNavigationBarItem(icon: Icon(Icons.bar_chart_rounded), label: "Reports"),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.inbox_rounded),
+          label: "Requests",
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.bar_chart_rounded),
+          label: "Reports",
+        ),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
       ],
     );
