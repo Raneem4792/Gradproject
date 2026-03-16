@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'pilgrim_meals_page.dart';
 import 'pilgrim_order_history_page.dart';
 import 'pilgrim_profile_page.dart';
+import 'pilgrim_ai_chat_page.dart';
 
 class PilgrimHomeScreen extends StatefulWidget {
   static const String routeName = '/pilgrim-home';
@@ -61,6 +62,15 @@ void _handleBottomNavTap(int i) {
   }
 }
 
+void _openAIChatPage() {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const PilgrimAIChatPage(),
+    ),
+  );
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,9 +83,9 @@ void _handleBottomNavTap(int i) {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _TopCombinedBlock(
+               _TopCombinedBlock(
                 userName: "Ahmed",
-                onTapAskAI: _noop,
+                onTapAskAI: _openAIChatPage,
               ),
               const SizedBox(height: 18),
 
