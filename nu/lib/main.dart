@@ -10,6 +10,7 @@ import 'provider_mangae_campaign_screen.dart';
 
 import 'pilgrim_profile_page.dart';
 import 'provider_profile_page.dart';
+import 'pilgrim_meals_page.dart';
 
 void main() {
   runApp(const NusuqApp());
@@ -25,7 +26,7 @@ class NusuqApp extends StatelessWidget {
       title: 'NUSUQ',
 
       // الصفحة اللي يبدأ منها التطبيق
-      initialRoute: ProviderHomeScreen.routeName,
+      initialRoute: PilgrimHomeScreen.routeName,
 
       routes: {
         SignUpScreen.routeName: (context) => const SignUpScreen(),
@@ -46,6 +47,7 @@ class NusuqApp extends StatelessWidget {
         // صفحات البروفايل
         '/pilgrimProfile': (context) => const PilgrimProfilePage(),
         '/providerProfile': (context) => const ProviderProfilePage(),
+        PilgrimMealsPage.routeName: (_) => const PilgrimMealsPage(),
       },
     );
   }

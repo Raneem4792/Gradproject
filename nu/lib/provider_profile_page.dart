@@ -1,452 +1,851 @@
 import 'package:flutter/material.dart';
-import 'nusuq_colors.dart';
+import 'package:flutter/services.dart';
 
 class ProviderProfilePage extends StatelessWidget {
+  static const String routeName = '/provider-profile';
+
   const ProviderProfilePage({super.key});
+
+  static const Color bg = Color(0xFFF3F6F5);
+  static const Color primaryDark = Color(0xFF062C26);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color primaryMid = Color(0xFF1A6B66);
+  static const Color mint = Color(0xFF9FE5C9);
+  static const Color softMint = Color(0xFFE8F6F1);
+  static const Color gold = Color(0xFFF0E0C0);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: NusuqColors.appBg,
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _buildHeader(),
-                  Padding(
-                    padding: const EdgeInsets.all(18),
-                    child: Column(
-                      children: [
-                        _buildCompanyInfo(),
-                        const SizedBox(height: 14),
-                        _buildPerformance(),
-                        const SizedBox(height: 14),
-                        _buildMealsOffered(),
-                        const SizedBox(height: 14),
-                        _buildSettings(),
-                        const SizedBox(height: 14),
-                        _buildLogoutBtn(),
-                        const SizedBox(height: 10),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+      backgroundColor: bg,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.6,
+        shadowColor: Colors.black.withOpacity(0.08),
+        surfaceTintColor: Colors.white,
+        centerTitle: true,
+        title: const Text(
+          'Provider Profile',
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
           ),
-          _buildBottomNav(),
-        ],
+        ),
+        leading: IconButton(
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            Navigator.pop(context);
+          },
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.black87,
+          ),
+        ),
       ),
-    );
-  }
-
-  // ════════════════════════════════════════
-  // HEADER
-  // ════════════════════════════════════════
-  Widget _buildHeader() {
-    return Container(
-      color: NusuqColors.deepForest,
-      child: SafeArea(
-        bottom: false,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
         child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Provider Profile',
-                      style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
-                  _editBtn(),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  _avatar('AB', NusuqColors.darkGold, NusuqColors.gold),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      RichText(
-                        text: const TextSpan(
-                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-                          children: [
-                            TextSpan(text: 'Al-Baraka ', style: TextStyle(color: Colors.white)),
-                            TextSpan(text: 'Catering',   style: TextStyle(color: NusuqColors.gold)),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text('📍 Makkah Al-Mukarramah',
-                          style: TextStyle(color: Colors.white38, fontSize: 12)),
-                    ]),
-                  ),
-                  _verifiedBadge('✦ Licensed'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            _statsStrip([
-              ('142', 'Pilgrims Served', NusuqColors.brightGreen),
-              ('4.8★','Rating',          NusuqColors.gold),
-              ('2',   'Campaigns',       Colors.white),
-            ]),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            _ProfileHeaderCard(),
+            SizedBox(height: 16),
+
+            _SectionTitle(title: "Basic Information"),
+            SizedBox(height: 10),
+            _InfoCard(),
+            SizedBox(height: 16),
+
+            _SectionTitle(title: "Orders Summary"),
+            SizedBox(height: 10),
+            _StatsGrid(),
+            SizedBox(height: 16),
+
+            _SectionTitle(title: "Linked Campaigns"),
+            SizedBox(height: 10),
+            _CampaignsCard(),
+            SizedBox(height: 16),
+
+            _SectionTitle(title: "Account Settings"),
+            SizedBox(height: 10),
+            _SettingsCard(),
+            SizedBox(height: 22),
+
+            _LogoutButton(),
           ],
         ),
       ),
     );
   }
+}
 
-  // ════════════════════════════════════════
-  // CARDS
-  // ════════════════════════════════════════
-  Widget _buildCompanyInfo() => _card(
-    icon: '🏢', iconBg: NusuqColors.goldSurface,
-    title: 'Company Information', action: 'Edit',
-    child: Column(children: [
-      _row('Company Name', 'Al-Baraka Catering Co.'),
-      _row('License No.',  'SA-2024-CT-0481', vc: NusuqColors.gold),
-      _row('Contact',      '+966 50 987 6543'),
-      _row('Email',        'info@albaraka.sa'),
-      _row('Capacity',     'Up to 500 pilgrims/day', vc: NusuqColors.midGreen),
-    ]),
-  );
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  const _SectionTitle({required this.title});
 
-  Widget _buildPerformance() => _card(
-    icon: '📊', iconBg: NusuqColors.mintSurface,
-    title: 'Performance', action: 'Full Report',
-    child: Padding(
-      padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
-      child: Column(children: [
-        // Bar chart
-        SizedBox(
-          height: 100,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w900,
+        color: Colors.black.withOpacity(0.8),
+      ),
+    );
+  }
+}
+
+class _ProfileHeaderCard extends StatelessWidget {
+  const _ProfileHeaderCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              blurRadius: 24,
+              offset: const Offset(0, 14),
+              color: Colors.black.withOpacity(0.07),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    ProviderProfilePage.primaryDark,
+                    ProviderProfilePage.primary,
+                    ProviderProfilePage.primaryMid,
+                  ],
+                ),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    width: 78,
+                    height: 78,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.14),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.28),
+                        width: 1.4,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.storefront_rounded,
+                      color: Colors.white,
+                      size: 38,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "Al Barakah Catering",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "Meal Provider",
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.88),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: ProviderProfilePage.mint.withOpacity(0.95),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Text(
+                      "Verified Account",
+                      style: TextStyle(
+                        color: ProviderProfilePage.primaryDark,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              right: -28,
+              top: -36,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: ProviderProfilePage.mint.withOpacity(0.11),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            Positioned(
+              left: -35,
+              bottom: -45,
+              child: Container(
+                width: 135,
+                height: 135,
+                decoration: BoxDecoration(
+                  color: ProviderProfilePage.gold.withOpacity(0.10),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoCard extends StatelessWidget {
+  const _InfoCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _WhiteCard(
+      child: Column(
+        children: const [
+          _InfoRow(
+            icon: Icons.badge_outlined,
+            title: "Provider ID",
+            value: "PR-2026-014",
+          ),
+          Divider(height: 22),
+          _InfoRow(
+            icon: Icons.email_outlined,
+            title: "Email",
+            value: "provider@nusuq.com",
+          ),
+          Divider(height: 22),
+          _InfoRow(
+            icon: Icons.phone_outlined,
+            title: "Phone",
+            value: "+966 5X XXX XXXX",
+          ),
+          Divider(height: 22),
+          _InfoRow(
+            icon: Icons.location_on_outlined,
+            title: "Location",
+            value: "Makkah",
+          ),
+          Divider(height: 22),
+          _InfoRow(
+            icon: Icons.room_service_outlined,
+            title: "Service Type",
+            value: "Meal Provider",
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+
+  const _InfoRow({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: ProviderProfilePage.softMint,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(icon, color: ProviderProfilePage.primary, size: 21),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _bar('On Time',     0.92, NusuqColors.midGreen,  NusuqColors.brightGreen, '92%'),
-              const SizedBox(width: 8),
-              _bar('Rating',      0.80, NusuqColors.darkGold,  NusuqColors.gold,         '4.8'),
-              const SizedBox(width: 8),
-              _bar('Accuracy',    0.96, NusuqColors.midGreen,  NusuqColors.brightGreen, '96%'),
-              const SizedBox(width: 8),
-              _bar('Satisfaction',0.88, NusuqColors.midGreen,  NusuqColors.brightGreen, '88%'),
-              const SizedBox(width: 8),
-              _bar('Waste',       0.03, const Color(0xFFC0392B), const Color(0xFFE74C3C), '3%'),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Colors.black.withOpacity(0.55),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ],
           ),
         ),
-        const SizedBox(height: 12),
-        const Divider(color: NusuqColors.border),
-        const SizedBox(height: 10),
-        // Summary row
-        Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-          _perfStat('142',  'Total Pilgrims', Colors.white),
-          _perfStat('856',  'Meals Delivered', NusuqColors.gold),
-          _perfStat('2',    'Active Campaigns', NusuqColors.midGreen),
-        ]),
-      ]),
-    ),
-  );
+      ],
+    );
+  }
+}
 
-  Widget _buildMealsOffered() => _card(
-    icon: '🍽️', iconBg: NusuqColors.mintSurface,
-    title: 'Meals Offered', action: 'Manage',
-    child: Padding(
-      padding: const EdgeInsets.fromLTRB(18, 10, 18, 14),
-      child: Column(children: [
-        _mealItem('🥗', 'Grilled Chicken Salad', 'Low carb · Gluten-free · 420 kcal', 'Active', true),
-        const SizedBox(height: 8),
-        _mealItem('🍚', 'Lamb Rice Kabsa',       'Traditional · 680 kcal',             'Active', true),
-        const SizedBox(height: 8),
-        _mealItem('🥘', 'Diabetic Lentil Soup',  'Low sugar · Vegan · 310 kcal',       'New',    false),
-      ]),
-    ),
-  );
+class _StatsGrid extends StatelessWidget {
+  const _StatsGrid();
 
-  Widget _buildSettings() => _card(
-    icon: '⚙️', iconBg: const Color(0xFFF0F0F0),
-    title: 'Settings & Notifications',
-    child: Column(children: [
-      _toggleRow('🔔', NusuqColors.mintSurface,      'New Order Alerts',  'Notify on new requests',    true),
-      _toggleRow('📈', NusuqColors.goldSurface,      'Daily Reports',     'Performance summary',       true),
-      _arrowRow ('🌐', const Color(0xFFF0F0F0),      'Language',          val: 'العربية'),
-      _arrowRow ('🔒', const Color(0xFFF0F0F0),      'Account Security'),
-    ]),
-  );
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _StatCard(
+                title: "Total Orders",
+                value: "145",
+                icon: Icons.receipt_long_rounded,
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: _StatCard(
+                title: "Accepted",
+                value: "120",
+                icon: Icons.check_circle_outline_rounded,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _StatCard(
+                title: "Rejected",
+                value: "25",
+                icon: Icons.cancel_outlined,
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: _StatCard(
+                title: "Campaigns",
+                value: "3",
+                icon: Icons.campaign_rounded,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
 
-  Widget _buildLogoutBtn() {
+class _StatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF0F0),
-        border: Border.all(color: const Color(0xFFFFD5D5)),
-        borderRadius: BorderRadius.circular(14),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+            color: Colors.black.withOpacity(0.05),
+          ),
+        ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () {},
-          child: const Padding(
-            padding: EdgeInsets.symmetric(vertical: 14),
-            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Text('🚪', style: TextStyle(fontSize: 18)),
-              SizedBox(width: 8),
-              Text('Sign Out',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFFE53935))),
-            ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: ProviderProfilePage.primary, size: 24),
+          const SizedBox(height: 14),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12.5,
+              color: Colors.black.withOpacity(0.6),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CampaignsCard extends StatelessWidget {
+  const _CampaignsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _WhiteCard(
+      child: Column(
+        children: const [
+          _CampaignTile(
+            title: "Al Noor Hajj Campaign",
+            campaignId: "CN-1001",
+            pilgrimsCount: "45 pilgrims",
+            arrivalDay: "Monday",
+            arrivalDate: "25/05/2026",
+            arrivalTime: "2:30 PM",
+            fromCountry: "Indonesia",
+          ),
+          SizedBox(height: 12),
+          _CampaignTile(
+            title: "Rahma Hajj Campaign",
+            campaignId: "CN-1002",
+            pilgrimsCount: "38 pilgrims",
+            arrivalDay: "Wednesday",
+            arrivalDate: "27/05/2026",
+            arrivalTime: "11:00 AM",
+            fromCountry: "Turkey",
+          ),
+          SizedBox(height: 12),
+          _CampaignTile(
+            title: "Al Huda Hajj Campaign",
+            campaignId: "CN-1003",
+            pilgrimsCount: "52 pilgrims",
+            arrivalDay: "Friday",
+            arrivalDate: "29/05/2026",
+            arrivalTime: "4:15 PM",
+            fromCountry: "Malaysia",
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CampaignTile extends StatelessWidget {
+  final String title;
+  final String campaignId;
+  final String pilgrimsCount;
+  final String arrivalDay;
+  final String arrivalDate;
+  final String arrivalTime;
+  final String fromCountry;
+
+  const _CampaignTile({
+    required this.title,
+    required this.campaignId,
+    required this.pilgrimsCount,
+    required this.arrivalDay,
+    required this.arrivalDate,
+    required this.arrivalTime,
+    required this.fromCountry,
+  });
+
+void _showCampaignDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (_) {
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF7FAF8),
+            borderRadius: BorderRadius.circular(28),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 8,
+                height: 150,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8ED8C0),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(width: 14),
+
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    /// عنوان الحملة
+                    Center(
+                      child: Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF133B33),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+
+                        /// ايقونة الحملة
+                        Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE3F4EE),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Icon(
+                            Icons.campaign_rounded,
+                            color: Color(0xFF2D6B5F),
+                            size: 32,
+                          ),
+                        ),
+
+                        const SizedBox(width: 14),
+
+                        /// معلومات الحملة
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+
+                              Wrap(
+                                spacing: 10,
+                                children: [
+                                  _DialogBadge(text: campaignId),
+                                  _DialogBadge(text: pilgrimsCount),
+                                ],
+                              ),
+
+                              const SizedBox(height: 14),
+
+                              _DialogDetailRow(
+                                icon: Icons.calendar_today_outlined,
+                                text:
+                                    "Arrival Day: $arrivalDay • $arrivalDate",
+                              ),
+
+                              const SizedBox(height: 10),
+
+                              _DialogDetailRow(
+                                icon: Icons.access_time_rounded,
+                                text:
+                                    "Arrival Time: $arrivalTime • From $fromCountry",
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    /// زر اغلاق فقط
+                    Center(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text(
+                          "Close",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => _showCampaignDialog(context),
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: ProviderProfilePage.softMint.withOpacity(0.55),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.groups_2_rounded,
+                color: ProviderProfilePage.primary,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DialogBadge extends StatelessWidget {
+  final String text;
+
+  const _DialogBadge({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE3F4EE),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFBEDFD5)),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 13.5,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF35695E),
+        ),
+      ),
+    );
+  }
+}
+
+class _DialogDetailRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _DialogDetailRow({
+    required this.icon,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: const Color(0xFF5F6F6A)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF4F5C58),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SettingsCard extends StatelessWidget {
+  const _SettingsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _WhiteCard(
+      child: Column(
+        children: const [
+          _SettingTile(
+            icon: Icons.edit_outlined,
+            title: "Edit Profile",
+          ),
+          Divider(height: 18),
+          _SettingTile(
+            icon: Icons.lock_outline_rounded,
+            title: "Change Password",
+          ),
+          Divider(height: 18),
+          _SettingTile(
+            icon: Icons.notifications_none_rounded,
+            title: "Notification Settings",
+          ),
+          Divider(height: 18),
+          _SettingTile(
+            icon: Icons.language_rounded,
+            title: "Language",
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+
+  const _SettingTile({
+    required this.icon,
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {},
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: ProviderProfilePage.softMint,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: ProviderProfilePage.primary, size: 21),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LogoutButton extends StatelessWidget {
+  const _LogoutButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () {},
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          side: BorderSide(
+            color: Colors.red.withOpacity(0.22),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          backgroundColor: Colors.white,
+        ),
+        icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+        label: const Text(
+          "Log Out",
+          style: TextStyle(
+            color: Colors.redAccent,
+            fontSize: 14.5,
+            fontWeight: FontWeight.w900,
           ),
         ),
       ),
     );
   }
+}
 
-  // ════════════════════════════════════════
-  // BOTTOM NAV
-  // ════════════════════════════════════════
-  Widget _buildBottomNav() {
+class _WhiteCard extends StatelessWidget {
+  final Widget child;
+
+  const _WhiteCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFEEF4F0))),
-      ),
-      padding: const EdgeInsets.fromLTRB(10, 12, 10, 24),
-      child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-        _navItem('🏠', 'Home',    false),
-        _navItem('📋', 'Orders',  false),
-        _navFab('➕'),
-        _navItem('📊', 'Reports', false),
-        _navItem('👤', 'Profile', true),
-      ]),
-    );
-  }
-
-  // ════════════════════════════════════════
-  // HELPERS
-  // ════════════════════════════════════════
-  Widget _editBtn() => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-    decoration: BoxDecoration(
-      color: Colors.white.withOpacity(0.1),
-      border: Border.all(color: Colors.white.withOpacity(0.15)),
-      borderRadius: BorderRadius.circular(11),
-    ),
-    child: const Row(children: [
-      Text('✏️', style: TextStyle(fontSize: 13)),
-      SizedBox(width: 5),
-      Text('Edit', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
-    ]),
-  );
-
-  Widget _avatar(String initials, Color c1, Color c2) => Container(
-    width: 72, height: 72,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      gradient: LinearGradient(colors: [c1, c2]),
-      border: Border.all(color: Colors.white24, width: 3),
-    ),
-    alignment: Alignment.center,
-    child: Text(initials, style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w700)),
-  );
-
-  Widget _verifiedBadge(String text) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-    decoration: BoxDecoration(
-      color: NusuqColors.gold.withOpacity(0.15),
-      border: Border.all(color: NusuqColors.gold.withOpacity(0.4)),
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: Text(text, style: const TextStyle(color: NusuqColors.gold, fontSize: 10, fontWeight: FontWeight.w600)),
-  );
-
-  Widget _statsStrip(List<(String, String, Color)> items) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.07))),
-      ),
-      child: Row(
-        children: items.map((e) => Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              border: Border(right: BorderSide(color: Colors.white.withOpacity(0.07))),
-            ),
-            child: Column(children: [
-              Text(e.$1, style: TextStyle(color: e.$3, fontSize: 18, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 3),
-              Text(e.$2, style: const TextStyle(color: Colors.white38, fontSize: 9)),
-            ]),
-          ),
-        )).toList(),
-      ),
-    );
-  }
-
-  Widget _card({required String icon, required Color iconBg, required String title, String? action, required Widget child}) {
-    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: NusuqColors.border),
-        boxShadow: [BoxShadow(color: NusuqColors.deepForest.withOpacity(0.06), blurRadius: 16, offset: const Offset(0, 4))],
-      ),
-      child: Column(children: [
-        Container(
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 12),
-          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: NusuqColors.border))),
-          child: Row(children: [
-            Container(width: 26, height: 26,
-              decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(8)),
-              alignment: Alignment.center,
-              child: Text(icon, style: const TextStyle(fontSize: 13))),
-            const SizedBox(width: 8),
-            Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: NusuqColors.textDark)),
-            const Spacer(),
-            if (action != null)
-              Text(action, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: NusuqColors.midGreen)),
-          ]),
-        ),
-        child,
-      ]),
-    );
-  }
-
-  Widget _row(String k, String v, {Color? vc}) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-    decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFEEF5F1)))),
-    child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(k, style: const TextStyle(fontSize: 12, color: NusuqColors.muted, fontWeight: FontWeight.w500)),
-      Text(v, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: vc ?? NusuqColors.textDark)),
-    ]),
-  );
-
-  Widget _bar(String label, double ratio, Color c1, Color c2, String val) {
-    return Expanded(
-      child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
-        Text(val, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: NusuqColors.textDark)),
-        const SizedBox(height: 4),
-        Container(
-          height: 70 * ratio,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(begin: Alignment.bottomCenter, end: Alignment.topCenter, colors: [c1, c2]),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 20,
+            offset: const Offset(0, 12),
+            color: Colors.black.withOpacity(0.05),
           ),
-        ),
-        const SizedBox(height: 6),
-        Text(label, style: const TextStyle(fontSize: 8, color: NusuqColors.muted), textAlign: TextAlign.center),
-      ]),
+        ],
+      ),
+      child: child,
     );
   }
-
-  Widget _perfStat(String num, String label, Color c) => Column(children: [
-    Text(num,   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: c)),
-    const SizedBox(height: 3),
-    Text(label, style: const TextStyle(fontSize: 9, color: NusuqColors.muted)),
-  ]);
-
-  Widget _mealItem(String emoji, String name, String detail, String badge, bool isActive) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: NusuqColors.appBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: NusuqColors.border),
-      ),
-      child: Row(children: [
-        Text(emoji, style: const TextStyle(fontSize: 22)),
-        const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(name,   style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: NusuqColors.textDark)),
-          Text(detail, style: const TextStyle(fontSize: 10, color: NusuqColors.muted)),
-        ])),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-          decoration: BoxDecoration(
-            color: isActive ? NusuqColors.mintSurface : NusuqColors.goldSurface,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(badge,
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
-              color: isActive ? NusuqColors.midGreen : const Color(0xFF8A6820))),
-        ),
-      ]),
-    );
-  }
-
-  Widget _toggleRow(String icon, Color bg, String label, String sub, bool on) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-    decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFEEF5F1)))),
-    child: Row(children: [
-      Container(width: 34, height: 34,
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(11)),
-        alignment: Alignment.center,
-        child: Text(icon, style: const TextStyle(fontSize: 16))),
-      const SizedBox(width: 12),
-      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: NusuqColors.textDark)),
-        Text(sub,   style: const TextStyle(fontSize: 10, color: NusuqColors.muted)),
-      ])),
-      Container(
-        width: 36, height: 20,
-        decoration: BoxDecoration(
-          color: on ? NusuqColors.midGreen : const Color(0xFFDDDDDD),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Align(
-          alignment: on ? Alignment.centerRight : Alignment.centerLeft,
-          child: Container(margin: const EdgeInsets.all(3), width: 14, height: 14,
-            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
-        ),
-      ),
-    ]),
-  );
-
-  Widget _arrowRow(String icon, Color bg, String label, {String? val}) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-    decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFEEF5F1)))),
-    child: Row(children: [
-      Container(width: 34, height: 34,
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(11)),
-        alignment: Alignment.center,
-        child: Text(icon, style: const TextStyle(fontSize: 16))),
-      const SizedBox(width: 12),
-      Expanded(child: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: NusuqColors.textDark))),
-      if (val != null) Text(val, style: const TextStyle(fontSize: 11, color: NusuqColors.muted)),
-      const SizedBox(width: 6),
-      const Icon(Icons.chevron_right, color: Color(0xFFCCCCCC), size: 20),
-    ]),
-  );
-
-  Widget _navItem(String emoji, String label, bool active) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-    decoration: BoxDecoration(
-      color: active ? NusuqColors.mintSurface : Colors.transparent,
-      borderRadius: BorderRadius.circular(14),
-    ),
-    child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Text(emoji, style: const TextStyle(fontSize: 20)),
-      const SizedBox(height: 3),
-      Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
-          color: active ? NusuqColors.midGreen : const Color(0xFFBBBBBB))),
-    ]),
-  );
-
-  Widget _navFab(String emoji) => Container(
-    width: 54, height: 54,
-    margin: const EdgeInsets.only(bottom: 18),
-    decoration: BoxDecoration(
-      gradient: NusuqColors.buttonGradient,
-      borderRadius: BorderRadius.circular(18),
-      boxShadow: [BoxShadow(color: NusuqColors.midGreen.withOpacity(0.4), blurRadius: 16, offset: const Offset(0, 6))],
-    ),
-    alignment: Alignment.center,
-    child: Text(emoji, style: const TextStyle(fontSize: 24)),
-  );
 }

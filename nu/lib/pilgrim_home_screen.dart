@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'pilgrim_meals_page.dart';
+import 'pilgrim_order_history_page.dart';
 
 class PilgrimHomeScreen extends StatefulWidget {
   static const String routeName = '/pilgrim-home';
@@ -9,11 +11,9 @@ class PilgrimHomeScreen extends StatefulWidget {
   State<PilgrimHomeScreen> createState() => _PilgrimHomeScreenState();
 }
 
-
 class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
   int _navIndex = 0;
 
-  // ✅ NUSUQ Premium Palette (نفس ألوانك)
   static const Color bg = Color(0xFFF3F6F5);
   static const Color primaryDark = Color(0xFF062C26);
   static const Color primary = Color(0xFF0D4C4A);
@@ -21,11 +21,41 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
   static const Color mint = Color(0xFF9FE5C9);
   static const Color gold = Color(0xFFF0E0C0);
 
+  void _openMealsPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const PilgrimMealsPage(),
+      ),
+    );
+  }
+
+  void _openOrderHistoryPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const PilgrimOrderHistoryPage(),
+      ),
+    );
+  }
+
+  void _handleBottomNavTap(int i) {
+    setState(() => _navIndex = i);
+
+    if (i == 1) {
+      _openMealsPage();
+    } else if (i == 2) {
+      _openOrderHistoryPage();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bg,
+      appBar: const _PilgrimMainAppBar(),
       body: SafeArea(
+        top: false,
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 22),
           child: Column(
@@ -33,51 +63,50 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
             children: [
               const _TopCombinedBlock(
                 userName: "Ahmed",
-                onTapNotification: _noop,
                 onTapAskAI: _noop,
               ),
               const SizedBox(height: 18),
 
-              const _SectionHeader(
-                title: "Order Now",
-                onTapArrow: _noop,
-              ),
+              const _SectionHeader(title: "Order Now"),
               const SizedBox(height: 10),
 
-              // ✅ بدل السحب: ثنتين جنب بعض بشكل أفخم
               Row(
-                children: const [
+                children: [
                   Expanded(
                     child: _OrderNowCard(
                       title: "Meals",
-                      gradient: LinearGradient(
+                      subtitle: "Browse daily meals",
+                      gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Color(0xFFEEF7F3),
-                          Color(0xFFE9EFEF),
+                          Color(0xFFEAF7F2),
+                          Color(0xFFDCEFE8),
                         ],
                       ),
-                      onEnter: _noop,
-                      icon: Icons.restaurant_menu,
+                      onEnter: _openMealsPage,
+                      icon: Icons.restaurant_menu_rounded,
                       chipColor: mint,
+                      buttonText: "Start Order",
                     ),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: _OrderNowCard(
-                      title: "buffet",
-                      gradient: LinearGradient(
+                      title: "Buffet",
+                      subtitle: "Explore buffet options",
+                      gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Color(0xFFF5EEDC),
-                          Color(0xFFF1F4F4),
+                          Color(0xFFFAF1DF),
+                          Color(0xFFF3ECE2),
                         ],
                       ),
                       onEnter: _noop,
-                      icon: Icons.local_dining,
+                      icon: Icons.local_dining_rounded,
                       chipColor: gold,
+                      buttonText: "View Options",
                     ),
                   ),
                 ],
@@ -85,18 +114,15 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
 
               const SizedBox(height: 18),
 
-              const _SectionHeader(
-                title: "Order History",
-                onTapArrow: _noop,
-              ),
+              const _SectionHeader(title: "Order History"),
               const SizedBox(height: 10),
 
-              const _OrderHistoryCard(
+              _OrderHistoryCard(
                 title: "Grilled Shrimp with White Rice",
                 metaLine: "12 Dhul Hijjah · Lunch",
                 kcalLine: "450 Protein · 40g Carbs · 600 kcal",
-                badgeText: "Matched based on your dietary profile",
-                onTap: _noop,
+                badgeText: "Tap to view previous orders",
+                onTap: _openOrderHistoryPage,
               ),
               const SizedBox(height: 8),
             ],
@@ -105,7 +131,7 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
       ),
       bottomNavigationBar: _BottomNav(
         currentIndex: _navIndex,
-        onTap: (i) => setState(() => _navIndex = i),
+        onTap: _handleBottomNavTap,
       ),
     );
   }
@@ -113,17 +139,74 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
   static void _noop() {}
 }
 
+class _PilgrimMainAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
+  const _PilgrimMainAppBar();
+
+  @override
+  Size get preferredSize => const Size.fromHeight(58);
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0.6,
+      shadowColor: Colors.black.withOpacity(0.08),
+      surfaceTintColor: Colors.white,
+      automaticallyImplyLeading: false,
+      titleSpacing: 8,
+      title: Row(
+        children: [
+          IconButton(
+            onPressed: () {
+              // TODO: open menu / drawer
+            },
+            icon: const Icon(Icons.menu_rounded, color: Colors.black87),
+          ),
+          const SizedBox(width: 4),
+          const Text(
+            "NUSUQ",
+            style: TextStyle(
+              color: Colors.black87,
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.4,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          onPressed: () {
+            // TODO: notifications
+          },
+          icon: const Icon(
+            Icons.notifications,
+            color: Colors.black87,
+            size: 20,
+          ),
+        ),
+        IconButton(
+          onPressed: () {
+            // TODO: search
+          },
+          icon: const Icon(Icons.search, color: Colors.black87, size: 20),
+        ),
+        const SizedBox(width: 6),
+      ],
+    );
+  }
+}
+
 /// =======================
-/// TOP BLOCK (Header + Today’s Meals + Ask AI)
+/// TOP BLOCK
 /// =======================
 class _TopCombinedBlock extends StatelessWidget {
   final String userName;
-  final VoidCallback onTapNotification;
   final VoidCallback onTapAskAI;
 
   const _TopCombinedBlock({
     required this.userName,
-    required this.onTapNotification,
     required this.onTapAskAI,
   });
 
@@ -151,13 +234,15 @@ class _TopCombinedBlock extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // ✅ Header card with subtle decorative blobs
           ClipRRect(
             borderRadius: BorderRadius.circular(18),
             child: Stack(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
@@ -167,7 +252,6 @@ class _TopCombinedBlock extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      // Avatar
                       Container(
                         width: 44,
                         height: 44,
@@ -181,8 +265,6 @@ class _TopCombinedBlock extends StatelessWidget {
                         child: const Icon(Icons.person, color: Colors.white),
                       ),
                       const SizedBox(width: 12),
-
-                      // Greeting + name
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,30 +290,9 @@ class _TopCombinedBlock extends StatelessWidget {
                           ],
                         ),
                       ),
-
-                      // Notification
-                      InkWell(
-                        onTap: onTapNotification,
-                        borderRadius: BorderRadius.circular(14),
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Colors.white.withOpacity(0.16)),
-                          ),
-                          child: Icon(
-                            Icons.notifications_none,
-                            color: Colors.white.withOpacity(0.96),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
-
-                // Decorative blobs (بدون محتوى جديد)
                 Positioned(
                   right: -28,
                   top: -30,
@@ -259,10 +320,7 @@ class _TopCombinedBlock extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(height: 12),
-
-          // Today's meals card
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(14),
@@ -276,7 +334,11 @@ class _TopCombinedBlock extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.access_time, size: 18, color: primary.withOpacity(0.90)),
+                    Icon(
+                      Icons.access_time,
+                      size: 18,
+                      color: primary.withOpacity(0.90),
+                    ),
                     const SizedBox(width: 8),
                     const Text(
                       "Today’s Meals",
@@ -289,7 +351,10 @@ class _TopCombinedBlock extends StatelessWidget {
                     Container(
                       width: 10,
                       height: 10,
-                      decoration: const BoxDecoration(color: mint, shape: BoxShape.circle),
+                      decoration: const BoxDecoration(
+                        color: mint,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ],
                 ),
@@ -312,10 +377,7 @@ class _TopCombinedBlock extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(height: 12),
-
-          // Ask AI button
           InkWell(
             onTap: onTapAskAI,
             borderRadius: BorderRadius.circular(16),
@@ -394,61 +456,41 @@ class _TopCombinedBlock extends StatelessWidget {
 /// =======================
 class _SectionHeader extends StatelessWidget {
   final String title;
-  final VoidCallback onTapArrow;
 
-  const _SectionHeader({required this.title, required this.onTapArrow});
-
-  static const Color primary = Color(0xFF0D4C4A);
+  const _SectionHeader({required this.title});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w900),
-        ),
-        const Spacer(),
-        InkWell(
-          onTap: onTapArrow,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.black.withOpacity(0.06)),
-            ),
-            child: Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: primary.withOpacity(0.70),
-            ),
-          ),
-        ),
-      ],
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 14.5,
+        fontWeight: FontWeight.w900,
+      ),
     );
   }
 }
 
 /// =======================
-/// ORDER NOW CARD (Improved while keeping same content)
+/// ORDER NOW CARD
 /// =======================
 class _OrderNowCard extends StatelessWidget {
   final String title;
+  final String subtitle;
   final Gradient gradient;
   final VoidCallback onEnter;
-
-  // ✅ ديكور فقط (بدون تغيير المحتوى)
   final IconData icon;
   final Color chipColor;
+  final String buttonText;
 
   const _OrderNowCard({
     required this.title,
+    required this.subtitle,
     required this.gradient,
     required this.onEnter,
     required this.icon,
     required this.chipColor,
+    required this.buttonText,
   });
 
   static const Color primary = Color(0xFF0D4C4A);
@@ -457,10 +499,10 @@ class _OrderNowCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 170,
+      height: 230,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: Colors.black.withOpacity(0.05)),
         boxShadow: [
           BoxShadow(
@@ -472,77 +514,126 @@ class _OrderNowCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Top area (gradient) + icon chip
           Expanded(
             child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(22),
+              ),
               child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Positioned.fill(
-                    child: Container(decoration: BoxDecoration(gradient: gradient)),
+                  Container(
+                    decoration: BoxDecoration(gradient: gradient),
                   ),
                   Positioned(
-                    left: 12,
-                    top: 12,
+                    right: -22,
+                    top: -18,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      width: 92,
+                      height: 92,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.68),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.black.withOpacity(0.06)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: chipColor.withOpacity(0.95),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Icon(icon, size: 16, color: primaryDark.withOpacity(0.88)),
-                        ],
+                        color: Colors.white.withOpacity(0.18),
+                        shape: BoxShape.circle,
                       ),
                     ),
                   ),
                   Positioned(
-                    left: 12,
-                    bottom: 10,
-                    child: Text(
-                      title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 13.5,
-                        color: primaryDark.withOpacity(0.95),
+                    left: 14,
+                    top: 14,
+                    child: Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.72),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(
+                          color: Colors.black.withOpacity(0.05),
+                        ),
                       ),
+                      child: Icon(
+                        icon,
+                        size: 23,
+                        color: primaryDark.withOpacity(0.92),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 14,
+                    top: 74,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: chipColor.withOpacity(0.28),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        title == "Meals" ? "Recommended" : "Group Service",
+                        style: TextStyle(
+                          fontSize: 11.2,
+                          fontWeight: FontWeight.w800,
+                          color: primaryDark.withOpacity(0.85),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 14,
+                    right: 14,
+                    bottom: 16,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                            color: primaryDark.withOpacity(0.96),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            height: 1.3,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: primaryDark.withOpacity(0.67),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
           ),
-
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
             child: SizedBox(
-              height: 34,
+              height: 42,
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: onEnter,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primary,
+                  foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(15),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
                 ),
-                child: const Text(
-                  "enter",
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
+                child: Text(
+                  buttonText,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ),
@@ -594,6 +685,7 @@ class _OrderHistoryCard extends StatelessWidget {
           ],
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               width: 60,
@@ -603,7 +695,11 @@ class _OrderHistoryCard extends StatelessWidget {
                 color: const Color(0xFFEAF4F2),
                 border: Border.all(color: primary.withOpacity(0.10)),
               ),
-              child: Icon(Icons.restaurant, size: 26, color: primary.withOpacity(0.86)),
+              child: Icon(
+                Icons.restaurant,
+                size: 26,
+                color: primary.withOpacity(0.86),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -614,7 +710,10 @@ class _OrderHistoryCard extends StatelessWidget {
                     title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w900),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 14,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -636,7 +735,10 @@ class _OrderHistoryCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE9F7F2),
                       borderRadius: BorderRadius.circular(12),
@@ -685,7 +787,10 @@ class _BottomNav extends StatelessWidget {
       unselectedFontSize: 12,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
-        BottomNavigationBarItem(icon: Icon(Icons.restaurant_menu), label: "Meals"),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.restaurant_menu),
+          label: "Meals",
+        ),
         BottomNavigationBarItem(icon: Icon(Icons.history), label: "History"),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
       ],
