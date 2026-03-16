@@ -1,792 +1,650 @@
 import 'package:flutter/material.dart';
-import 'nusuq_colors.dart';
 
 class PilgrimProfilePage extends StatelessWidget {
+  static const String routeName = '/pilgrim-profile';
+
   const PilgrimProfilePage({super.key});
+
+  static const Color bg = Color(0xFFF3F6F5);
+  static const Color primaryDark = Color(0xFF062C26);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color primaryMid = Color(0xFF1A6B66);
+  static const Color mint = Color(0xFF9FE5C9);
+  static const Color softMint = Color(0xFFEAF4F2);
+  static const Color gold = Color(0xFFF0E0C0);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: NusuqColors.appBg,
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _buildHeader(),
-                  Transform.translate(
-                    offset: const Offset(0, -18),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        children: [
-                          _buildQuickStatsCards(),
-                          const SizedBox(height: 14),
-                          _buildPersonalInfo(),
-                          const SizedBox(height: 14),
-                          _buildDietaryNeeds(),
-                          const SizedBox(height: 14),
-                          _buildMyStats(),
-                          const SizedBox(height: 14),
-                          _buildSettings(),
-                          const SizedBox(height: 14),
-                          _buildLogoutBtn(),
-                          const SizedBox(height: 18),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          _buildBottomNav(),
-        ],
-      ),
-    );
-  }
-
-  // ════════════════════════════════════════
-  // HEADER
-  // ════════════════════════════════════════
-  Widget _buildHeader() {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            NusuqColors.deepForest,
-            NusuqColors.midGreen,
-          ],
-        ),
-        borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(32),
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 12, 18, 34),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'My Profile',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  _editBtn(),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  _avatar('HA', NusuqColors.midGreen, NusuqColors.brightGreen),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        RichText(
-                          text: const TextSpan(
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w800,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: 'Hamida ',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              TextSpan(
-                                text: 'Akhtar',
-                                style: TextStyle(color: NusuqColors.gold),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: const [
-                            Icon(
-                              Icons.location_on_rounded,
-                              color: Colors.white70,
-                              size: 15,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Makkah Al-Mukarramah',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        _VerifiedBadge(text: 'Hajj 1447H'),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ════════════════════════════════════════
-  // QUICK STATS
-  // ════════════════════════════════════════
-  Widget _buildQuickStatsCards() {
-    return Row(
-      children: const [
-        Expanded(
-          child: _MiniStatCard(
-            value: '18',
-            label: 'Meals Ordered',
-            valueColor: NusuqColors.brightGreen,
-          ),
-        ),
-        SizedBox(width: 12),
-        Expanded(
-          child: _MiniStatCard(
-            value: '4.9★',
-            label: 'Avg Rating',
-            valueColor: NusuqColors.gold,
-          ),
-        ),
-        SizedBox(width: 12),
-        Expanded(
-          child: _MiniStatCard(
-            value: '6',
-            label: 'Days Active',
-            valueColor: NusuqColors.midGreen,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ════════════════════════════════════════
-  // CARDS
-  // ════════════════════════════════════════
-  Widget _buildPersonalInfo() => _card(
-        icon: Icons.person_outline_rounded,
-        iconBg: NusuqColors.mintSurface,
-        title: 'Personal Information',
-        action: 'Edit',
-        child: Column(
-          children: [
-            _row('Full Name', 'Hamida Akhtar'),
-            _row('Nationality', 'Pakistani', leadingEmoji: '🇵🇰'),
-            _row('Passport No.', 'AK-7291043'),
-            _row('Phone', '+92 300 1234567'),
-            _row(
-              'Campaign',
-              'Al-Nour Group',
-              vc: NusuqColors.midGreen,
-            ),
-          ],
-        ),
-      );
-
-  Widget _buildDietaryNeeds() => _card(
-        icon: Icons.restaurant_menu_rounded,
-        iconBg: NusuqColors.mintSurface,
-        title: 'Dietary & Health Needs',
-        action: 'Edit',
+      backgroundColor: bg,
+      appBar: const _PilgrimProfileAppBar(),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _row('Health Condition', 'Type 2 Diabetes'),
-            _row('Allergies', 'Nuts, Gluten', leadingEmoji: '⚠️'),
-            _row(
-              'Meal Preference',
-              'Low Carb',
-              vc: NusuqColors.midGreen,
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _tag('Vegan', on: true),
-                  _tag('Gluten-Free', on: true),
-                  _tag('Diabetic', on: true),
-                  _tag('High Protein', on: false),
-                  _tag('Heart Diet', on: false),
-                  _tag('Nut Allergy', on: true),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
+          children: const [
+            _ProfileHeaderCard(),
+            SizedBox(height: 16),
 
-  Widget _buildMyStats() => _card(
-        icon: Icons.bar_chart_rounded,
-        iconBg: NusuqColors.goldSurface,
-        title: 'My Statistics',
-        child: Column(
-          children: [
-            _row('Total Meals', '18 meals'),
-            _row('Meals Rated', '15 ratings'),
-            _row(
-              'Avg Satisfaction',
-              '4.9 / 5.0 ★',
-              vc: NusuqColors.gold,
-            ),
-            _row(
-              'Favourite Meal',
-              'Grilled Chicken Salad',
-              leadingEmoji: '🥗',
-            ),
-          ],
-        ),
-      );
+            _SectionTitle(title: "Personal Information"),
+            SizedBox(height: 10),
+            _PersonalInfoCard(),
+            SizedBox(height: 16),
 
-  Widget _buildSettings() => _card(
-        icon: Icons.settings_outlined,
-        iconBg: const Color(0xFFF3F4F6),
-        title: 'Settings & Notifications',
-        child: Column(
-          children: [
-            _toggleRow(
-              icon: Icons.notifications_none_rounded,
-              bg: NusuqColors.mintSurface,
-              label: 'Meal Reminders',
-              sub: 'Notify before each meal',
-              on: true,
-            ),
-            _toggleRow(
-              icon: Icons.auto_awesome_outlined,
-              bg: NusuqColors.mintSurface,
-              label: 'AI Suggestions',
-              sub: 'Daily smart meal picks',
-              on: true,
-            ),
-            _arrowRow(
-              icon: Icons.language_rounded,
-              bg: const Color(0xFFF3F4F6),
-              label: 'Language',
-              val: 'English',
-            ),
-            _arrowRow(
-              icon: Icons.lock_outline_rounded,
-              bg: const Color(0xFFF3F4F6),
-              label: 'Privacy & Data',
-            ),
-          ],
-        ),
-      );
+            _SectionTitle(title: "Health Profile"),
+            SizedBox(height: 10),
+            _HealthProfileCard(),
+            SizedBox(height: 16),
 
-  Widget _buildLogoutBtn() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF4F4),
-        border: Border.all(color: const Color(0xFFFFD9D9)),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: () {},
-          child: const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.logout_rounded,
-                  color: Color(0xFFE53935),
-                  size: 19,
-                ),
-                SizedBox(width: 8),
-                Text(
-                  'Sign Out',
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFFE53935),
-                  ),
-                ),
-              ],
-            ),
-          ),
+            _SectionTitle(title: "Meal Preference Summary"),
+            SizedBox(height: 10),
+            _MealSummaryCard(),
+            SizedBox(height: 16),
+
+            _SectionTitle(title: "Settings"),
+            SizedBox(height: 10),
+            _SettingsCard(),
+            SizedBox(height: 22),
+
+            _LogoutButton(),
+          ],
         ),
       ),
     );
   }
+}
 
-  // ════════════════════════════════════════
-  // BOTTOM NAV
-  // ════════════════════════════════════════
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Color(0xFFEDF3EF)),
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 22),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+class _PilgrimProfileAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
+  const _PilgrimProfileAppBar();
+
+  @override
+  Size get preferredSize => const Size.fromHeight(58);
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0.6,
+      shadowColor: Colors.black.withOpacity(0.08),
+      surfaceTintColor: Colors.white,
+      automaticallyImplyLeading: false,
+      titleSpacing: 8,
+      title: Row(
         children: [
-          _navItem(Icons.home_filled, 'Home', false),
-          _navItem(Icons.explore_outlined, 'Explore', false),
-          _navFab(Icons.restaurant_menu_rounded),
-          _navItem(Icons.favorite_border_rounded, 'Saved', false),
-          _navItem(Icons.person_rounded, 'Profile', true),
+          IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.black87,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 2),
+          const Text(
+            "Pilgrim Profile",
+            style: TextStyle(
+              color: Colors.black87,
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
         ],
       ),
     );
   }
+}
 
-  // ════════════════════════════════════════
-  // HELPERS
-  // ════════════════════════════════════════
-  Widget _editBtn() => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.14),
-          border: Border.all(color: Colors.white.withOpacity(0.18)),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Row(
-          children: [
-            Icon(Icons.edit_outlined, color: Colors.white70, size: 14),
-            SizedBox(width: 6),
-            Text(
-              'Edit',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      );
+class _SectionTitle extends StatelessWidget {
+  final String title;
 
-  Widget _avatar(String initials, Color c1, Color c2) => Container(
-        width: 78,
-        height: 78,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(colors: [c1, c2]),
-          border: Border.all(color: Colors.white24, width: 3),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.16),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          initials,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 26,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      );
+  const _SectionTitle({required this.title});
 
-  Widget _card({
-    required IconData icon,
-    required Color iconBg,
-    required String title,
-    String? action,
-    required Widget child,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: NusuqColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: NusuqColors.deepForest.withOpacity(0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 14.5,
+        fontWeight: FontWeight.w900,
       ),
-      child: Column(
+    );
+  }
+}
+
+class _ProfileHeaderCard extends StatelessWidget {
+  const _ProfileHeaderCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: Stack(
         children: [
           Container(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
             decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: NusuqColors.border),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  PilgrimProfilePage.primaryDark,
+                  PilgrimProfilePage.primary,
+                  PilgrimProfilePage.primaryMid,
+                ],
               ),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 34,
-                  height: 34,
+                  width: 74,
+                  height: 74,
                   decoration: BoxDecoration(
-                    color: iconBg,
-                    borderRadius: BorderRadius.circular(10),
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.14),
+                    border: Border.all(color: Colors.white.withOpacity(0.25)),
                   ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    icon,
-                    size: 18,
-                    color: NusuqColors.midGreen,
+                  child: const Icon(
+                    Icons.person_rounded,
+                    color: Colors.white,
+                    size: 38,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 14),
                 Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w800,
-                      color: NusuqColors.textDark,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Ahmed Al-Harbi",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        "Pilgrim ID: PG-2026-014",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.82),
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Campaign: Al Noor Hajj Group",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.82),
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: PilgrimProfilePage.mint.withOpacity(0.95),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: const Text(
+                          "Active Account",
+                          style: TextStyle(
+                            color: PilgrimProfilePage.primaryDark,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                if (action != null)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: NusuqColors.mintSurface,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      action,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: NusuqColors.midGreen,
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
-          child,
+          Positioned(
+            right: -28,
+            top: -36,
+            child: Container(
+              width: 118,
+              height: 118,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: PilgrimProfilePage.mint.withOpacity(0.10),
+              ),
+            ),
+          ),
+          Positioned(
+            left: -28,
+            bottom: -36,
+            child: Container(
+              width: 126,
+              height: 126,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: PilgrimProfilePage.gold.withOpacity(0.08),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _row(
-    String k,
-    String v, {
-    Color? vc,
-    String? leadingEmoji,
-  }) =>
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: Color(0xFFEEF5F1)),
+class _PersonalInfoCard extends StatelessWidget {
+  const _PersonalInfoCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _WhiteCard(
+      child: Column(
+        children: const [
+          _CardHeader(title: "Personal Details", actionText: "Edit"),
+          SizedBox(height: 10),
+          _InfoRow(
+            icon: Icons.person_outline_rounded,
+            title: "Full Name",
+            value: "Ahmed Al-Harbi",
           ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                k,
-                style: const TextStyle(
-                  fontSize: 12.2,
-                  color: NusuqColors.muted,
-                  fontWeight: FontWeight.w600,
+          Divider(height: 22),
+          _InfoRow(
+            icon: Icons.email_outlined,
+            title: "Email",
+            value: "ahmed@example.com",
+          ),
+          Divider(height: 22),
+          _InfoRow(
+            icon: Icons.phone_outlined,
+            title: "Phone Number",
+            value: "+966 5X XXX XXXX",
+          ),
+          Divider(height: 22),
+          _InfoRow(
+            icon: Icons.lock_outline_rounded,
+            title: "Password",
+            value: "Change Password",
+            valueColor: PilgrimProfilePage.primary,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HealthProfileCard extends StatelessWidget {
+  const _HealthProfileCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _WhiteCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          _CardHeader(title: "Health Information", actionText: "Edit"),
+          SizedBox(height: 10),
+          _InfoRow(
+            icon: Icons.cake_outlined,
+            title: "Age",
+            value: "36",
+          ),
+          Divider(height: 22),
+          _InfoRow(
+            icon: Icons.monitor_heart_outlined,
+            title: "Health Condition",
+            value: "Diabetes",
+          ),
+          Divider(height: 22),
+          _InfoRow(
+            icon: Icons.restaurant_menu_rounded,
+            title: "Dietary Preference",
+            value: "Low Sugar",
+          ),
+          Divider(height: 22),
+          _InfoRow(
+            icon: Icons.warning_amber_rounded,
+            title: "Allergies",
+            value: "Nuts, Seafood",
+          ),
+          SizedBox(height: 14),
+          _TagsWrap(
+            tags: [
+              "Diabetic",
+              "Low Sugar",
+              "Nut Allergy",
+              "High Protein",
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MealSummaryCard extends StatelessWidget {
+  const _MealSummaryCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _WhiteCard(
+      child: Column(
+        children: const [
+          _CardHeader(title: "Preference Summary"),
+          SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _MiniStatCard(
+                  title: "Orders",
+                  value: "12",
+                  icon: Icons.receipt_long_rounded,
                 ),
               ),
-            ),
-            Flexible(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (leadingEmoji != null) ...[
-                    Text(leadingEmoji, style: const TextStyle(fontSize: 14)),
-                    const SizedBox(width: 6),
-                  ],
-                  Flexible(
-                    child: Text(
-                      v,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.end,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: vc ?? NusuqColors.textDark,
-                      ),
-                    ),
-                  ),
-                ],
+              SizedBox(width: 12),
+              Expanded(
+                child: _MiniStatCard(
+                  title: "AI Match",
+                  value: "ON",
+                  icon: Icons.auto_awesome_rounded,
+                ),
               ),
-            ),
-          ],
-        ),
-      );
-
-  Widget _tag(String label, {required bool on}) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-        decoration: BoxDecoration(
-          color: on ? NusuqColors.mintSurface : const Color(0xFFF5F5F5),
-          border: Border.all(
-            color: on ? NusuqColors.midGreen : const Color(0xFFEAEAEA),
+            ],
           ),
-          borderRadius: BorderRadius.circular(20),
+          SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _MiniStatCard(
+                  title: "Last Meal",
+                  value: "Salad",
+                  icon: Icons.lunch_dining_rounded,
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: _MiniStatCard(
+                  title: "Main Plan",
+                  value: "Healthy",
+                  icon: Icons.favorite_outline_rounded,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsCard extends StatelessWidget {
+  const _SettingsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _WhiteCard(
+      child: Column(
+        children: const [
+          _CardHeader(title: "Preferences"),
+          SizedBox(height: 10),
+          _SettingRow(
+            icon: Icons.notifications_none_rounded,
+            title: "Notifications",
+            value: "Enabled",
+          ),
+          Divider(height: 22),
+          _SettingRow(
+            icon: Icons.language_rounded,
+            title: "Language",
+            value: "English",
+          ),
+          Divider(height: 22),
+          _SettingRow(
+            icon: Icons.privacy_tip_outlined,
+            title: "Privacy",
+            value: "Manage",
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LogoutButton extends StatelessWidget {
+  const _LogoutButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () {},
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          side: BorderSide(
+            color: Colors.red.withOpacity(0.22),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          backgroundColor: Colors.white,
         ),
-        child: Text(
-          label,
+        icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+        label: const Text(
+          "Log Out",
           style: TextStyle(
-            fontSize: 11.2,
-            fontWeight: FontWeight.w700,
-            color: on ? NusuqColors.midGreen : const Color(0xFFB5B5B5),
+            color: Colors.redAccent,
+            fontSize: 14.5,
+            fontWeight: FontWeight.w900,
           ),
         ),
-      );
+      ),
+    );
+  }
+}
 
-  Widget _toggleRow({
-    required IconData icon,
-    required Color bg,
-    required String label,
-    required String sub,
-    required bool on,
-  }) =>
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-        decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: Color(0xFFEEF5F1)),
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: bg,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              alignment: Alignment.center,
-              child: Icon(icon, size: 19, color: NusuqColors.midGreen),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 13.2,
-                      fontWeight: FontWeight.w700,
-                      color: NusuqColors.textDark,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    sub,
-                    style: const TextStyle(
-                      fontSize: 10.5,
-                      color: NusuqColors.muted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: 38,
-              height: 22,
-              decoration: BoxDecoration(
-                color: on ? NusuqColors.midGreen : const Color(0xFFD9D9D9),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Align(
-                alignment:
-                    on ? Alignment.centerRight : Alignment.centerLeft,
-                child: Container(
-                  margin: const EdgeInsets.all(4),
-                  width: 14,
-                  height: 14,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+class _CardHeader extends StatelessWidget {
+  final String title;
+  final String? actionText;
 
-  Widget _arrowRow({
-    required IconData icon,
-    required Color bg,
-    required String label,
-    String? val,
-  }) =>
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-        decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: Color(0xFFEEF5F1)),
+  const _CardHeader({
+    required this.title,
+    this.actionText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14.5,
+            fontWeight: FontWeight.w900,
           ),
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: bg,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              alignment: Alignment.center,
-              child: Icon(icon, size: 19, color: NusuqColors.textDark),
+        const Spacer(),
+        if (actionText != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: PilgrimProfilePage.softMint,
+              borderRadius: BorderRadius.circular(999),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 13.2,
-                  fontWeight: FontWeight.w700,
-                  color: NusuqColors.textDark,
-                ),
+            child: Text(
+              actionText!,
+              style: const TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                color: PilgrimProfilePage.primary,
               ),
             ),
-            if (val != null)
+          ),
+      ],
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  final Color? valueColor;
+
+  const _InfoRow({
+    required this.icon,
+    required this.title,
+    required this.value,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: PilgrimProfilePage.softMint,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(
+            icon,
+            color: PilgrimProfilePage.primary,
+            size: 21,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
-                val,
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  color: NusuqColors.muted,
-                  fontWeight: FontWeight.w600,
+                title,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Colors.black.withOpacity(0.55),
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            const SizedBox(width: 6),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: Color(0xFFBFBFBF),
-              size: 20,
-            ),
-          ],
-        ),
-      );
-
-  Widget _navItem(IconData icon, String label, bool active) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: active ? NusuqColors.mintSurface : Colors.transparent,
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 21,
-              color: active ? NusuqColors.midGreen : const Color(0xFFB7B7B7),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10.2,
-                fontWeight: FontWeight.w700,
-                color:
-                    active ? NusuqColors.midGreen : const Color(0xFFB7B7B7),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 14.2,
+                  fontWeight: FontWeight.w800,
+                  color: valueColor ?? Colors.black87,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      );
+      ],
+    );
+  }
+}
 
-  Widget _navFab(IconData icon) => Container(
-        width: 58,
-        height: 58,
-        margin: const EdgeInsets.only(bottom: 14),
-        decoration: BoxDecoration(
-          gradient: NusuqColors.buttonGradient,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: NusuqColors.midGreen.withOpacity(0.35),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
+class _SettingRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+
+  const _SettingRow({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: PilgrimProfilePage.softMint,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(
+            icon,
+            color: PilgrimProfilePage.primary,
+            size: 21,
+          ),
         ),
-        alignment: Alignment.center,
-        child: Icon(icon, color: Colors.white, size: 26),
-      );
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14.2,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 12.6,
+            color: Colors.black.withOpacity(0.58),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _MiniStatCard extends StatelessWidget {
+  final String title;
   final String value;
-  final String label;
-  final Color valueColor;
+  final IconData icon;
 
   const _MiniStatCard({
+    required this.title,
     required this.value,
-    required this.label,
-    required this.valueColor,
+    required this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: NusuqColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: NusuqColors.deepForest.withOpacity(0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: const Color(0xFFF8FAFA),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.black.withOpacity(0.05)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Icon(
+            icon,
+            size: 22,
+            color: PilgrimProfilePage.primary,
+          ),
+          const SizedBox(height: 12),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: valueColor,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 10.3,
-              fontWeight: FontWeight.w600,
-              color: NusuqColors.muted,
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.black.withOpacity(0.58),
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -795,28 +653,68 @@ class _MiniStatCard extends StatelessWidget {
   }
 }
 
-class _VerifiedBadge extends StatelessWidget {
-  final String text;
+class _TagsWrap extends StatelessWidget {
+  final List<String> tags;
 
-  const _VerifiedBadge({required this.text});
+  const _TagsWrap({required this.tags});
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: tags
+          .map(
+            (tag) => Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+              decoration: BoxDecoration(
+                color: PilgrimProfilePage.softMint,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: PilgrimProfilePage.mint.withOpacity(0.8),
+                ),
+              ),
+              child: Text(
+                tag,
+                style: const TextStyle(
+                  fontSize: 11.8,
+                  fontWeight: FontWeight.w800,
+                  color: PilgrimProfilePage.primary,
+                ),
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _WhiteCard extends StatelessWidget {
+  final Widget child;
+
+  const _WhiteCard({required this.child});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: NusuqColors.gold.withOpacity(0.14),
-        border: Border.all(color: NusuqColors.gold.withOpacity(0.35)),
-        borderRadius: BorderRadius.circular(999),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.black.withOpacity(0.05)),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 20,
+            offset: const Offset(0, 12),
+            color: Colors.black.withOpacity(0.05),
+          ),
+        ],
       ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: NusuqColors.gold,
-          fontSize: 10.5,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
+      child: child,
     );
   }
 }

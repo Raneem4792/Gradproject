@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'pilgrim_meals_page.dart';
 import 'pilgrim_order_history_page.dart';
+import 'pilgrim_profile_page.dart';
 
 class PilgrimHomeScreen extends StatefulWidget {
   static const String routeName = '/pilgrim-home';
@@ -39,15 +40,26 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
     );
   }
 
-  void _handleBottomNavTap(int i) {
-    setState(() => _navIndex = i);
+void _openProfilePage() {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const PilgrimProfilePage(),
+    ),
+  );
+}
 
-    if (i == 1) {
-      _openMealsPage();
-    } else if (i == 2) {
-      _openOrderHistoryPage();
-    }
+void _handleBottomNavTap(int i) {
+  setState(() => _navIndex = i);
+
+  if (i == 1) {
+    _openMealsPage();
+  } else if (i == 2) {
+    _openOrderHistoryPage();
+  } else if (i == 3) {
+    _openProfilePage();
   }
+}
 
   @override
   Widget build(BuildContext context) {
