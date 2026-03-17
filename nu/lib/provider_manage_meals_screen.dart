@@ -5,7 +5,6 @@ import 'provider_bottom_nav.dart';
 import 'provider_home_screen.dart';
 import 'incoming_meal_requests_page.dart';
 import 'provider_dashboard_page.dart';
-import 'provider_notifications_page.dart';
 
 class ProviderMealManagementScreen extends StatefulWidget {
   const ProviderMealManagementScreen({super.key});
@@ -65,13 +64,6 @@ class _ProviderMealManagementScreenState
   ];
 
   int _navIndex = 0;
-
-  void _openNotificationsPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const ProviderNotificationsPage()),
-    );
-  }
 
   void _handleBack() {
     if (Navigator.canPop(context)) {
@@ -205,10 +197,7 @@ class _ProviderMealManagementScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bg,
-      appBar: _MealManagementMainAppBar(
-        onBack: _handleBack,
-        onTapNotifications: _openNotificationsPage,
-      ),
+      appBar: _MealManagementMainAppBar(onBack: _handleBack),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -265,12 +254,8 @@ class _ProviderMealManagementScreenState
 class _MealManagementMainAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final VoidCallback onBack;
-  final VoidCallback onTapNotifications;
 
-  const _MealManagementMainAppBar({
-    required this.onBack,
-    required this.onTapNotifications,
-  });
+  const _MealManagementMainAppBar({required this.onBack});
 
   @override
   Size get preferredSize => const Size.fromHeight(58);
@@ -306,9 +291,7 @@ class _MealManagementMainAppBar extends StatelessWidget
           ),
         ],
       ),
-      actions: [
-        const SizedBox(width: 6),
-      ],
+      actions: [const SizedBox(width: 6)],
     );
   }
 }

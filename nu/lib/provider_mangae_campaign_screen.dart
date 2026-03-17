@@ -3,7 +3,6 @@ import 'provider_bottom_nav.dart';
 import 'provider_home_screen.dart';
 import 'incoming_meal_requests_page.dart';
 import 'provider_dashboard_page.dart';
-import 'provider_notifications_page.dart';
 
 class ProviderCampaignManagementScreen extends StatefulWidget {
   const ProviderCampaignManagementScreen({super.key});
@@ -57,13 +56,6 @@ class _ProviderCampaignManagementScreenState
   ];
 
   int _navIndex = 0;
-
-  void _openNotificationsPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const ProviderNotificationsPage()),
-    );
-  }
 
   void _handleBack() {
     if (Navigator.canPop(context)) {
@@ -206,10 +198,7 @@ class _ProviderCampaignManagementScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bg,
-      appBar: _CampaignManagementMainAppBar(
-        onBack: _handleBack,
-        onTapNotifications: _openNotificationsPage,
-      ),
+      appBar: _CampaignManagementMainAppBar(onBack: _handleBack),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -266,12 +255,8 @@ class _ProviderCampaignManagementScreenState
 class _CampaignManagementMainAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final VoidCallback onBack;
-  final VoidCallback onTapNotifications;
 
-  const _CampaignManagementMainAppBar({
-    required this.onBack,
-    required this.onTapNotifications,
-  });
+  const _CampaignManagementMainAppBar({required this.onBack});
 
   @override
   Size get preferredSize => const Size.fromHeight(58);
