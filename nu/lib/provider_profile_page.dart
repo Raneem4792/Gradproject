@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'provider_home_screen.dart';
 
-class ProviderProfilePage extends StatelessWidget {
+class ProviderProfilePage extends StatefulWidget {
   static const String routeName = '/provider-profile';
 
   const ProviderProfilePage({super.key});
@@ -15,9 +16,207 @@ class ProviderProfilePage extends StatelessWidget {
   static const Color gold = Color(0xFFF0E0C0);
 
   @override
+  State<ProviderProfilePage> createState() => _ProviderProfilePageState();
+}
+
+class _ProviderProfilePageState extends State<ProviderProfilePage> {
+  bool isEditingBasicInfo = false;
+  bool isChangingPassword = false;
+  bool notificationsEnabled = true;
+  String language = "English";
+
+  String providerName = "Al Barakah Catering";
+  String providerId = "PR-2026-014";
+  String email = "provider@nusuq.com";
+  String phone = "+966 5X XXX XXXX";
+  String location = "Makkah";
+  String serviceType = "Meal Provider";
+
+  late final TextEditingController nameController;
+  late final TextEditingController emailController;
+  late final TextEditingController phoneController;
+
+  late final TextEditingController currentPasswordController;
+  late final TextEditingController newPasswordController;
+  late final TextEditingController confirmPasswordController;
+
+  @override
+  void initState() {
+    super.initState();
+    nameController = TextEditingController(text: providerName);
+    emailController = TextEditingController(text: email);
+    phoneController = TextEditingController(text: phone);
+
+    currentPasswordController = TextEditingController();
+    newPasswordController = TextEditingController();
+    confirmPasswordController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    currentPasswordController.dispose();
+    newPasswordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _toggleBasicInfoEdit() {
+    if (isEditingBasicInfo) {
+      setState(() {
+        providerName = nameController.text.trim();
+        email = emailController.text.trim();
+        phone = phoneController.text.trim();
+        isEditingBasicInfo = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Basic information updated")),
+      );
+    } else {
+      nameController.text = providerName;
+      emailController.text = email;
+      phoneController.text = phone;
+
+      setState(() {
+        isEditingBasicInfo = true;
+      });
+    }
+  }
+
+  void _cancelBasicInfoEdit() {
+    setState(() {
+      nameController.text = providerName;
+      emailController.text = email;
+      phoneController.text = phone;
+      isEditingBasicInfo = false;
+    });
+  }
+
+  void _changePassword() {
+    setState(() {
+      isChangingPassword = !isChangingPassword;
+      if (!isChangingPassword) {
+        currentPasswordController.clear();
+        newPasswordController.clear();
+        confirmPasswordController.clear();
+      }
+    });
+  }
+
+  void _savePassword() {
+    final current = currentPasswordController.text.trim();
+    final newPass = newPasswordController.text.trim();
+    final confirm = confirmPasswordController.text.trim();
+
+    if (current.isEmpty || newPass.isEmpty || confirm.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill all password fields")),
+      );
+      return;
+    }
+
+    if (newPass.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("New password must be at least 8 characters"),
+        ),
+      );
+      return;
+    }
+
+    if (newPass != confirm) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("New password and confirm password do not match"),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      isChangingPassword = false;
+      currentPasswordController.clear();
+      newPasswordController.clear();
+      confirmPasswordController.clear();
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Password changed successfully")),
+    );
+  }
+
+  Future<void> _changeLanguage() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(18, 8, 18, 10),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      "Choose Language",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+                ListTile(
+                  title: const Text("العربية"),
+                  trailing: language == "العربية"
+                      ? const Icon(
+                          Icons.check,
+                          color: ProviderProfilePage.primary,
+                        )
+                      : null,
+                  onTap: () => Navigator.pop(context, "العربية"),
+                ),
+                ListTile(
+                  title: const Text("English"),
+                  trailing: language == "English"
+                      ? const Icon(
+                          Icons.check,
+                          color: ProviderProfilePage.primary,
+                        )
+                      : null,
+                  onTap: () => Navigator.pop(context, "English"),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selected != null) {
+      setState(() {
+        language = selected;
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Language changed to $selected")));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: ProviderProfilePage.bg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.6,
@@ -35,7 +234,10 @@ class ProviderProfilePage extends StatelessWidget {
         leading: IconButton(
           onPressed: () {
             HapticFeedback.selectionClick();
-            Navigator.pop(context);
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const ProviderHomeScreen()),
+            );
           },
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
@@ -47,31 +249,59 @@ class ProviderProfilePage extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            _ProfileHeaderCard(),
-            SizedBox(height: 16),
+          children: [
+            _ProfileHeaderCard(providerName: providerName),
+            const SizedBox(height: 16),
 
-            _SectionTitle(title: "Basic Information"),
-            SizedBox(height: 10),
-            _InfoCard(),
-            SizedBox(height: 16),
+            const _SectionTitle(title: "Basic Information"),
+            const SizedBox(height: 10),
+            _InfoCard(
+              isEditing: isEditingBasicInfo,
+              providerName: providerName,
+              providerId: providerId,
+              email: email,
+              phone: phone,
+              location: location,
+              serviceType: serviceType,
+              nameController: nameController,
+              emailController: emailController,
+              phoneController: phoneController,
+              onEditTap: _toggleBasicInfoEdit,
+              onCancelTap: _cancelBasicInfoEdit,
+              onChangePassword: _changePassword,
+              isChangingPassword: isChangingPassword,
+              currentPasswordController: currentPasswordController,
+              newPasswordController: newPasswordController,
+              confirmPasswordController: confirmPasswordController,
+              onSavePassword: _savePassword,
+            ),
+            const SizedBox(height: 16),
 
-            _SectionTitle(title: "Orders Summary"),
-            SizedBox(height: 10),
-            _StatsGrid(),
-            SizedBox(height: 16),
+            const _SectionTitle(title: "Orders Summary"),
+            const SizedBox(height: 10),
+            const _StatsGrid(),
+            const SizedBox(height: 16),
 
-            _SectionTitle(title: "Linked Campaigns"),
-            SizedBox(height: 10),
-            _CampaignsCard(),
-            SizedBox(height: 16),
+            const _SectionTitle(title: "Linked Campaigns"),
+            const SizedBox(height: 10),
+            const _CampaignsCard(),
+            const SizedBox(height: 16),
 
-            _SectionTitle(title: "Account Settings"),
-            SizedBox(height: 10),
-            _SettingsCard(),
-            SizedBox(height: 22),
+            const _SectionTitle(title: "Settings"),
+            const SizedBox(height: 10),
+            _SettingsCard(
+              notificationsEnabled: notificationsEnabled,
+              language: language,
+              onNotificationsChanged: (value) {
+                setState(() {
+                  notificationsEnabled = value;
+                });
+              },
+              onLanguageTap: _changeLanguage,
+            ),
+            const SizedBox(height: 22),
 
-            _LogoutButton(),
+            const _LogoutButton(),
           ],
         ),
       ),
@@ -97,167 +327,293 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _ProfileHeaderCard extends StatelessWidget {
-  const _ProfileHeaderCard();
+  final String providerName;
+
+  const _ProfileHeaderCard({required this.providerName});
 
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              blurRadius: 24,
-              offset: const Offset(0, 14),
-              color: Colors.black.withOpacity(0.07),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    ProviderProfilePage.primaryDark,
-                    ProviderProfilePage.primary,
-                    ProviderProfilePage.primaryMid,
-                  ],
-                ),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 78,
-                    height: 78,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.14),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.28),
-                        width: 1.4,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.storefront_rounded,
-                      color: Colors.white,
-                      size: 38,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    "Al Barakah Catering",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    "Meal Provider",
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.88),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: ProviderProfilePage.mint.withOpacity(0.95),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: const Text(
-                      "Verified Account",
-                      style: TextStyle(
-                        color: ProviderProfilePage.primaryDark,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
+      child: Stack(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  ProviderProfilePage.primaryDark,
+                  ProviderProfilePage.primary,
+                  ProviderProfilePage.primaryMid,
                 ],
               ),
             ),
-            Positioned(
-              right: -28,
-              top: -36,
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: ProviderProfilePage.mint.withOpacity(0.11),
-                  shape: BoxShape.circle,
+            child: Row(
+              children: [
+                Container(
+                  width: 74,
+                  height: 74,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.14),
+                    border: Border.all(color: Colors.white.withOpacity(0.25)),
+                  ),
+                  child: const Icon(
+                    Icons.storefront_rounded,
+                    color: Colors.white,
+                    size: 38,
+                  ),
                 ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        providerName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        "Provider ID: PR-2026-014",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.82),
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Service: Meal Provider",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.82),
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: ProviderProfilePage.mint.withOpacity(0.95),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: const Text(
+                          "Verified Account",
+                          style: TextStyle(
+                            color: ProviderProfilePage.primaryDark,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            right: -28,
+            top: -36,
+            child: Container(
+              width: 118,
+              height: 118,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: ProviderProfilePage.mint.withOpacity(0.10),
               ),
             ),
-            Positioned(
-              left: -35,
-              bottom: -45,
-              child: Container(
-                width: 135,
-                height: 135,
-                decoration: BoxDecoration(
-                  color: ProviderProfilePage.gold.withOpacity(0.10),
-                  shape: BoxShape.circle,
-                ),
+          ),
+          Positioned(
+            left: -28,
+            bottom: -36,
+            child: Container(
+              width: 126,
+              height: 126,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: ProviderProfilePage.gold.withOpacity(0.08),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
 class _InfoCard extends StatelessWidget {
-  const _InfoCard();
+  final bool isEditing;
+  final String providerName;
+  final String providerId;
+  final String email;
+  final String phone;
+  final String location;
+  final String serviceType;
+
+  final TextEditingController nameController;
+  final TextEditingController emailController;
+  final TextEditingController phoneController;
+
+  final VoidCallback onEditTap;
+  final VoidCallback onCancelTap;
+  final VoidCallback onChangePassword;
+  final bool isChangingPassword;
+  final TextEditingController currentPasswordController;
+  final TextEditingController newPasswordController;
+  final TextEditingController confirmPasswordController;
+  final VoidCallback onSavePassword;
+
+  const _InfoCard({
+    required this.isEditing,
+    required this.providerName,
+    required this.providerId,
+    required this.email,
+    required this.phone,
+    required this.location,
+    required this.serviceType,
+    required this.nameController,
+    required this.emailController,
+    required this.phoneController,
+    required this.onEditTap,
+    required this.onCancelTap,
+    required this.onChangePassword,
+    required this.isChangingPassword,
+    required this.currentPasswordController,
+    required this.newPasswordController,
+    required this.confirmPasswordController,
+    required this.onSavePassword,
+  });
 
   @override
   Widget build(BuildContext context) {
     return _WhiteCard(
       child: Column(
-        children: const [
-          _InfoRow(
-            icon: Icons.badge_outlined,
-            title: "Provider ID",
-            value: "PR-2026-014",
+        children: [
+          _CardHeader(
+            title: "Provider Details",
+            actionText: isEditing ? "Save" : "Edit",
+            onActionTap: onEditTap,
+            showCancel: isEditing,
+            onCancelTap: onCancelTap,
           ),
-          Divider(height: 22),
-          _InfoRow(
-            icon: Icons.email_outlined,
-            title: "Email",
-            value: "provider@nusuq.com",
-          ),
-          Divider(height: 22),
-          _InfoRow(
-            icon: Icons.phone_outlined,
-            title: "Phone",
-            value: "+966 5X XXX XXXX",
-          ),
-          Divider(height: 22),
-          _InfoRow(
-            icon: Icons.location_on_outlined,
-            title: "Location",
-            value: "Makkah",
-          ),
-          Divider(height: 22),
-          _InfoRow(
-            icon: Icons.room_service_outlined,
-            title: "Service Type",
-            value: "Meal Provider",
-          ),
+          const SizedBox(height: 10),
+          if (isEditing) ...[
+            _EditableField(
+              icon: Icons.storefront_outlined,
+              label: "Provider Name",
+              controller: nameController,
+            ),
+            const SizedBox(height: 14),
+            _EditableField(
+              icon: Icons.email_outlined,
+              label: "Email",
+              controller: emailController,
+            ),
+            const SizedBox(height: 14),
+            _EditableField(
+              icon: Icons.phone_outlined,
+              label: "Phone",
+              controller: phoneController,
+            ),
+            const SizedBox(height: 14),
+            _InfoRow(
+              icon: Icons.lock_outline_rounded,
+              title: "Password",
+              value: "Change Password",
+              valueColor: ProviderProfilePage.primary,
+              onTap: onChangePassword,
+            ),
+          ] else ...[
+            _InfoRow(
+              icon: Icons.storefront_outlined,
+              title: "Provider Name",
+              value: providerName,
+            ),
+            const Divider(height: 22),
+            _InfoRow(
+              icon: Icons.badge_outlined,
+              title: "Provider ID",
+              value: providerId,
+            ),
+            const Divider(height: 22),
+            _InfoRow(icon: Icons.email_outlined, title: "Email", value: email),
+            const Divider(height: 22),
+            _InfoRow(icon: Icons.phone_outlined, title: "Phone", value: phone),
+            const Divider(height: 22),
+            _InfoRow(
+              icon: Icons.location_on_outlined,
+              title: "Location",
+              value: location,
+            ),
+            const Divider(height: 22),
+            _InfoRow(
+              icon: Icons.room_service_outlined,
+              title: "Service Type",
+              value: serviceType,
+            ),
+            const Divider(height: 22),
+            _InfoRow(
+              icon: Icons.lock_outline_rounded,
+              title: "Password",
+              value: "Change Password",
+              valueColor: ProviderProfilePage.primary,
+              onTap: onChangePassword,
+            ),
+          ],
+          if (isChangingPassword) ...[
+            const SizedBox(height: 14),
+            _EditableField(
+              icon: Icons.lock_outline_rounded,
+              label: "Current Password",
+              controller: currentPasswordController,
+              obscureText: true,
+            ),
+            const SizedBox(height: 12),
+            _EditableField(
+              icon: Icons.lock_reset_rounded,
+              label: "New Password",
+              controller: newPasswordController,
+              obscureText: true,
+            ),
+            const SizedBox(height: 12),
+            _EditableField(
+              icon: Icons.lock_person_rounded,
+              label: "Confirm New Password",
+              controller: confirmPasswordController,
+              obscureText: true,
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onSavePassword,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ProviderProfilePage.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  "Save New Password",
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -268,16 +624,20 @@ class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String title;
   final String value;
+  final Color? valueColor;
+  final VoidCallback? onTap;
 
   const _InfoRow({
     required this.icon,
     required this.title,
     required this.value,
+    this.valueColor,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final child = Row(
       children: [
         Container(
           width: 42,
@@ -304,14 +664,150 @@ class _InfoRow extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14.5,
                   fontWeight: FontWeight.w800,
+                  color: valueColor ?? Colors.black87,
                 ),
               ),
             ],
           ),
         ),
+      ],
+    );
+
+    if (onTap == null) return child;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _EditableField extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final TextEditingController controller;
+  final TextInputType? keyboardType;
+  final bool obscureText;
+
+  const _EditableField({
+    required this.icon,
+    required this.label,
+    required this.controller,
+    this.keyboardType,
+    this.obscureText = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: ProviderProfilePage.softMint,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(icon, color: ProviderProfilePage.primary, size: 21),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            obscureText: obscureText,
+            decoration: InputDecoration(
+              labelText: label,
+              isDense: true,
+              filled: true,
+              fillColor: const Color(0xFFF8FAFA),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 14,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
+              ),
+              focusedBorder: const OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(14)),
+                borderSide: BorderSide(
+                  color: ProviderProfilePage.primary,
+                  width: 1.2,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CardHeader extends StatelessWidget {
+  final String title;
+  final String? actionText;
+  final VoidCallback? onActionTap;
+  final bool showCancel;
+  final VoidCallback? onCancelTap;
+
+  const _CardHeader({
+    required this.title,
+    this.actionText,
+    this.onActionTap,
+    this.showCancel = false,
+    this.onCancelTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w900),
+        ),
+        const Spacer(),
+        if (showCancel)
+          TextButton(
+            onPressed: onCancelTap,
+            child: const Text(
+              "Cancel",
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w700),
+            ),
+          ),
+        if (actionText != null)
+          InkWell(
+            borderRadius: BorderRadius.circular(999),
+            onTap: onActionTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: ProviderProfilePage.softMint,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                actionText!,
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w800,
+                  color: ProviderProfilePage.primary,
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -401,10 +897,7 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 14),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-            ),
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 4),
           Text(
@@ -483,134 +976,116 @@ class _CampaignTile extends StatelessWidget {
     required this.fromCountry,
   });
 
-void _showCampaignDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (_) {
-      return Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF7FAF8),
-            borderRadius: BorderRadius.circular(28),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 8,
-                height: 150,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF8ED8C0),
-                  borderRadius: BorderRadius.circular(999),
+  void _showCampaignDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7FAF8),
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 8,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8ED8C0),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 14),
-
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-
-                    /// عنوان الحملة
-                    Center(
-                      child: Text(
-                        title,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF133B33),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-
-                        /// ايقونة الحملة
-                        Container(
-                          width: 70,
-                          height: 70,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE3F4EE),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Icon(
-                            Icons.campaign_rounded,
-                            color: Color(0xFF2D6B5F),
-                            size: 32,
-                          ),
-                        ),
-
-                        const SizedBox(width: 14),
-
-                        /// معلومات الحملة
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-
-                              Wrap(
-                                spacing: 10,
-                                children: [
-                                  _DialogBadge(text: campaignId),
-                                  _DialogBadge(text: pilgrimsCount),
-                                ],
-                              ),
-
-                              const SizedBox(height: 14),
-
-                              _DialogDetailRow(
-                                icon: Icons.calendar_today_outlined,
-                                text:
-                                    "Arrival Day: $arrivalDay • $arrivalDate",
-                              ),
-
-                              const SizedBox(height: 10),
-
-                              _DialogDetailRow(
-                                icon: Icons.access_time_rounded,
-                                text:
-                                    "Arrival Time: $arrivalTime • From $fromCountry",
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    /// زر اغلاق فقط
-                    Center(
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text(
-                          "Close",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Text(
+                          title,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF133B33),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 14),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 70,
+                            height: 70,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE3F4EE),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Icon(
+                              Icons.campaign_rounded,
+                              color: Color(0xFF2D6B5F),
+                              size: 32,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Wrap(
+                                  spacing: 10,
+                                  children: [
+                                    _DialogBadge(text: campaignId),
+                                    _DialogBadge(text: pilgrimsCount),
+                                  ],
+                                ),
+                                const SizedBox(height: 14),
+                                _DialogDetailRow(
+                                  icon: Icons.calendar_today_outlined,
+                                  text:
+                                      "Arrival Day: $arrivalDay • $arrivalDate",
+                                ),
+                                const SizedBox(height: 10),
+                                _DialogDetailRow(
+                                  icon: Icons.access_time_rounded,
+                                  text:
+                                      "Arrival Time: $arrivalTime • From $fromCountry",
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      Center(
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text(
+                            "Close",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -686,10 +1161,7 @@ class _DialogDetailRow extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _DialogDetailRow({
-    required this.icon,
-    required this.text,
-  });
+  const _DialogDetailRow({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -714,31 +1186,35 @@ class _DialogDetailRow extends StatelessWidget {
 }
 
 class _SettingsCard extends StatelessWidget {
-  const _SettingsCard();
+  final bool notificationsEnabled;
+  final String language;
+  final ValueChanged<bool> onNotificationsChanged;
+  final VoidCallback onLanguageTap;
+
+  const _SettingsCard({
+    required this.notificationsEnabled,
+    required this.language,
+    required this.onNotificationsChanged,
+    required this.onLanguageTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return _WhiteCard(
       child: Column(
-        children: const [
-          _SettingTile(
-            icon: Icons.edit_outlined,
-            title: "Edit Profile",
-          ),
-          Divider(height: 18),
-          _SettingTile(
-            icon: Icons.lock_outline_rounded,
-            title: "Change Password",
-          ),
-          Divider(height: 18),
-          _SettingTile(
+        children: [
+          _SwitchSettingRow(
             icon: Icons.notifications_none_rounded,
-            title: "Notification Settings",
+            title: "Notification",
+            value: notificationsEnabled,
+            onChanged: onNotificationsChanged,
           ),
-          Divider(height: 18),
-          _SettingTile(
+          const Divider(height: 22),
+          _SettingRow(
             icon: Icons.language_rounded,
             title: "Language",
+            value: language,
+            onTap: onLanguageTap,
           ),
         ],
       ),
@@ -746,20 +1222,24 @@ class _SettingsCard extends StatelessWidget {
   }
 }
 
-class _SettingTile extends StatelessWidget {
+class _SettingRow extends StatelessWidget {
   final IconData icon;
   final String title;
+  final String value;
+  final VoidCallback? onTap;
 
-  const _SettingTile({
+  const _SettingRow({
     required this.icon,
     required this.title,
+    required this.value,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {},
       borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
@@ -783,10 +1263,66 @@ class _SettingTile extends StatelessWidget {
                 ),
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 12.6,
+                color: Colors.black.withOpacity(0.58),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(width: 6),
+            const Icon(Icons.chevron_right_rounded, color: Colors.black45),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SwitchSettingRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _SwitchSettingRow({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: ProviderProfilePage.softMint,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(icon, color: ProviderProfilePage.primary, size: 21),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 14.2, fontWeight: FontWeight.w800),
+          ),
+        ),
+        Transform.scale(
+          scale: 0.82,
+          child: Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: ProviderProfilePage.primary,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -802,9 +1338,7 @@ class _LogoutButton extends StatelessWidget {
         onPressed: () {},
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 15),
-          side: BorderSide(
-            color: Colors.red.withOpacity(0.22),
-          ),
+          side: BorderSide(color: Colors.red.withOpacity(0.22)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),

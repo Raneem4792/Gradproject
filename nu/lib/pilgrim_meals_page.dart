@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'pilgrim_submit_meal_request_page.dart';
+import 'pilgrim_home_screen.dart';
+import 'pilgrim_order_history_page.dart';
+import 'pilgrim_profile_page.dart';
+import 'pilgrim_bottom_nav.dart';
 
 class PilgrimMealsPage extends StatefulWidget {
   static const String routeName = '/pilgrim-meals';
@@ -73,6 +77,31 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
     );
   }
 
+  void _handleBottomNavTap(int i) {
+    if (i == _navIndex) return;
+
+    setState(() => _navIndex = i);
+
+    if (i == 0) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PilgrimHomeScreen()),
+      );
+    } else if (i == 1) {
+      // Already on Meals page
+    } else if (i == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PilgrimOrderHistoryPage()),
+      );
+    } else if (i == 3) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PilgrimProfilePage()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final visibleMeals = showRecommendedOnly
@@ -144,11 +173,9 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
           ),
         ),
       ),
-      bottomNavigationBar: _MealsBottomNav(
+      bottomNavigationBar: PilgrimBottomNav(
         currentIndex: _navIndex,
-        onTap: (i) {
-          setState(() => _navIndex = i);
-        },
+        onTap: _handleBottomNavTap,
       ),
     );
   }
@@ -194,13 +221,7 @@ class _PilgrimMealsAppBar extends StatelessWidget
           ),
         ],
       ),
-      actions: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.search, color: Colors.black87, size: 20),
-        ),
-        const SizedBox(width: 6),
-      ],
+      actions: [const SizedBox(width: 6)],
     );
   }
 }
@@ -314,10 +335,7 @@ class _MealsSectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: const TextStyle(
-        fontSize: 14.5,
-        fontWeight: FontWeight.w900,
-      ),
+      style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w900),
     );
   }
 }
@@ -399,11 +417,7 @@ class _FilterChipButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 18,
-              color: isSelected ? Colors.white : primary,
-            ),
+            Icon(icon, size: 18, color: isSelected ? Colors.white : primary),
             const SizedBox(width: 8),
             Flexible(
               child: Text(
@@ -473,9 +487,7 @@ class _MealRequestCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(24),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             child: Container(
               height: 150,
               width: double.infinity,
@@ -483,10 +495,7 @@ class _MealRequestCard extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    softBg,
-                    mint.withOpacity(0.35),
-                  ],
+                  colors: [softBg, mint.withOpacity(0.35)],
                 ),
               ),
               child: Stack(
@@ -692,10 +701,7 @@ class _EmptyMealsState extends StatelessWidget {
           const SizedBox(height: 10),
           const Text(
             "No recommended meals found",
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 14,
-            ),
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
           ),
           const SizedBox(height: 6),
           Text(
@@ -708,41 +714,6 @@ class _EmptyMealsState extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _MealsBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onTap;
-
-  const _MealsBottomNav({
-    required this.currentIndex,
-    required this.onTap,
-  });
-
-  static const Color primary = Color(0xFF0D4C4A);
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: onTap,
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: Colors.white,
-      selectedItemColor: primary,
-      unselectedItemColor: Colors.black.withOpacity(0.42),
-      selectedFontSize: 12,
-      unselectedFontSize: 12,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.restaurant_menu),
-          label: "Meals",
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.history), label: "History"),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
-      ],
     );
   }
 }

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'pilgrim_rate_meal_page.dart';
+import 'pilgrim_bottom_nav.dart';
+import 'pilgrim_home_screen.dart';
+import 'pilgrim_meals_page.dart';
+import 'pilgrim_profile_page.dart';
 
 class PilgrimOrderHistoryPage extends StatefulWidget {
   static const String routeName = '/pilgrim-order-history';
@@ -85,10 +89,25 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
   }
 
   void _handleBottomNavTap(int i) {
+    if (i == _navIndex) return;
+
     setState(() => _navIndex = i);
 
     if (i == 0) {
-      Navigator.pop(context);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PilgrimHomeScreen()),
+      );
+    } else if (i == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PilgrimMealsPage()),
+      );
+    } else if (i == 3) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PilgrimProfilePage()),
+      );
     }
   }
 
@@ -127,7 +146,7 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
           ),
         ),
       ),
-      bottomNavigationBar: _OrderHistoryBottomNav(
+      bottomNavigationBar: PilgrimBottomNav(
         currentIndex: _navIndex,
         onTap: _handleBottomNavTap,
       ),
@@ -155,7 +174,10 @@ class _OrderHistoryAppBar extends StatelessWidget
         children: [
           IconButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const PilgrimHomeScreen()),
+              );
             },
             icon: const Icon(
               Icons.arrow_back_ios_new_rounded,
@@ -287,10 +309,7 @@ class _HistorySectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: const TextStyle(
-        fontSize: 14.5,
-        fontWeight: FontWeight.w900,
-      ),
+      style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w900),
     );
   }
 }
@@ -492,41 +511,6 @@ class _OrderHistoryItemCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _OrderHistoryBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onTap;
-
-  const _OrderHistoryBottomNav({
-    required this.currentIndex,
-    required this.onTap,
-  });
-
-  static const Color primary = Color(0xFF0D4C4A);
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: onTap,
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: Colors.white,
-      selectedItemColor: primary,
-      unselectedItemColor: Colors.black.withOpacity(0.42),
-      selectedFontSize: 12,
-      unselectedFontSize: 12,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.restaurant_menu),
-          label: "Meals",
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.history), label: "History"),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
-      ],
     );
   }
 }

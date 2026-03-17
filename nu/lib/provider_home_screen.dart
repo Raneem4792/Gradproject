@@ -5,6 +5,8 @@ import 'provider_dashboard_page.dart';
 import 'provider_history_screen.dart';
 import 'provider_manage_meals_screen.dart';
 import 'provider_mangae_campaign_screen.dart';
+import 'provider_notifications_page.dart';
+import 'provider_bottom_nav.dart';
 
 class ProviderHomeScreen extends StatefulWidget {
   static const String routeName = '/provider-home';
@@ -38,22 +40,31 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
   static const Color bg = Color(0xFFF3F6F5);
 
   void _tapNav(int i) {
+    if (i == _navIndex) return;
+
     HapticFeedback.selectionClick();
     setState(() => _navIndex = i);
 
     if (i == 1) {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const IncomingMealRequestsPage()),
       );
     } else if (i == 2) {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const ProviderDashboardPage()),
       );
     } else if (i == 3) {
-      Navigator.pushNamed(context, '/providerProfile');
+      Navigator.pushReplacementNamed(context, '/providerProfile');
     }
+  }
+
+  void _openNotificationsPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ProviderNotificationsPage()),
+    );
   }
 
   @override
@@ -61,7 +72,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
     return Scaffold(
       backgroundColor: bg,
 
-      appBar: const _ProviderMainAppBar(),
+      appBar: _ProviderMainAppBar(onTapNotifications: _openNotificationsPage),
 
       body: SafeArea(
         top: false,
@@ -89,7 +100,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: _ProviderBottomNav(
+      bottomNavigationBar: ProviderBottomNav(
         currentIndex: _navIndex,
         onTap: _tapNav,
       ),
@@ -104,7 +115,9 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
 /// =======================
 class _ProviderMainAppBar extends StatelessWidget
     implements PreferredSizeWidget {
-  const _ProviderMainAppBar();
+  final VoidCallback onTapNotifications;
+
+  const _ProviderMainAppBar({required this.onTapNotifications});
 
   static const Color primary = Color(0xFF0D4C4A);
 
@@ -142,20 +155,12 @@ class _ProviderMainAppBar extends StatelessWidget
       ),
       actions: [
         IconButton(
-          onPressed: () {
-            // TODO: notifications
-          },
+          onPressed: onTapNotifications,
           icon: const Icon(
             Icons.notifications,
             color: Colors.black87,
             size: 20,
           ),
-        ),
-        IconButton(
-          onPressed: () {
-            // TODO: search
-          },
-          icon: const Icon(Icons.search, color: Colors.black87, size: 20),
         ),
         const SizedBox(width: 6),
       ],
@@ -369,6 +374,10 @@ class _RequestsCard extends StatelessWidget {
               ),
             ),
             TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: primary,
+                textStyle: const TextStyle(fontWeight: FontWeight.w900),
+              ),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -515,41 +524,6 @@ class _ServiceListCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// =======================
-/// Bottom Nav
-/// =======================
-class _ProviderBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onTap;
-
-  const _ProviderBottomNav({required this.currentIndex, required this.onTap});
-
-  static const Color primary = Color(0xFF0D4C4A);
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: onTap,
-      selectedItemColor: primary,
-      unselectedItemColor: Colors.black.withOpacity(0.45),
-      type: BottomNavigationBarType.fixed,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.inbox_rounded),
-          label: "Requests",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.bar_chart_rounded),
-          label: "Reports",
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
-      ],
     );
   }
 }

@@ -26,7 +26,7 @@ class NusuqApp extends StatelessWidget {
       title: 'NUSUQ',
 
       // الصفحة اللي يبدأ منها التطبيق
-      initialRoute: PilgrimHomeScreen.routeName,
+      initialRoute: ProviderHomeScreen.routeName,
 
       routes: {
         SignUpScreen.routeName: (context) => const SignUpScreen(),

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'provider_bottom_nav.dart';
+import 'provider_home_screen.dart';
+import 'incoming_meal_requests_page.dart';
+import 'provider_notifications_page.dart';
 
 class ProviderDashboardPage extends StatefulWidget {
   static const String routeName = '/provider-dashboard';
@@ -21,12 +25,52 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
 
   int _navIndex = 2;
 
+  void _openNotificationsPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ProviderNotificationsPage()),
+    );
+  }
+
+  void _handleBack() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProviderHomeScreen()),
+      );
+    }
+  }
+
+  void _handleBottomNavTap(int i) {
+    if (i == _navIndex) return;
+
+    HapticFeedback.selectionClick();
+    setState(() => _navIndex = i);
+
+    if (i == 0) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProviderHomeScreen()),
+      );
+    } else if (i == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const IncomingMealRequestsPage()),
+      );
+    } else if (i == 3) {
+      Navigator.pushReplacementNamed(context, '/providerProfile');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bg,
       appBar: _DashboardMainAppBar(
-        onBack: () => Navigator.pop(context),
+        onBack: _handleBack,
+        onTapNotifications: _openNotificationsPage,
       ),
       body: SafeArea(
         top: false,
@@ -38,10 +82,7 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
               const _DashboardPageHeader(),
               const SizedBox(height: 14),
 
-              const _HeroSummaryCard(
-                totalOrders: 140,
-                wastePercent: 7.8,
-              ),
+              const _HeroSummaryCard(totalOrders: 140, wastePercent: 7.8),
 
               const SizedBox(height: 14),
 
@@ -155,12 +196,9 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
           ),
         ),
       ),
-      bottomNavigationBar: _ProviderBottomNav(
+      bottomNavigationBar: ProviderBottomNav(
         currentIndex: _navIndex,
-        onTap: (i) {
-          HapticFeedback.selectionClick();
-          setState(() => _navIndex = i);
-        },
+        onTap: _handleBottomNavTap,
       ),
     );
   }
@@ -172,9 +210,11 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
 class _DashboardMainAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final VoidCallback onBack;
+  final VoidCallback onTapNotifications;
 
   const _DashboardMainAppBar({
     required this.onBack,
+    required this.onTapNotifications,
   });
 
   @override
@@ -213,16 +253,12 @@ class _DashboardMainAppBar extends StatelessWidget
       ),
       actions: [
         IconButton(
-          onPressed: () {
-            // TODO: notifications
-          },
-          icon: const Icon(Icons.notifications, color: Colors.black87, size: 20),
-        ),
-        IconButton(
-          onPressed: () {
-            // TODO: search
-          },
-          icon: const Icon(Icons.search, color: Colors.black87, size: 20),
+          onPressed: onTapNotifications,
+          icon: const Icon(
+            Icons.notifications,
+            color: Colors.black87,
+            size: 20,
+          ),
         ),
         const SizedBox(width: 6),
       ],
@@ -243,10 +279,7 @@ class _DashboardPageHeader extends StatelessWidget {
         const Expanded(
           child: Text(
             "Performance & Reports",
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
-            ),
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
           ),
         ),
         Text(
@@ -458,10 +491,7 @@ class _HeroProgressPill extends StatelessWidget {
   final String label;
   final double percent;
 
-  const _HeroProgressPill({
-    required this.label,
-    required this.percent,
-  });
+  const _HeroProgressPill({required this.label, required this.percent});
 
   static const Color mint = Color(0xFFA8E7CF);
 
@@ -801,7 +831,10 @@ class _FeedbackCard extends StatelessWidget {
               Container(
                 width: 10,
                 height: 10,
-                decoration: const BoxDecoration(color: mint, shape: BoxShape.circle),
+                decoration: const BoxDecoration(
+                  color: mint,
+                  shape: BoxShape.circle,
+                ),
               ),
               const SizedBox(width: 8),
               Text(
@@ -835,10 +868,7 @@ class _AISuggestionsCard extends StatelessWidget {
   final String headline;
   final List<String> suggestions;
 
-  const _AISuggestionsCard({
-    required this.headline,
-    required this.suggestions,
-  });
+  const _AISuggestionsCard({required this.headline, required this.suggestions});
 
   static const Color primary = Color(0xFF0B4A40);
   static const Color mint = Color(0xFFA8E7CF);
@@ -886,7 +916,10 @@ class _AISuggestionsCard extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (_, i) {
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 9,
+                  ),
                   decoration: BoxDecoration(
                     color: softMint,
                     borderRadius: BorderRadius.circular(14),
@@ -895,7 +928,11 @@ class _AISuggestionsCard extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.auto_awesome_rounded, size: 16, color: primary.withOpacity(0.82)),
+                      Icon(
+                        Icons.auto_awesome_rounded,
+                        size: 16,
+                        color: primary.withOpacity(0.82),
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -1078,11 +1115,17 @@ class _TopMealsList extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: mint.withOpacity(0.55)),
                   ),
-                  child: Icon(Icons.restaurant_menu_rounded, color: primary.withOpacity(0.80)),
+                  child: Icon(
+                    Icons.restaurant_menu_rounded,
+                    color: primary.withOpacity(0.80),
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(name, style: const TextStyle(fontWeight: FontWeight.w900)),
+                  child: Text(
+                    name,
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
                 ),
                 Text(
                   count,
@@ -1116,13 +1159,18 @@ class _GenerateReportButton extends StatelessWidget {
       height: 54,
       child: ElevatedButton(
         onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          elevation: 0,
-          backgroundColor: primaryDark,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        ).copyWith(
-          overlayColor: WidgetStateProperty.all(Colors.white.withOpacity(0.08)),
-        ),
+        style:
+            ElevatedButton.styleFrom(
+              elevation: 0,
+              backgroundColor: primaryDark,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+            ).copyWith(
+              overlayColor: WidgetStateProperty.all(
+                Colors.white.withOpacity(0.08),
+              ),
+            ),
         child: const Text(
           "GENERATE REPORT",
           style: TextStyle(
@@ -1132,44 +1180,6 @@ class _GenerateReportButton extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// =======================
-/// Bottom Nav
-/// =======================
-class _ProviderBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onTap;
-
-  const _ProviderBottomNav({required this.currentIndex, required this.onTap});
-
-  static const Color primary = Color(0xFF0B4A40);
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: onTap,
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: Colors.white,
-      selectedItemColor: primary,
-      unselectedItemColor: Colors.black.withOpacity(0.42),
-      selectedFontSize: 12,
-      unselectedFontSize: 12,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.inbox_rounded),
-          label: "Requests",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.bar_chart_rounded),
-          label: "Reports",
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
-      ],
     );
   }
 }

@@ -3,6 +3,8 @@ import 'pilgrim_meals_page.dart';
 import 'pilgrim_order_history_page.dart';
 import 'pilgrim_profile_page.dart';
 import 'pilgrim_ai_chat_page.dart';
+import 'pilgrim_bottom_nav.dart';
+import 'pilgrim_notifications_page.dart';
 
 class PilgrimHomeScreen extends StatefulWidget {
   static const String routeName = '/pilgrim-home';
@@ -26,56 +28,59 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
   void _openMealsPage() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const PilgrimMealsPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const PilgrimMealsPage()),
     );
   }
 
   void _openOrderHistoryPage() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const PilgrimOrderHistoryPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const PilgrimOrderHistoryPage()),
     );
   }
 
-void _openProfilePage() {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => const PilgrimProfilePage(),
-    ),
-  );
-}
+  void _handleBottomNavTap(int i) {
+    if (i == _navIndex) return;
 
-void _handleBottomNavTap(int i) {
-  setState(() => _navIndex = i);
+    setState(() => _navIndex = i);
 
-  if (i == 1) {
-    _openMealsPage();
-  } else if (i == 2) {
-    _openOrderHistoryPage();
-  } else if (i == 3) {
-    _openProfilePage();
+    if (i == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PilgrimMealsPage()),
+      );
+    } else if (i == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PilgrimOrderHistoryPage()),
+      );
+    } else if (i == 3) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PilgrimProfilePage()),
+      );
+    }
   }
-}
 
-void _openAIChatPage() {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => const PilgrimAIChatPage(),
-    ),
-  );
-}
+  void _openAIChatPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PilgrimAIChatPage()),
+    );
+  }
+
+  void _openNotificationsPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PilgrimNotificationsPage()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bg,
-      appBar: const _PilgrimMainAppBar(),
+      appBar: _PilgrimMainAppBar(onTapNotifications: _openNotificationsPage),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -83,10 +88,7 @@ void _openAIChatPage() {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-               _TopCombinedBlock(
-                userName: "Ahmed",
-                onTapAskAI: _openAIChatPage,
-              ),
+              _TopCombinedBlock(userName: "Ahmed", onTapAskAI: _openAIChatPage),
               const SizedBox(height: 18),
 
               const _SectionHeader(title: "Order Now"),
@@ -101,10 +103,7 @@ void _openAIChatPage() {
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFFEAF7F2),
-                          Color(0xFFDCEFE8),
-                        ],
+                        colors: [Color(0xFFEAF7F2), Color(0xFFDCEFE8)],
                       ),
                       onEnter: _openMealsPage,
                       icon: Icons.restaurant_menu_rounded,
@@ -120,10 +119,7 @@ void _openAIChatPage() {
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFFFAF1DF),
-                          Color(0xFFF3ECE2),
-                        ],
+                        colors: [Color(0xFFFAF1DF), Color(0xFFF3ECE2)],
                       ),
                       onEnter: _noop,
                       icon: Icons.local_dining_rounded,
@@ -151,7 +147,7 @@ void _openAIChatPage() {
           ),
         ),
       ),
-      bottomNavigationBar: _BottomNav(
+      bottomNavigationBar: PilgrimBottomNav(
         currentIndex: _navIndex,
         onTap: _handleBottomNavTap,
       ),
@@ -163,7 +159,9 @@ void _openAIChatPage() {
 
 class _PilgrimMainAppBar extends StatelessWidget
     implements PreferredSizeWidget {
-  const _PilgrimMainAppBar();
+  final VoidCallback onTapNotifications;
+
+  const _PilgrimMainAppBar({required this.onTapNotifications});
 
   @override
   Size get preferredSize => const Size.fromHeight(58);
@@ -199,20 +197,12 @@ class _PilgrimMainAppBar extends StatelessWidget
       ),
       actions: [
         IconButton(
-          onPressed: () {
-            // TODO: notifications
-          },
+          onPressed: onTapNotifications,
           icon: const Icon(
             Icons.notifications,
             color: Colors.black87,
             size: 20,
           ),
-        ),
-        IconButton(
-          onPressed: () {
-            // TODO: search
-          },
-          icon: const Icon(Icons.search, color: Colors.black87, size: 20),
         ),
         const SizedBox(width: 6),
       ],
@@ -227,10 +217,7 @@ class _TopCombinedBlock extends StatelessWidget {
   final String userName;
   final VoidCallback onTapAskAI;
 
-  const _TopCombinedBlock({
-    required this.userName,
-    required this.onTapAskAI,
-  });
+  const _TopCombinedBlock({required this.userName, required this.onTapAskAI});
 
   static const Color primaryDark = Color(0xFF062C26);
   static const Color primary = Color(0xFF0D4C4A);
@@ -410,11 +397,7 @@ class _TopCombinedBlock extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    primaryDark,
-                    primary,
-                    primaryMid.withOpacity(0.95),
-                  ],
+                  colors: [primaryDark, primary, primaryMid.withOpacity(0.95)],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.white.withOpacity(0.12)),
@@ -485,10 +468,7 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: const TextStyle(
-        fontSize: 14.5,
-        fontWeight: FontWeight.w900,
-      ),
+      style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w900),
     );
   }
 }
@@ -544,9 +524,7 @@ class _OrderNowCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Container(
-                    decoration: BoxDecoration(gradient: gradient),
-                  ),
+                  Container(decoration: BoxDecoration(gradient: gradient)),
                   Positioned(
                     right: -22,
                     top: -18,
@@ -781,41 +759,6 @@ class _OrderHistoryCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// =======================
-/// BOTTOM NAV
-/// =======================
-class _BottomNav extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onTap;
-
-  const _BottomNav({required this.currentIndex, required this.onTap});
-
-  static const Color primary = Color(0xFF0D4C4A);
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: onTap,
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: Colors.white,
-      selectedItemColor: primary,
-      unselectedItemColor: Colors.black.withOpacity(0.42),
-      selectedFontSize: 12,
-      unselectedFontSize: 12,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.restaurant_menu),
-          label: "Meals",
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.history), label: "History"),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
-      ],
     );
   }
 }

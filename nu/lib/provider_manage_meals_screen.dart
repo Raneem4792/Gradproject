@@ -1,6 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'provider_bottom_nav.dart';
+import 'provider_home_screen.dart';
+import 'incoming_meal_requests_page.dart';
+import 'provider_dashboard_page.dart';
+import 'provider_notifications_page.dart';
 
 class ProviderMealManagementScreen extends StatefulWidget {
   const ProviderMealManagementScreen({super.key});
@@ -59,7 +64,50 @@ class _ProviderMealManagementScreenState
     ),
   ];
 
-  int _navIndex = 1;
+  int _navIndex = 0;
+
+  void _openNotificationsPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ProviderNotificationsPage()),
+    );
+  }
+
+  void _handleBack() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProviderHomeScreen()),
+      );
+    }
+  }
+
+  void _handleBottomNavTap(int i) {
+    if (i == _navIndex) return;
+
+    setState(() => _navIndex = i);
+
+    if (i == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const IncomingMealRequestsPage()),
+      );
+    } else if (i == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProviderDashboardPage()),
+      );
+    } else if (i == 3) {
+      Navigator.pushReplacementNamed(context, '/providerProfile');
+    } else if (i == 0) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProviderHomeScreen()),
+      );
+    }
+  }
 
   void _openAddSheet() async {
     final created = await showModalBottomSheet<_MealItem>(
@@ -157,7 +205,10 @@ class _ProviderMealManagementScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bg,
-      appBar: _MealManagementMainAppBar(onBack: () => Navigator.pop(context)),
+      appBar: _MealManagementMainAppBar(
+        onBack: _handleBack,
+        onTapNotifications: _openNotificationsPage,
+      ),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -203,9 +254,9 @@ class _ProviderMealManagementScreenState
           ),
         ),
       ),
-      bottomNavigationBar: _ProviderBottomNav(
+      bottomNavigationBar: ProviderBottomNav(
         currentIndex: _navIndex,
-        onTap: (i) => setState(() => _navIndex = i),
+        onTap: _handleBottomNavTap,
       ),
     );
   }
@@ -214,8 +265,12 @@ class _ProviderMealManagementScreenState
 class _MealManagementMainAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final VoidCallback onBack;
+  final VoidCallback onTapNotifications;
 
-  const _MealManagementMainAppBar({required this.onBack});
+  const _MealManagementMainAppBar({
+    required this.onBack,
+    required this.onTapNotifications,
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(58);
@@ -252,18 +307,6 @@ class _MealManagementMainAppBar extends StatelessWidget
         ],
       ),
       actions: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(
-            Icons.notifications,
-            color: Colors.black87,
-            size: 20,
-          ),
-        ),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.search, color: Colors.black87, size: 20),
-        ),
         const SizedBox(width: 6),
       ],
     );
@@ -667,8 +710,6 @@ class _TypePill extends StatelessWidget {
   final _MealType type;
 
   static const Color primary = Color(0xFF0B4A40);
-  static const Color mint = Color(0xFFA8E7CF);
-  static const Color softMint = Color(0xFFE6F6F0);
 
   @override
   Widget build(BuildContext context) {
@@ -1427,41 +1468,6 @@ class _ImagePickerBox extends StatelessWidget {
           ],
         ],
       ),
-    );
-  }
-}
-
-class _ProviderBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onTap;
-
-  const _ProviderBottomNav({required this.currentIndex, required this.onTap});
-
-  static const Color primary = Color(0xFF0B4A40);
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: onTap,
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: Colors.white,
-      selectedItemColor: primary,
-      unselectedItemColor: Colors.black.withOpacity(0.42),
-      selectedFontSize: 12,
-      unselectedFontSize: 12,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.restaurant_menu_rounded),
-          label: "Meals",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.history_rounded),
-          label: "History",
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
-      ],
     );
   }
 }

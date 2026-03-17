@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'provider_bottom_nav.dart';
+import 'provider_home_screen.dart';
+import 'incoming_meal_requests_page.dart';
+import 'provider_dashboard_page.dart';
+import 'provider_notifications_page.dart';
 
 class ProviderCampaignManagementScreen extends StatefulWidget {
   const ProviderCampaignManagementScreen({super.key});
@@ -11,7 +16,6 @@ class ProviderCampaignManagementScreen extends StatefulWidget {
 
 class _ProviderCampaignManagementScreenState
     extends State<ProviderCampaignManagementScreen> {
-  // ===== Shared palette to match previous provider screens =====
   static const Color bg = Color(0xFFF1F6F4);
   static const Color primaryDark = Color(0xFF052720);
   static const Color primary = Color(0xFF0B4A40);
@@ -52,7 +56,50 @@ class _ProviderCampaignManagementScreenState
     ),
   ];
 
-  int _navIndex = 1;
+  int _navIndex = 0;
+
+  void _openNotificationsPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ProviderNotificationsPage()),
+    );
+  }
+
+  void _handleBack() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProviderHomeScreen()),
+      );
+    }
+  }
+
+  void _handleBottomNavTap(int i) {
+    if (i == _navIndex) return;
+
+    setState(() => _navIndex = i);
+
+    if (i == 0) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProviderHomeScreen()),
+      );
+    } else if (i == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const IncomingMealRequestsPage()),
+      );
+    } else if (i == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProviderDashboardPage()),
+      );
+    } else if (i == 3) {
+      Navigator.pushReplacementNamed(context, '/providerProfile');
+    }
+  }
 
   void _openAddSheet() async {
     final created = await showModalBottomSheet<_CampaignItem>(
@@ -160,7 +207,8 @@ class _ProviderCampaignManagementScreenState
     return Scaffold(
       backgroundColor: bg,
       appBar: _CampaignManagementMainAppBar(
-        onBack: () => Navigator.pop(context),
+        onBack: _handleBack,
+        onTapNotifications: _openNotificationsPage,
       ),
       body: SafeArea(
         top: false,
@@ -207,20 +255,23 @@ class _ProviderCampaignManagementScreenState
           ),
         ),
       ),
-      bottomNavigationBar: _ProviderBottomNav(
+      bottomNavigationBar: ProviderBottomNav(
         currentIndex: _navIndex,
-        onTap: (i) => setState(() => _navIndex = i),
+        onTap: _handleBottomNavTap,
       ),
     );
   }
 }
 
-// AppBar الرئيسي بنفس ستايل الصفحات السابقة
 class _CampaignManagementMainAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final VoidCallback onBack;
+  final VoidCallback onTapNotifications;
 
-  const _CampaignManagementMainAppBar({required this.onBack});
+  const _CampaignManagementMainAppBar({
+    required this.onBack,
+    required this.onTapNotifications,
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(58);
@@ -256,26 +307,11 @@ class _CampaignManagementMainAppBar extends StatelessWidget
           ),
         ],
       ),
-      actions: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(
-            Icons.notifications,
-            color: Colors.black87,
-            size: 20,
-          ),
-        ),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.search, color: Colors.black87, size: 20),
-        ),
-        const SizedBox(width: 6),
-      ],
+      actions: [const SizedBox(width: 6)],
     );
   }
 }
 
-// الهيدر الرئيسي للصفحة
 class _CampaignManagementHeaderCard extends StatelessWidget {
   final String title;
   final String badgeText;
@@ -358,7 +394,6 @@ class _CampaignManagementHeaderCard extends StatelessWidget {
   }
 }
 
-// زر إضافة الحملة الطويل تحت الهيدر بنفس التصميم
 class _AddCampaignWideButton extends StatelessWidget {
   final VoidCallback onTap;
 
@@ -424,7 +459,6 @@ class _AddCampaignWideButton extends StatelessWidget {
   }
 }
 
-// كرت الحملة في قائمة الإدارة
 class _CampaignCard extends StatelessWidget {
   const _CampaignCard({
     required this.campaign,
@@ -584,7 +618,6 @@ class _CampaignCard extends StatelessWidget {
   }
 }
 
-// Bottom sheet للفورم: إضافة / تعديل حملة
 class _CampaignFormSheet extends StatefulWidget {
   final _FormMode mode;
   final _CampaignItem? initial;
@@ -768,7 +801,7 @@ class _CampaignFormSheetState extends State<_CampaignFormSheet> {
               ),
               const SizedBox(height: 18),
 
-              _SectionLabel(title: 'Campaign Name'),
+              const _SectionLabel(title: 'Campaign Name'),
               const SizedBox(height: 8),
               _StyledInput(
                 controller: _nameController,
@@ -783,7 +816,7 @@ class _CampaignFormSheetState extends State<_CampaignFormSheet> {
               ),
 
               const SizedBox(height: 14),
-              _SectionLabel(title: 'Number of Pilgrims'),
+              const _SectionLabel(title: 'Number of Pilgrims'),
               const SizedBox(height: 8),
               _PilgrimsCounter(
                 count: _pilgrimsCount,
@@ -1312,41 +1345,6 @@ class _CampaignItem {
       arrivalDate: arrivalDate ?? this.arrivalDate,
       arrivalTime: arrivalTime ?? this.arrivalTime,
       arrivalFrom: arrivalFrom ?? this.arrivalFrom,
-    );
-  }
-}
-
-class _ProviderBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onTap;
-
-  const _ProviderBottomNav({required this.currentIndex, required this.onTap});
-
-  static const Color primary = Color(0xFF0B4A40);
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: onTap,
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: Colors.white,
-      selectedItemColor: primary,
-      unselectedItemColor: Colors.black.withOpacity(0.42),
-      selectedFontSize: 12,
-      unselectedFontSize: 12,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.restaurant_menu_rounded),
-          label: "Meals",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.history_rounded),
-          label: "History",
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
-      ],
     );
   }
 }

@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'provider_bottom_nav.dart';
+import 'provider_home_screen.dart';
+import 'provider_dashboard_page.dart';
+import 'provider_notifications_page.dart';
+import 'provider_total_requests_page.dart';
 
 class IncomingMealRequestsPage extends StatefulWidget {
   static const String routeName = '/incoming-requests';
@@ -12,6 +17,8 @@ class IncomingMealRequestsPage extends StatefulWidget {
 }
 
 class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
+  int _navIndex = 1;
+
   static const Color bg = Color(0xFFF1F6F4);
   static const Color primaryDark = Color(0xFF052720);
   static const Color primary = Color(0xFF0B4A40);
@@ -41,13 +48,49 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
     ),
   ];
 
+  void _openTotalRequestsPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ProviderTotalRequestsPage()),
+    );
+  }
+
+  void _handleBack() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProviderHomeScreen()),
+      );
+    }
+  }
+
+  void _handleBottomNavTap(int i) {
+    if (i == _navIndex) return;
+
+    setState(() => _navIndex = i);
+
+    if (i == 0) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProviderHomeScreen()),
+      );
+    } else if (i == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProviderDashboardPage()),
+      );
+    } else if (i == 3) {
+      Navigator.pushReplacementNamed(context, '/providerProfile');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bg,
-      appBar: _RequestsMainAppBar(
-        onBack: () => Navigator.pop(context),
-      ),
+      appBar: _RequestsMainAppBar(onBack: _handleBack),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -60,7 +103,6 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
                 badgeText: "${_requests.length} new",
               ),
               const SizedBox(height: 16),
-
               ListView.separated(
                 itemCount: _requests.length,
                 shrinkWrap: true,
@@ -78,15 +120,12 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
                   );
                 },
               ),
-
               const SizedBox(height: 20),
-
               _SectionHeaderRow(
                 title: "Total requests",
-                onTapArrow: () {},
+                onTapArrow: _openTotalRequestsPage,
               ),
               const SizedBox(height: 12),
-
               SizedBox(
                 height: 156,
                 child: ListView.separated(
@@ -96,7 +135,7 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
                   itemBuilder: (context, index) {
                     return const _TotalRequestBoxGreen(
                       mealName: "Meal Name",
-                      pieces: "NO of piece",
+                      pieces: "NO of requests",
                     );
                   },
                 ),
@@ -105,9 +144,9 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
           ),
         ),
       ),
-      bottomNavigationBar: _ProviderBottomNav(
-        currentIndex: 1,
-        onTap: (_) {},
+      bottomNavigationBar: ProviderBottomNav(
+        currentIndex: _navIndex,
+        onTap: _handleBottomNavTap,
       ),
     );
   }
@@ -120,9 +159,7 @@ class _RequestsMainAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final VoidCallback onBack;
 
-  const _RequestsMainAppBar({
-    required this.onBack,
-  });
+  const _RequestsMainAppBar({required this.onBack});
 
   @override
   Size get preferredSize => const Size.fromHeight(58);
@@ -140,8 +177,11 @@ class _RequestsMainAppBar extends StatelessWidget
         children: [
           IconButton(
             onPressed: onBack,
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                color: Colors.black87, size: 20),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.black87,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 2),
           const Text(
@@ -155,21 +195,7 @@ class _RequestsMainAppBar extends StatelessWidget
           ),
         ],
       ),
-      actions: [
-        IconButton(
-          onPressed: () {
-            // TODO: notifications
-          },
-          icon: const Icon(Icons.notifications, color: Colors.black87, size: 20),
-        ),
-        IconButton(
-          onPressed: () {
-            // TODO: search
-          },
-          icon: const Icon(Icons.search, color: Colors.black87, size: 20),
-        ),
-        const SizedBox(width: 6),
-      ],
+      actions: const [SizedBox(width: 6)],
     );
   }
 }
@@ -181,10 +207,7 @@ class _RequestsHeaderCard extends StatelessWidget {
   final String title;
   final String badgeText;
 
-  const _RequestsHeaderCard({
-    required this.title,
-    required this.badgeText,
-  });
+  const _RequestsHeaderCard({required this.title, required this.badgeText});
 
   static const Color primaryDark = Color(0xFF052720);
   static const Color primary = Color(0xFF0B4A40);
@@ -314,16 +337,12 @@ class _IncomingRequestCardGreen extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  mint.withOpacity(0.95),
-                  primaryMid.withOpacity(0.75),
-                ],
+                colors: [mint.withOpacity(0.95), primaryMid.withOpacity(0.75)],
               ),
               borderRadius: BorderRadius.circular(999),
             ),
           ),
           const SizedBox(width: 12),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,21 +356,15 @@ class _IncomingRequestCardGreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-
-                _InfoLine(
-                  icon: Icons.flag_outlined,
-                  text: campaignNo,
-                ),
+                _InfoLine(icon: Icons.flag_outlined, text: campaignNo),
                 const SizedBox(height: 5),
-                _InfoLine(
-                  icon: Icons.person_outline,
-                  text: hajName,
-                ),
+                _InfoLine(icon: Icons.person_outline, text: hajName),
                 const SizedBox(height: 8),
-
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 7,
+                  ),
                   decoration: BoxDecoration(
                     color: softMint,
                     borderRadius: BorderRadius.circular(12),
@@ -380,9 +393,7 @@ class _IncomingRequestCardGreen extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(width: 12),
-
           Column(
             children: [
               _ActionButton(
@@ -410,10 +421,7 @@ class _InfoLine extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _InfoLine({
-    required this.icon,
-    required this.text,
-  });
+  const _InfoLine({required this.icon, required this.text});
 
   static const Color primary = Color(0xFF0B4A40);
 
@@ -466,8 +474,9 @@ class _ActionButton extends StatelessWidget {
         : null;
 
     final bgColor = isPrimary ? null : Colors.white;
-    final borderColor =
-        isPrimary ? Colors.transparent : primary.withOpacity(0.14);
+    final borderColor = isPrimary
+        ? Colors.transparent
+        : primary.withOpacity(0.14);
     final fgColor = isPrimary ? Colors.white : primary.withOpacity(0.86);
 
     return Material(
@@ -521,10 +530,7 @@ class _SectionHeaderRow extends StatelessWidget {
   final String title;
   final VoidCallback onTapArrow;
 
-  const _SectionHeaderRow({
-    required this.title,
-    required this.onTapArrow,
-  });
+  const _SectionHeaderRow({required this.title, required this.onTapArrow});
 
   static const Color primary = Color(0xFF0B4A40);
 
@@ -569,10 +575,7 @@ class _TotalRequestBoxGreen extends StatelessWidget {
   final String mealName;
   final String pieces;
 
-  const _TotalRequestBoxGreen({
-    required this.mealName,
-    required this.pieces,
-  });
+  const _TotalRequestBoxGreen({required this.mealName, required this.pieces});
 
   static const Color primary = Color(0xFF0B4A40);
   static const Color primaryMid = Color(0xFF167062);
@@ -614,10 +617,7 @@ class _TotalRequestBoxGreen extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  softMint,
-                  mint.withOpacity(0.34),
-                ],
+                colors: [softMint, mint.withOpacity(0.34)],
               ),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: mint.withOpacity(0.58)),
@@ -641,47 +641,6 @@ class _TotalRequestBoxGreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// =======================
-/// Bottom Nav
-/// =======================
-class _ProviderBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onTap;
-
-  const _ProviderBottomNav({
-    required this.currentIndex,
-    required this.onTap,
-  });
-
-  static const Color primary = Color(0xFF0B4A40);
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: onTap,
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: Colors.white,
-      selectedItemColor: primary,
-      unselectedItemColor: Colors.black.withOpacity(0.42),
-      selectedFontSize: 12,
-      unselectedFontSize: 12,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.inbox_rounded),
-          label: "Requests",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.bar_chart_rounded),
-          label: "Reports",
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
-      ],
     );
   }
 }

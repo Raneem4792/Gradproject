@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'provider_bottom_nav.dart';
+import 'provider_home_screen.dart';
+import 'incoming_meal_requests_page.dart';
+import 'provider_notifications_page.dart';
 
 class ProviderHistoryScreen extends StatefulWidget {
   const ProviderHistoryScreen({super.key});
@@ -9,7 +13,6 @@ class ProviderHistoryScreen extends StatefulWidget {
 }
 
 class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
-  // ===== Shared palette to match IncomingMealRequestsPage =====
   static const Color bg = Color(0xFFF1F6F4);
   static const Color primaryDark = Color(0xFF052720);
   static const Color primary = Color(0xFF0B4A40);
@@ -17,13 +20,11 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
   static const Color mint = Color(0xFFA8E7CF);
   static const Color softMint = Color(0xFFE6F6F0);
 
-  // Filter labels
   String selectedDate = 'Date';
   String selectedCampaign = 'Campaign';
   String selectedMealType = 'Meal';
   String selectedStatus = 'Status';
 
-  // Filter values (null = All)
   DateTime? selectedDateValue;
   String? selectedCampaignValue;
   _MealType? selectedMealTypeValue;
@@ -90,6 +91,44 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
   void initState() {
     super.initState();
     filteredItems = List<_HistoryItem>.from(items);
+  }
+
+  void _openNotificationsPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ProviderNotificationsPage()),
+    );
+  }
+
+  void _handleBack() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProviderHomeScreen()),
+      );
+    }
+  }
+
+  void _handleBottomNavTap(int i) {
+    if (i == _navIndex) return;
+
+    setState(() => _navIndex = i);
+
+    if (i == 0) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProviderHomeScreen()),
+      );
+    } else if (i == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const IncomingMealRequestsPage()),
+      );
+    } else if (i == 3) {
+      Navigator.pushReplacementNamed(context, '/providerProfile');
+    }
   }
 
   DateTime? _parseDate(String ddMMyyyy) {
@@ -372,7 +411,10 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bg,
-      appBar: _HistoryMainAppBar(onBack: () => Navigator.pop(context)),
+      appBar: _HistoryMainAppBar(
+        onBack: _handleBack,
+        onTapNotifications: _openNotificationsPage,
+      ),
       body: SafeArea(
         top: false,
         child: Column(
@@ -389,7 +431,6 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
                       onAllReviews: _openAllReviews,
                     ),
                     const SizedBox(height: 16),
-
                     Row(
                       children: [
                         Expanded(
@@ -408,7 +449,6 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
                       ],
                     ),
                     const SizedBox(height: 10),
-
                     Row(
                       children: [
                         Expanded(
@@ -426,9 +466,7 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 8),
-
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
@@ -442,9 +480,7 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 8),
-
                     ...filteredItems.map((e) {
                       final review = _reviewsByOrderId[e.orderId];
                       return Padding(
@@ -458,7 +494,6 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
                         ),
                       );
                     }),
-
                     if (filteredItems.isEmpty)
                       const Padding(
                         padding: EdgeInsets.only(top: 24),
@@ -479,20 +514,23 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: _ProviderBottomNav(
+      bottomNavigationBar: ProviderBottomNav(
         currentIndex: _navIndex,
-        onTap: (i) => setState(() => _navIndex = i),
+        onTap: _handleBottomNavTap,
       ),
     );
   }
 }
 
-// هذا الكلاس حق الـ AppBar الرئيسي بنفس ستايل صفحة الطلبات
 class _HistoryMainAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final VoidCallback onBack;
+  final VoidCallback onTapNotifications;
 
-  const _HistoryMainAppBar({required this.onBack});
+  const _HistoryMainAppBar({
+    required this.onBack,
+    required this.onTapNotifications,
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(58);
@@ -529,25 +567,12 @@ class _HistoryMainAppBar extends StatelessWidget
         ],
       ),
       actions: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(
-            Icons.notifications,
-            color: Colors.black87,
-            size: 20,
-          ),
-        ),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.search, color: Colors.black87, size: 20),
-        ),
         const SizedBox(width: 6),
       ],
     );
   }
 }
 
-// هذا الكلاس حق الهيدر الرئيسي للصفحة بنفس هوية الصفحة الأولى
 class _HistoryHeaderCard extends StatelessWidget {
   final String title;
   final String badgeText;
@@ -634,7 +659,7 @@ class _HistoryHeaderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          Container(
+          SizedBox(
             width: double.infinity,
             child: Material(
               color: Colors.transparent,
@@ -679,7 +704,6 @@ class _HistoryHeaderCard extends StatelessWidget {
   }
 }
 
-// هذا الكلاس حق فلتر الاختيارات بشكل متناسق مع نفس الستايل
 class _DropdownChip extends StatelessWidget {
   const _DropdownChip({required this.label, required this.onTap});
   final String label;
@@ -747,7 +771,6 @@ class _DropdownChip extends StatelessWidget {
   }
 }
 
-// هذا الكلاس حق كرت الطلب في سجل التاريخ بنفس نفسية الكروت الأولى
 class _HistoryCard extends StatelessWidget {
   const _HistoryCard({
     required this.item,
@@ -935,7 +958,6 @@ class _HistoryCard extends StatelessWidget {
   }
 }
 
-// هذا الكلاس حق عرض النجوم للتقييم
 class _Stars extends StatelessWidget {
   const _Stars({required this.rating});
   final int rating;
@@ -956,49 +978,10 @@ class _Stars extends StatelessWidget {
   }
 }
 
-// هذا الكلاس حق الـ BottomNavigationBar بنفس شكل الصفحة المرجعية
-class _ProviderBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onTap;
-
-  const _ProviderBottomNav({required this.currentIndex, required this.onTap});
-
-  static const Color primary = Color(0xFF0B4A40);
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: onTap,
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: Colors.white,
-      selectedItemColor: primary,
-      unselectedItemColor: Colors.black.withOpacity(0.42),
-      selectedFontSize: 12,
-      unselectedFontSize: 12,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.restaurant_menu_rounded),
-          label: "Meals",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.history_rounded),
-          label: "History",
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
-      ],
-    );
-  }
-}
-
-// هذا الإنم حق حالات الطلب
 enum _Status { completed, rejected }
 
-// هذا الإنم حق أنواع الوجبات
 enum _MealType { breakfast, lunch, dinner }
 
-// هذا المودل حق عنصر واحد من سجل الطلبات
 class _HistoryItem {
   final String orderId;
   final String date;
@@ -1019,7 +1002,6 @@ class _HistoryItem {
   });
 }
 
-// هذا الكلاس حق تصميم شارة الحالة Completed / Rejected
 class _StatusPill {
   final String text;
   final Color bg;
@@ -1053,7 +1035,6 @@ class _StatusPill {
   }
 }
 
-// هذا المودل حق التقييم والتعليق والرد
 class _Review {
   final int rating;
   final String comment;
@@ -1070,7 +1051,6 @@ class _Review {
   }
 }
 
-// هذا الكلاس حق البوتوم شيت لعرض التقييم وكتابة الرد
 class _ReviewViewSheet extends StatefulWidget {
   const _ReviewViewSheet({
     required this.orderId,
@@ -1265,7 +1245,6 @@ class _ReviewViewSheetState extends State<_ReviewViewSheet> {
   }
 }
 
-// هذا الكلاس حق صفحة كل التقييمات
 class ProviderAllReviewsScreen extends StatelessWidget {
   const ProviderAllReviewsScreen({
     super.key,
