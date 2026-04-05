@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
-import 'pilgrim_home_screen.dart';
-import 'provider_home_screen.dart';
-import 'signup_page.dart';
-import 'login_page.dart';
-import 'provider_history_screen.dart';
-import 'provider_manage_meals_screen.dart';
-import 'provider_mangae_campaign_screen.dart';
+import 'pages/pilgrim_home_screen.dart';
+import 'pages/provider_home_screen.dart';
+import 'pages/signup_page.dart';
+import 'pages/login_page.dart';
+import 'pages/provider_history_screen.dart';
+import 'pages/provider_manage_meals_screen.dart';
+import 'pages/provider_mangae_campaign_screen.dart';
 
-import 'pilgrim_profile_page.dart';
-import 'provider_profile_page.dart';
-import 'pilgrim_meals_page.dart';
+import 'pages/pilgrim_profile_page.dart';
+import 'pages/provider_profile_page.dart';
+import 'pages/pilgrim_meals_page.dart';
 
 void main() {
   runApp(const NusuqApp());
@@ -26,7 +26,7 @@ class NusuqApp extends StatelessWidget {
       title: 'NUSUQ',
 
       // الصفحة اللي يبدأ منها التطبيق
-      initialRoute: ProviderHomeScreen.routeName,
+      initialRoute: SignUpScreen.routeName,
 
       routes: {
         SignUpScreen.routeName: (context) => const SignUpScreen(),
@@ -44,7 +44,7 @@ class NusuqApp extends StatelessWidget {
         ProviderCampaignManagementScreen.routeName: (context) =>
             const ProviderCampaignManagementScreen(),
 
-        // صفحات البروفايل
+       
         '/pilgrimProfile': (context) => const PilgrimProfilePage(),
         '/providerProfile': (context) => const ProviderProfilePage(),
         PilgrimMealsPage.routeName: (_) => const PilgrimMealsPage(),
