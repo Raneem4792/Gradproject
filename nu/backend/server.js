@@ -8,6 +8,7 @@ const authRoutes = require('./routes/authRoutes');
 const pilgrimRoutes = require('./routes/pilgrimRoutes');
 const rateRoutes = require('./routes/rateRoutes');
 const healthRoutes = require('./routes/healthRoutes');
+const providerRoutes = require('./routes/providerRoutes');
 
 
 const app = express();
@@ -22,6 +23,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/pilgrims', pilgrimRoutes);
 app.use('/api/rates', rateRoutes);
 app.use('/api/health', healthRoutes);
+app.use('/api/providers', providerRoutes);
 
 // استدعاء الداتابيس
 const db = require('./config/db');

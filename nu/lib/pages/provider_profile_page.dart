@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'provider_home_screen.dart';
+import '../services/provider_service.dart';
+import '../session/user_session.dart';
+import '../models/provider_profile.dart';
 
 class ProviderProfilePage extends StatefulWidget {
   static const String routeName = '/provider-profile';
@@ -20,15 +23,18 @@ class ProviderProfilePage extends StatefulWidget {
 }
 
 class _ProviderProfilePageState extends State<ProviderProfilePage> {
+  final ProviderService _providerService = ProviderService();
+  bool _isProfileLoading = true;
+
   bool isEditingBasicInfo = false;
   bool isChangingPassword = false;
   bool notificationsEnabled = true;
   String language = "English";
 
-  String providerName = "Al Barakah Catering";
-  String providerId = "PR-2026-014";
-  String email = "provider@nusuq.com";
-  String phone = "+966 5X XXX XXXX";
+  String providerName = "";
+  String providerId = "";
+  String email = "";
+  String phone = "";
   String location = "Makkah";
   String serviceType = "Meal Provider";
 
@@ -43,6 +49,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
   @override
   void initState() {
     super.initState();
+
     nameController = TextEditingController(text: providerName);
     emailController = TextEditingController(text: email);
     phoneController = TextEditingController(text: phone);
@@ -50,6 +57,8 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     currentPasswordController = TextEditingController();
     newPasswordController = TextEditingController();
     confirmPasswordController = TextEditingController();
+
+    _loadProviderProfile();
   }
 
   @override
@@ -63,18 +72,70 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     super.dispose();
   }
 
-  void _toggleBasicInfoEdit() {
-    if (isEditingBasicInfo) {
-      setState(() {
-        providerName = nameController.text.trim();
-        email = emailController.text.trim();
-        phone = phoneController.text.trim();
-        isEditingBasicInfo = false;
-      });
+  Future<void> _loadProviderProfile() async {
+    final providerId = UserSession.userId;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Basic information updated")),
-      );
+    if (providerId == null || providerId.isEmpty) {
+      setState(() => _isProfileLoading = false);
+      return;
+    }
+
+    try {
+      final profile = await _providerService.getProfile(providerId);
+
+      setState(() {
+        providerName = profile.fullName;
+        this.providerId = profile.providerID;
+        email = profile.email;
+        phone = profile.phoneNumber;
+
+        nameController.text = providerName;
+        emailController.text = email;
+        phoneController.text = phone;
+
+        _isProfileLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isProfileLoading = false);
+    }
+  }
+
+  Future<void> _toggleBasicInfoEdit() async {
+    if (isEditingBasicInfo) {
+      final providerId = UserSession.userId;
+
+      if (providerId == null || providerId.isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("User session not found")));
+        return;
+      }
+
+      try {
+        final profile = ProviderProfile(
+          providerID: providerId,
+          fullName: nameController.text.trim(),
+          email: emailController.text.trim(),
+          phoneNumber: phoneController.text.trim(),
+        );
+
+        await _providerService.updateProfile(profile);
+
+        setState(() {
+          providerName = nameController.text.trim();
+          email = emailController.text.trim();
+          phone = phoneController.text.trim();
+          isEditingBasicInfo = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Basic information updated")),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Failed to update profile: $e")));
+      }
     } else {
       nameController.text = providerName;
       emailController.text = email;
@@ -250,31 +311,38 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _ProfileHeaderCard(providerName: providerName),
+            _ProfileHeaderCard(
+              providerName: providerName,
+              providerId: providerId,
+              serviceType: serviceType,
+            ),
             const SizedBox(height: 16),
 
             const _SectionTitle(title: "Basic Information"),
             const SizedBox(height: 10),
-            _InfoCard(
-              isEditing: isEditingBasicInfo,
-              providerName: providerName,
-              providerId: providerId,
-              email: email,
-              phone: phone,
-              location: location,
-              serviceType: serviceType,
-              nameController: nameController,
-              emailController: emailController,
-              phoneController: phoneController,
-              onEditTap: _toggleBasicInfoEdit,
-              onCancelTap: _cancelBasicInfoEdit,
-              onChangePassword: _changePassword,
-              isChangingPassword: isChangingPassword,
-              currentPasswordController: currentPasswordController,
-              newPasswordController: newPasswordController,
-              confirmPasswordController: confirmPasswordController,
-              onSavePassword: _savePassword,
-            ),
+            if (_isProfileLoading)
+              const Center(child: CircularProgressIndicator())
+            else
+              _InfoCard(
+                isEditing: isEditingBasicInfo,
+                providerName: providerName,
+                providerId: providerId,
+                email: email,
+                phone: phone,
+                location: location,
+                serviceType: serviceType,
+                nameController: nameController,
+                emailController: emailController,
+                phoneController: phoneController,
+                onEditTap: _toggleBasicInfoEdit,
+                onCancelTap: _cancelBasicInfoEdit,
+                onChangePassword: _changePassword,
+                isChangingPassword: isChangingPassword,
+                currentPasswordController: currentPasswordController,
+                newPasswordController: newPasswordController,
+                confirmPasswordController: confirmPasswordController,
+                onSavePassword: _savePassword,
+              ),
             const SizedBox(height: 16),
 
             const _SectionTitle(title: "Orders Summary"),
@@ -328,8 +396,14 @@ class _SectionTitle extends StatelessWidget {
 
 class _ProfileHeaderCard extends StatelessWidget {
   final String providerName;
+  final String providerId;
+  final String serviceType;
 
-  const _ProfileHeaderCard({required this.providerName});
+  const _ProfileHeaderCard({
+    required this.providerName,
+    required this.providerId,
+    required this.serviceType,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -382,7 +456,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        "Provider ID: PR-2026-014",
+                        "Provider ID: ${providerId.isEmpty ? 'Not Available' : providerId}",
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.82),
                           fontSize: 12.5,
@@ -391,7 +465,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        "Service: Meal Provider",
+                        "Service: ${serviceType.isEmpty ? 'Not Available' : serviceType}",
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.82),
                           fontSize: 12.5,

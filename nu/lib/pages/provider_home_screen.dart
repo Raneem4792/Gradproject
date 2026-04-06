@@ -7,6 +7,8 @@ import 'provider_manage_meals_screen.dart';
 import 'provider_mangae_campaign_screen.dart';
 import 'provider_notifications_page.dart';
 import '../widgets/provider_bottom_nav.dart';
+import '../services/provider_service.dart';
+import '../session/user_session.dart';
 
 class ProviderHomeScreen extends StatefulWidget {
   static const String routeName = '/provider-home';
@@ -37,7 +39,16 @@ class _SectionLabel extends StatelessWidget {
 class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
   int _navIndex = 0;
 
+  final ProviderService _providerService = ProviderService();
+  late Future<Map<String, dynamic>> _homeFuture;
+
   static const Color bg = Color(0xFFF3F6F5);
+
+  @override
+  void initState() {
+    super.initState();
+    _homeFuture = _providerService.getProviderHomeData(UserSession.userId!);
+  }
 
   void _tapNav(int i) {
     if (i == _navIndex) return;
@@ -71,33 +82,59 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bg,
-
       appBar: _ProviderMainAppBar(onTapNotifications: _openNotificationsPage),
-
       body: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 22),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              _ProviderTopBlock(providerName: "Provider Name"),
-              SizedBox(height: 14),
+        child: FutureBuilder<Map<String, dynamic>>(
+          future: _homeFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-              _RequestsCard(
-                newRequestsCount: 3,
-                orderText: "Order #xxxx",
-                onTapViewAll: _noop,
-                onTapCard: _noop,
+            if (snapshot.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    'Error loading home data: ${snapshot.error}',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              );
+            }
+
+            final data = snapshot.data ?? {};
+            final providerName = data['fullName'] ?? 'Provider';
+            final latestOrder = data['latestOrder'];
+            final newRequestsCount = data['newRequestsCount'] ?? 0;
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _ProviderTopBlock(providerName: providerName),
+                  const SizedBox(height: 14),
+
+                  _RequestsCard(
+                    newRequestsCount: newRequestsCount,
+                    orderText: latestOrder == null
+                        ? "No recent order"
+                        : "Order #${latestOrder['orderID']}",
+                    onTapViewAll: _noop,
+                    onTapCard: _noop,
+                  ),
+                  const SizedBox(height: 18),
+
+                  const _SectionLabel(title: "Services"),
+                  const SizedBox(height: 12),
+
+                  const ProviderServicesList(),
+                ],
               ),
-              SizedBox(height: 18),
-
-              _SectionLabel(title: "Services"),
-              SizedBox(height: 12),
-
-              ProviderServicesList(),
-            ],
-          ),
+            );
+          },
         ),
       ),
       bottomNavigationBar: ProviderBottomNav(
@@ -110,9 +147,6 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
   static void _noop() {}
 }
 
-/// =======================
-/// APP BAR
-/// =======================
 class _ProviderMainAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final VoidCallback onTapNotifications;
@@ -136,9 +170,7 @@ class _ProviderMainAppBar extends StatelessWidget
       title: Row(
         children: [
           IconButton(
-            onPressed: () {
-              // TODO: open drawer / menu
-            },
+            onPressed: () {},
             icon: const Icon(Icons.menu_rounded, color: Colors.black87),
           ),
           const SizedBox(width: 4),
@@ -168,9 +200,6 @@ class _ProviderMainAppBar extends StatelessWidget
   }
 }
 
-/// =======================
-/// HEADER CARD
-/// =======================
 class _ProviderTopBlock extends StatelessWidget {
   final String providerName;
 
@@ -279,9 +308,6 @@ class _ProviderTopBlock extends StatelessWidget {
   }
 }
 
-/// =======================
-/// REQUESTS CARD
-/// =======================
 class _RequestsCard extends StatelessWidget {
   final int newRequestsCount;
   final String orderText;
@@ -395,9 +421,6 @@ class _RequestsCard extends StatelessWidget {
   }
 }
 
-/// =======================
-/// SERVICES LIST
-/// =======================
 class ProviderServicesList extends StatelessWidget {
   const ProviderServicesList({super.key});
 
