@@ -13,7 +13,6 @@ class MealService {
     }
   }
 
-  // ✅ GET MEALS
   Future<List<Meal>> getMeals() async {
     final response = await http.get(Uri.parse('$baseUrl/meals'));
 
@@ -25,7 +24,6 @@ class MealService {
     }
   }
 
-  // ✅ CREATE ORDER
   Future<Map<String, dynamic>> createOrder({
     required int mealID,
     required String pilgrimID,
@@ -33,10 +31,7 @@ class MealService {
     final response = await http.post(
       Uri.parse('$baseUrl/orders'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'mealID': mealID,
-        'pilgrimID': pilgrimID,
-      }),
+      body: jsonEncode({'mealID': mealID, 'pilgrimID': pilgrimID}),
     );
 
     final data = jsonDecode(response.body);
@@ -44,13 +39,10 @@ class MealService {
     if (response.statusCode == 201) {
       return data;
     } else {
-      throw Exception(
-        data['message'] ?? 'Failed to create order',
-      );
+      throw Exception(data['message'] ?? 'Failed to create order');
     }
   }
 
-  // ✅ GET ORDERS (OOP 🔥)
   Future<List<MealOrder>> getOrdersByPilgrim(String pilgrimID) async {
     final response = await http.get(
       Uri.parse('$baseUrl/orders/pilgrim/$pilgrimID'),
@@ -58,10 +50,7 @@ class MealService {
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
-
-      return data
-          .map((json) => MealOrder.fromJson(json))
-          .toList();
+      return data.map((json) => MealOrder.fromJson(json)).toList();
     } else {
       throw Exception(
         'Failed to load orders: ${response.statusCode} - ${response.body}',
@@ -69,23 +58,62 @@ class MealService {
     }
   }
 
-Future<void> createRate({
-  required int orderID,
-  required int stars,
-  required String comment,
-}) async {
-  final response = await http.post(
-    Uri.parse('$baseUrl/rate'),
-    headers: {'Content-Type': 'application/json'},
-    body: jsonEncode({
-      'orderID': orderID,
-      'stars': stars,
-      'comment': comment,
-    }),
-  );
+  Future<List<Map<String, dynamic>>> getProviderCampaigns(
+    String providerID,
+  ) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/orders/provider/$providerID/campaigns'),
+    );
 
-  if (response.statusCode != 201) {
-    throw Exception('Failed to submit rating');
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((e) => Map<String, dynamic>.from(e)).toList();
+    } else {
+      throw Exception(
+        'Failed to load campaigns: ${response.statusCode} - ${response.body}',
+      );
+    }
   }
-}
+
+  Future<List<MealOrder>> getOrdersByProvider(
+    String providerID, {
+    String? campaignID,
+  }) async {
+    final uri = Uri.parse('$baseUrl/orders/provider/$providerID').replace(
+      queryParameters: campaignID == null || campaignID.isEmpty
+          ? null
+          : {'campaignID': campaignID},
+    );
+
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => MealOrder.fromJson(json)).toList();
+    } else {
+      throw Exception(
+        'Failed to load provider orders: ${response.statusCode} - ${response.body}',
+      );
+    }
+  }
+
+  Future<void> createRate({
+    required int orderID,
+    required int stars,
+    required String comment,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/rate'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'orderID': orderID,
+        'stars': stars,
+        'comment': comment,
+      }),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception('Failed to submit rating');
+    }
+  }
 }
