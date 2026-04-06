@@ -19,6 +19,7 @@ const getProviderHomeData = async (req, res) => {
 
         const provider = providerRows[0];
 
+        // ✅ آخر طلب pending فقط
         const [orderRows] = await db.query(
             `SELECT 
           mo.orderID,
@@ -27,7 +28,7 @@ const getProviderHomeData = async (req, res) => {
           m.mealName
        FROM meal_order mo
        JOIN meal m ON mo.mealID = m.mealID
-       WHERE m.providerID = ?
+       WHERE m.providerID = ? AND mo.status = 'pending'
        ORDER BY mo.requestDate DESC
        LIMIT 1`,
             [providerID]
@@ -45,6 +46,7 @@ const getProviderHomeData = async (req, res) => {
             };
         }
 
+        // ✅ عدد الطلبات pending فقط
         const [countRows] = await db.query(
             `SELECT COUNT(*) AS newRequestsCount
        FROM meal_order mo

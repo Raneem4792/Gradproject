@@ -16,4 +16,8 @@ router.get('/provider/:providerID', (req, res) =>
   orderController.getOrdersByProvider(req, res)
 );
 
+router.post('/:orderID/status', (req, res) =>
+  orderController.updateOrderStatus(req, res)
+);
+
 module.exports = router;

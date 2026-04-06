@@ -47,7 +47,24 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
   @override
   void initState() {
     super.initState();
+    _reloadHomeData();
+  }
+
+  void _reloadHomeData() {
     _homeFuture = _providerService.getProviderHomeData(UserSession.userId!);
+  }
+
+  Future<void> _openIncomingRequestsPage() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const IncomingMealRequestsPage()),
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _reloadHomeData();
+    });
   }
 
   void _tapNav(int i) {
@@ -57,10 +74,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
     setState(() => _navIndex = i);
 
     if (i == 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const IncomingMealRequestsPage()),
-      );
+      _openIncomingRequestsPage();
     } else if (i == 2) {
       Navigator.pushReplacement(
         context,
@@ -109,6 +123,13 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
             final latestOrder = data['latestOrder'];
             final newRequestsCount = data['newRequestsCount'] ?? 0;
 
+            final String orderText;
+            if (newRequestsCount == 0 || latestOrder == null) {
+              orderText = "No new requests";
+            } else {
+              orderText = "Order #${latestOrder['orderID']}";
+            }
+
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 22),
               child: Column(
@@ -119,11 +140,9 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
 
                   _RequestsCard(
                     newRequestsCount: newRequestsCount,
-                    orderText: latestOrder == null
-                        ? "No recent order"
-                        : "Order #${latestOrder['orderID']}",
-                    onTapViewAll: _noop,
-                    onTapCard: _noop,
+                    orderText: orderText,
+                    onTapViewAll: _openIncomingRequestsPage,
+                    onTapCard: _openIncomingRequestsPage,
                   ),
                   const SizedBox(height: 18),
 
@@ -143,8 +162,6 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
       ),
     );
   }
-
-  static void _noop() {}
 }
 
 class _ProviderMainAppBar extends StatelessWidget
@@ -404,14 +421,7 @@ class _RequestsCard extends StatelessWidget {
                 foregroundColor: primary,
                 textStyle: const TextStyle(fontWeight: FontWeight.w900),
               ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const IncomingMealRequestsPage(),
-                  ),
-                );
-              },
+              onPressed: onTapViewAll,
               child: const Text("View All"),
             ),
           ],

@@ -1,3 +1,4 @@
+const db = require('../config/db');
 const orderService = require('../services/OrderService');
 
 class OrderController {
@@ -63,6 +64,45 @@ class OrderController {
       console.error('Get provider orders error:', error);
       return res.status(500).json({
         message: 'Failed to load provider order history',
+      });
+    }
+  }
+
+  async updateOrderStatus(req, res) {
+    try {
+      const { orderID } = req.params;
+      const { status } = req.body;
+
+      if (!status) {
+        return res.status(400).json({
+          message: 'status is required',
+        });
+      }
+
+      const allowedStatuses = ['pending', 'accepted', 'rejected'];
+
+      if (!allowedStatuses.includes(status.toLowerCase())) {
+        return res.status(400).json({
+          message: 'Invalid status value',
+        });
+      }
+
+      await db.query(
+        `
+        UPDATE meal_order
+        SET status = ?
+        WHERE orderID = ?
+        `,
+        [status.toLowerCase(), orderID]
+      );
+
+      return res.status(200).json({
+        message: 'Order status updated successfully',
+      });
+    } catch (error) {
+      console.error('Update order status error:', error);
+      return res.status(500).json({
+        message: 'Failed to update order status',
       });
     }
   }

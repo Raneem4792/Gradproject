@@ -116,4 +116,26 @@ class MealService {
       throw Exception('Failed to submit rating');
     }
   }
+
+  Future<String> updateOrderStatus({
+  required int orderID,
+  required String status,
+}) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/orders/$orderID/status'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({'status': status}),
+  );
+
+  final data = jsonDecode(response.body);
+
+  if (response.statusCode == 200) {
+    return data['message'] ?? 'Order status updated successfully';
+  } else {
+    throw Exception(
+      data['message'] ?? 'Failed to update order status',
+    );
+  }
 }
+}
+

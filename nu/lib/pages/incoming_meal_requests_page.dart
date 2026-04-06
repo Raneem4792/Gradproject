@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../widgets/provider_bottom_nav.dart';
 import 'provider_home_screen.dart';
 import 'provider_dashboard_page.dart';
+import '../session/user_session.dart';
+import '../models/meal_order.dart';
+import '../services/meal_service.dart';
 
 class IncomingMealRequestsPage extends StatefulWidget {
   static const String routeName = '/incoming-requests';
@@ -17,6 +19,9 @@ class IncomingMealRequestsPage extends StatefulWidget {
 class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
   int _navIndex = 1;
 
+  final MealService _mealService = MealService();
+  late Future<List<MealOrder>> _requestsFuture;
+
   static const Color bg = Color(0xFFF1F6F4);
   static const Color primaryDark = Color(0xFF052720);
   static const Color primary = Color(0xFF0B4A40);
@@ -24,26 +29,15 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
   static const Color mint = Color(0xFFA8E7CF);
   static const Color softMint = Color(0xFFE6F6F0);
 
-  final List<_ReqModel> _requests = [
-    _ReqModel(
-      mealName: "Meal Name",
-      campaignNo: "Campaign number",
-      hajName: "Haj name",
-      time: "9:41 AM",
-    ),
-    _ReqModel(
-      mealName: "Meal Name",
-      campaignNo: "Campaign number",
-      hajName: "Haj name",
-      time: "9:41 AM",
-    ),
-    _ReqModel(
-      mealName: "Meal Name",
-      campaignNo: "Campaign number",
-      hajName: "Haj name",
-      time: "9:41 AM",
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadRequests();
+  }
+
+  void _loadRequests() {
+    _requestsFuture = _mealService.getOrdersByProvider(UserSession.userId!);
+  }
 
   void _handleBack() {
     if (Navigator.canPop(context)) {
@@ -76,16 +70,54 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
     }
   }
 
-  void _acceptRequest(int index) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Request accepted')));
+  Future<void> _acceptRequest(int orderID) async {
+    try {
+      final message = await _mealService.updateOrderStatus(
+        orderID: orderID,
+        status: 'accepted',
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+
+      setState(() {
+        _loadRequests();
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to accept request: $e')));
+    }
   }
 
-  void _rejectRequest(int index) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Request rejected')));
+  Future<void> _rejectRequest(int orderID) async {
+    try {
+      final message = await _mealService.updateOrderStatus(
+        orderID: orderID,
+        status: 'rejected',
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+
+      setState(() {
+        _loadRequests();
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to reject request: $e')));
+    }
   }
 
   @override
@@ -95,32 +127,63 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
       appBar: _RequestsMainAppBar(onBack: _handleBack),
       body: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 22),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _RequestsHeaderCard(
-                title: "Incoming Requests",
-                badgeText: "${_requests.length} New",
-              ),
-              const SizedBox(height: 16),
-              ...List.generate(_requests.length, (index) {
-                final req = _requests[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: _IncomingRequestCardGreen(
-                    mealName: req.mealName,
-                    campaignNo: req.campaignNo,
-                    hajName: req.hajName,
-                    time: req.time,
-                    onAccept: () => _acceptRequest(index),
-                    onReject: () => _rejectRequest(index),
+        child: FutureBuilder<List<MealOrder>>(
+          future: _requestsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    'Error loading requests: ${snapshot.error}',
+                    textAlign: TextAlign.center,
                   ),
-                );
-              }),
-            ],
-          ),
+                ),
+              );
+            }
+
+            final allRequests = snapshot.data ?? [];
+            final requests = allRequests
+                .where((req) => req.status.toLowerCase() == 'pending')
+                .toList();
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _RequestsHeaderCard(
+                    title: "Incoming Requests",
+                    badgeText: "${requests.length} New",
+                  ),
+                  const SizedBox(height: 16),
+
+                  if (requests.isEmpty)
+                    const _EmptyRequestsCard()
+                  else
+                    ...requests.map(
+                      (req) => Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: _IncomingRequestCardGreen(
+                          mealName: req.mealName,
+                          campaignNo: req.campaignNumber.isEmpty
+                              ? req.campaignName
+                              : req.campaignNumber,
+                          hajName: req.pilgrimName,
+                          time: req.formattedRequestDate,
+                          onAccept: () => _acceptRequest(req.orderID),
+                          onReject: () => _rejectRequest(req.orderID),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
         ),
       ),
       bottomNavigationBar: ProviderBottomNav(
@@ -131,9 +194,6 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
   }
 }
 
-/// =======================
-/// APP BAR
-/// =======================
 class _RequestsMainAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final VoidCallback onBack;
@@ -179,9 +239,6 @@ class _RequestsMainAppBar extends StatelessWidget
   }
 }
 
-/// =======================
-/// HEADER CARD
-/// =======================
 class _RequestsHeaderCard extends StatelessWidget {
   final String title;
   final String badgeText;
@@ -261,9 +318,6 @@ class _RequestsHeaderCard extends StatelessWidget {
   }
 }
 
-/// =======================
-/// Request Card
-/// =======================
 class _IncomingRequestCardGreen extends StatelessWidget {
   final String mealName;
   final String campaignNo;
@@ -502,16 +556,30 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-class _ReqModel {
-  final String mealName;
-  final String campaignNo;
-  final String hajName;
-  final String time;
+class _EmptyRequestsCard extends StatelessWidget {
+  const _EmptyRequestsCard();
 
-  _ReqModel({
-    required this.mealName,
-    required this.campaignNo,
-    required this.hajName,
-    required this.time,
-  });
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.black.withOpacity(0.05)),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 22,
+            offset: const Offset(0, 12),
+            color: Colors.black.withOpacity(0.06),
+          ),
+        ],
+      ),
+      child: const Text(
+        'No incoming requests yet',
+        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+      ),
+    );
+  }
 }
