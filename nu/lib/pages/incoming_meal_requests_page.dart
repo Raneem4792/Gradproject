@@ -3,8 +3,6 @@ import 'package:flutter/services.dart';
 import '../widgets/provider_bottom_nav.dart';
 import 'provider_home_screen.dart';
 import 'provider_dashboard_page.dart';
-import 'provider_notifications_page.dart';
-import 'provider_total_requests_page.dart';
 
 class IncomingMealRequestsPage extends StatefulWidget {
   static const String routeName = '/incoming-requests';
@@ -25,7 +23,6 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
   static const Color primaryMid = Color(0xFF167062);
   static const Color mint = Color(0xFFA8E7CF);
   static const Color softMint = Color(0xFFE6F6F0);
-  static const Color gold = Color(0xFFF0E0C0);
 
   final List<_ReqModel> _requests = [
     _ReqModel(
@@ -47,13 +44,6 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
       time: "9:41 AM",
     ),
   ];
-
-  void _openTotalRequestsPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const ProviderTotalRequestsPage()),
-    );
-  }
 
   void _handleBack() {
     if (Navigator.canPop(context)) {
@@ -86,6 +76,18 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
     }
   }
 
+  void _acceptRequest(int index) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Request accepted')));
+  }
+
+  void _rejectRequest(int index) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Request rejected')));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,52 +96,29 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 22),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _RequestsHeaderCard(
-                title: "Requests list",
-                badgeText: "${_requests.length} new",
+                title: "Incoming Requests",
+                badgeText: "${_requests.length} New",
               ),
               const SizedBox(height: 16),
-              ListView.separated(
-                itemCount: _requests.length,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                separatorBuilder: (_, __) => const SizedBox(height: 14),
-                itemBuilder: (context, i) {
-                  final r = _requests[i];
-                  return _IncomingRequestCardGreen(
-                    mealName: r.mealName,
-                    campaignNo: r.campaignNo,
-                    hajName: r.hajName,
-                    time: r.time,
-                    onAccept: () => HapticFeedback.selectionClick(),
-                    onReject: () => HapticFeedback.selectionClick(),
-                  );
-                },
-              ),
-              const SizedBox(height: 20),
-              _SectionHeaderRow(
-                title: "Total requests",
-                onTapArrow: _openTotalRequestsPage,
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 156,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: 3,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    return const _TotalRequestBoxGreen(
-                      mealName: "Meal Name",
-                      pieces: "NO of requests",
-                    );
-                  },
-                ),
-              ),
+              ...List.generate(_requests.length, (index) {
+                final req = _requests[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: _IncomingRequestCardGreen(
+                    mealName: req.mealName,
+                    campaignNo: req.campaignNo,
+                    hajName: req.hajName,
+                    time: req.time,
+                    onAccept: () => _acceptRequest(index),
+                    onReject: () => _rejectRequest(index),
+                  ),
+                );
+              }),
             ],
           ),
         ),
@@ -518,128 +497,6 @@ class _ActionButton extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// =======================
-/// Total requests header row
-/// =======================
-class _SectionHeaderRow extends StatelessWidget {
-  final String title;
-  final VoidCallback onTapArrow;
-
-  const _SectionHeaderRow({required this.title, required this.onTapArrow});
-
-  static const Color primary = Color(0xFF0B4A40);
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 14.5,
-            fontWeight: FontWeight.w900,
-            color: primary,
-          ),
-        ),
-        const Spacer(),
-        InkWell(
-          onTap: onTapArrow,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: primary.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.arrow_forward_ios,
-              size: 15,
-              color: primary.withOpacity(0.78),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// =======================
-/// Total request box
-/// =======================
-class _TotalRequestBoxGreen extends StatelessWidget {
-  final String mealName;
-  final String pieces;
-
-  const _TotalRequestBoxGreen({required this.mealName, required this.pieces});
-
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color primaryMid = Color(0xFF167062);
-  static const Color mint = Color(0xFFA8E7CF);
-  static const Color softMint = Color(0xFFE6F6F0);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 146,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: primary.withOpacity(0.09)),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-            color: primary.withOpacity(0.08),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            mealName,
-            style: const TextStyle(
-              fontSize: 12.8,
-              fontWeight: FontWeight.w900,
-              color: primary,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            height: 64,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [softMint, mint.withOpacity(0.34)],
-              ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: mint.withOpacity(0.58)),
-            ),
-            child: Center(
-              child: Icon(
-                Icons.restaurant_menu_rounded,
-                color: primaryMid.withOpacity(0.85),
-                size: 24,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            pieces,
-            style: TextStyle(
-              fontSize: 11.6,
-              fontWeight: FontWeight.w700,
-              color: Colors.black.withOpacity(0.60),
-            ),
-          ),
-        ],
       ),
     );
   }
