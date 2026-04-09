@@ -3,6 +3,9 @@ import '../widgets/provider_bottom_nav.dart';
 import 'provider_home_screen.dart';
 import 'incoming_meal_requests_page.dart';
 import 'provider_dashboard_page.dart';
+import '../services/campaign_service.dart';
+import '../models/campaign.dart';
+import '../session/user_session.dart';
 
 class ProviderCampaignManagementScreen extends StatefulWidget {
   const ProviderCampaignManagementScreen({super.key});
@@ -22,40 +25,52 @@ class _ProviderCampaignManagementScreenState
   static const Color mint = Color(0xFFA8E7CF);
   static const Color softMint = Color(0xFFE6F6F0);
 
-  final List<_CampaignItem> _campaigns = [
-    _CampaignItem(
-      id: 'CAMP-001',
-      campaignNumber: 'CN-1001',
-      name: 'Al Noor Hajj Campaign',
-      numberOfPilgrims: 45,
-      arrivalDay: 'Monday',
-      arrivalDate: DateTime(2026, 5, 25),
-      arrivalTime: const TimeOfDay(hour: 14, minute: 30),
-      arrivalFrom: 'Indonesia',
-    ),
-    _CampaignItem(
-      id: 'CAMP-002',
-      campaignNumber: 'CN-1002',
-      name: 'Al Barakah Umrah Group',
-      numberOfPilgrims: 28,
-      arrivalDay: 'Wednesday',
-      arrivalDate: DateTime(2026, 6, 3),
-      arrivalTime: const TimeOfDay(hour: 9, minute: 15),
-      arrivalFrom: 'Turkey',
-    ),
-    _CampaignItem(
-      id: 'CAMP-003',
-      campaignNumber: 'CN-1003',
-      name: 'Taybah Pilgrims Campaign',
-      numberOfPilgrims: 60,
-      arrivalDay: 'Friday',
-      arrivalDate: DateTime(2026, 6, 12),
-      arrivalTime: const TimeOfDay(hour: 18, minute: 0),
-      arrivalFrom: 'Malaysia',
-    ),
-  ];
+  final CampaignService _campaignService = CampaignService();
+  List<Campaign> _campaigns = [];
+  bool _isLoading = true;
 
   int _navIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCampaigns();
+  }
+
+Future<void> _loadCampaigns() async {
+  print('1- _loadCampaigns started');
+
+  try {
+    final providerID = UserSession.userId;
+    print('2- providerID = $providerID');
+
+    if (providerID == null || providerID.isEmpty) {
+      throw Exception('Provider ID not found in session');
+    }
+
+    final campaigns =
+        await _campaignService.getCampaignsByProvider(providerID);
+
+    print('3- campaigns fetched = ${campaigns.length}');
+
+    if (!mounted) return;
+
+    setState(() {
+      _campaigns = campaigns;
+      _isLoading = false;
+    });
+
+    print('4- setState done');
+  } catch (e) {
+    print('ERROR in _loadCampaigns: $e');
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+}
 
   void _handleBack() {
     if (Navigator.canPop(context)) {
@@ -94,7 +109,7 @@ class _ProviderCampaignManagementScreenState
   }
 
   void _openAddSheet() async {
-    final created = await showModalBottomSheet<_CampaignItem>(
+    final created = await showModalBottomSheet<_CampaignFormResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
@@ -106,40 +121,72 @@ class _ProviderCampaignManagementScreenState
 
     if (created == null) return;
 
-    setState(() {
-      _campaigns.insert(
-        0,
-        created.copyWith(id: _generateId(), campaignNumber: null),
+    try {
+      final providerID = UserSession.userId;
+      if (providerID == null || providerID.isEmpty) {
+        throw Exception('Provider ID not found in session');
+      }
+
+      await _campaignService.createCampaign(
+        campaignName: created.campaignName,
+        campaignNumber: created.campaignNumber,
+        numberOfPilgrims: created.numberOfPilgrims,
+        arrivalDetails: created.arrivalDetails,
+        providerID: providerID,
       );
-    });
+
+      await _loadCampaigns();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Campaign added successfully')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to add campaign: $e')),
+      );
+    }
   }
 
-  void _openEditSheet(_CampaignItem campaign) async {
-    final updated = await showModalBottomSheet<_CampaignItem>(
+  void _openEditSheet(Campaign campaign) async {
+    final updated = await showModalBottomSheet<_CampaignFormResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
-      builder: (_) =>
-          _CampaignFormSheet(mode: _FormMode.edit, initial: campaign),
+      builder: (_) => _CampaignFormSheet(
+        mode: _FormMode.edit,
+        initial: campaign,
+      ),
     );
 
     if (updated == null) return;
 
-    setState(() {
-      final idx = _campaigns.indexWhere((c) => c.id == campaign.id);
-      if (idx != -1) {
-        _campaigns[idx] = updated.copyWith(
-          id: campaign.id,
-          campaignNumber: campaign.campaignNumber,
-        );
-      }
-    });
+    try {
+      await _campaignService.updateCampaign(
+        campaignID: campaign.campaignID,
+        campaignName: updated.campaignName,
+        campaignNumber: updated.campaignNumber,
+        numberOfPilgrims: updated.numberOfPilgrims,
+        arrivalDetails: updated.arrivalDetails,
+      );
+
+      await _loadCampaigns();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Campaign updated successfully')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update campaign: $e')),
+      );
+    }
   }
 
-  Future<void> _deleteCampaign(_CampaignItem campaign) async {
+  Future<void> _deleteCampaign(Campaign campaign) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -150,7 +197,7 @@ class _ProviderCampaignManagementScreenState
           style: TextStyle(fontWeight: FontWeight.w900),
         ),
         content: Text(
-          'Are you sure you want to delete "${campaign.name}"?',
+          'Are you sure you want to delete "${campaign.campaignName}"?',
           style: TextStyle(
             color: Colors.black.withOpacity(0.66),
             fontWeight: FontWeight.w600,
@@ -186,12 +233,20 @@ class _ProviderCampaignManagementScreenState
     );
 
     if (ok != true) return;
-    setState(() => _campaigns.removeWhere((c) => c.id == campaign.id));
-  }
 
-  String _generateId() {
-    final n = _campaigns.length + 1;
-    return 'CAMP-${n.toString().padLeft(3, '0')}';
+    try {
+      await _campaignService.deleteCampaign(campaign.campaignID);
+      await _loadCampaigns();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Campaign deleted successfully')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete campaign: $e')),
+      );
+    }
   }
 
   @override
@@ -201,48 +256,50 @@ class _ProviderCampaignManagementScreenState
       appBar: _CampaignManagementMainAppBar(onBack: _handleBack),
       body: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 22),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _CampaignManagementHeaderCard(
-                title: "Manage Campaigns",
-                badgeText: "${_campaigns.length} campaigns",
-              ),
-              const SizedBox(height: 14),
-              _AddCampaignWideButton(onTap: _openAddSheet),
-              const SizedBox(height: 16),
-              ListView.separated(
-                itemCount: _campaigns.length,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                separatorBuilder: (_, __) => const SizedBox(height: 14),
-                itemBuilder: (context, i) {
-                  final campaign = _campaigns[i];
-                  return _CampaignCard(
-                    campaign: campaign,
-                    onEdit: () => _openEditSheet(campaign),
-                    onDelete: () => _deleteCampaign(campaign),
-                  );
-                },
-              ),
-              if (_campaigns.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.only(top: 28),
-                  child: Center(
-                    child: Text(
-                      "No campaigns added yet",
-                      style: TextStyle(
-                        color: Colors.black45,
-                        fontWeight: FontWeight.w700,
-                      ),
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 22),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _CampaignManagementHeaderCard(
+                      title: "Manage Campaigns",
+                      badgeText: "${_campaigns.length} campaigns",
                     ),
-                  ),
+                    const SizedBox(height: 14),
+                    _AddCampaignWideButton(onTap: _openAddSheet),
+                    const SizedBox(height: 16),
+                    ListView.separated(
+                      itemCount: _campaigns.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      separatorBuilder: (_, __) => const SizedBox(height: 14),
+                      itemBuilder: (context, i) {
+                        final campaign = _campaigns[i];
+                        return _CampaignCard(
+                          campaign: campaign,
+                          onEdit: () => _openEditSheet(campaign),
+                          onDelete: () => _deleteCampaign(campaign),
+                        );
+                      },
+                    ),
+                    if (_campaigns.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 28),
+                        child: Center(
+                          child: Text(
+                            "No campaigns added yet",
+                            style: TextStyle(
+                              color: Colors.black45,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-            ],
-          ),
-        ),
+              ),
       ),
       bottomNavigationBar: ProviderBottomNav(
         currentIndex: _navIndex,
@@ -292,7 +349,7 @@ class _CampaignManagementMainAppBar extends StatelessWidget
           ),
         ],
       ),
-      actions: [const SizedBox(width: 6)],
+      actions: const [SizedBox(width: 6)],
     );
   }
 }
@@ -451,7 +508,7 @@ class _CampaignCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  final _CampaignItem campaign;
+  final Campaign campaign;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -516,7 +573,7 @@ class _CampaignCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  campaign.name,
+                  campaign.campaignName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -528,24 +585,15 @@ class _CampaignCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    _CampaignNumberPill(
-                      number: campaign.campaignNumber ?? 'Pending',
-                    ),
+                    _CampaignNumberPill(number: campaign.campaignNumber),
                     const SizedBox(width: 8),
                     _PilgrimsCountPill(count: campaign.numberOfPilgrims),
                   ],
                 ),
                 const SizedBox(height: 10),
                 _InfoRow(
-                  icon: Icons.calendar_today_rounded,
-                  text:
-                      'Arrival Day: ${campaign.arrivalDay} • ${_formatDate(campaign.arrivalDate)}',
-                ),
-                const SizedBox(height: 6),
-                _InfoRow(
-                  icon: Icons.access_time_rounded,
-                  text:
-                      'Arrival Time: ${_formatTime(campaign.arrivalTime)} • From ${campaign.arrivalFrom}',
+                  icon: Icons.info_outline_rounded,
+                  text: campaign.arrivalDetails,
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -605,7 +653,7 @@ class _CampaignCard extends StatelessWidget {
 
 class _CampaignFormSheet extends StatefulWidget {
   final _FormMode mode;
-  final _CampaignItem? initial;
+  final Campaign? initial;
 
   const _CampaignFormSheet({required this.mode, this.initial});
 
@@ -622,11 +670,9 @@ class _CampaignFormSheetState extends State<_CampaignFormSheet> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _nameController;
-  late final TextEditingController _arrivalFromController;
+  late final TextEditingController _campaignNumberController;
+  late final TextEditingController _arrivalDetailsController;
 
-  late DateTime _arrivalDate;
-  late TimeOfDay _arrivalTime;
-  late String _arrivalDay;
   late int _pilgrimsCount;
 
   bool get _isEdit => widget.mode == _FormMode.edit;
@@ -637,77 +683,25 @@ class _CampaignFormSheetState extends State<_CampaignFormSheet> {
 
     final initial = widget.initial;
 
-    _nameController = TextEditingController(text: initial?.name ?? '');
-    _arrivalFromController = TextEditingController(
-      text: initial?.arrivalFrom ?? '',
+    _nameController = TextEditingController(
+      text: initial?.campaignName ?? '',
+    );
+    _campaignNumberController = TextEditingController(
+      text: initial?.campaignNumber ?? '',
+    );
+    _arrivalDetailsController = TextEditingController(
+      text: initial?.arrivalDetails ?? '',
     );
 
-    _arrivalDate = initial?.arrivalDate ?? DateTime.now();
-    _arrivalTime = initial?.arrivalTime ?? const TimeOfDay(hour: 12, minute: 0);
-    _arrivalDay = initial?.arrivalDay ?? _dayNameFromDate(_arrivalDate);
     _pilgrimsCount = initial?.numberOfPilgrims ?? 1;
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _arrivalFromController.dispose();
+    _campaignNumberController.dispose();
+    _arrivalDetailsController.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickArrivalDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _arrivalDate,
-      firstDate: DateTime(2025),
-      lastDate: DateTime(2035),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: primary,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black87,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked == null) return;
-
-    setState(() {
-      _arrivalDate = picked;
-      _arrivalDay = _dayNameFromDate(picked);
-    });
-  }
-
-  Future<void> _pickArrivalTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _arrivalTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: primary,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black87,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked == null) return;
-
-    setState(() {
-      _arrivalTime = picked;
-    });
   }
 
   void _increasePilgrims() {
@@ -726,18 +720,14 @@ class _CampaignFormSheetState extends State<_CampaignFormSheet> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
 
-    final item = _CampaignItem(
-      id: widget.initial?.id ?? '',
-      campaignNumber: widget.initial?.campaignNumber,
-      name: _nameController.text.trim(),
+    final result = _CampaignFormResult(
+      campaignName: _nameController.text.trim(),
+      campaignNumber: _campaignNumberController.text.trim(),
       numberOfPilgrims: _pilgrimsCount,
-      arrivalDay: _arrivalDay,
-      arrivalDate: _arrivalDate,
-      arrivalTime: _arrivalTime,
-      arrivalFrom: _arrivalFromController.text.trim(),
+      arrivalDetails: _arrivalDetailsController.text.trim(),
     );
 
-    Navigator.pop(context, item);
+    Navigator.pop(context, result);
   }
 
   @override
@@ -776,7 +766,7 @@ class _CampaignFormSheetState extends State<_CampaignFormSheet> {
               Text(
                 _isEdit
                     ? 'Update campaign details below.'
-                    : 'Enter campaign information and arrival details.',
+                    : 'Enter campaign information below.',
                 style: TextStyle(
                   fontSize: 13.3,
                   height: 1.35,
@@ -801,6 +791,21 @@ class _CampaignFormSheetState extends State<_CampaignFormSheet> {
               ),
 
               const SizedBox(height: 14),
+              const _SectionLabel(title: 'Campaign Number'),
+              const SizedBox(height: 8),
+              _StyledInput(
+                controller: _campaignNumberController,
+                hint: 'Enter campaign number',
+                prefixIcon: Icons.confirmation_number_outlined,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return 'Campaign number is required';
+                  }
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 14),
               const _SectionLabel(title: 'Number of Pilgrims'),
               const SizedBox(height: 8),
               _PilgrimsCounter(
@@ -809,87 +814,33 @@ class _CampaignFormSheetState extends State<_CampaignFormSheet> {
                 onDecrease: _decreasePilgrims,
               ),
 
-              const SizedBox(height: 18),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: softMint,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: mint.withOpacity(0.55)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Arrival Details',
-                      style: TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w900,
-                        color: primaryDark,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Enter arrival day, date, time, and where the pilgrims are coming from.',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: Colors.black.withOpacity(0.62),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _PickerTile(
-                            label: 'Arrival Day',
-                            value: _arrivalDay,
-                            icon: Icons.today_rounded,
-                            onTap: null,
-                            readOnly: true,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _PickerTile(
-                            label: 'Arrival Date',
-                            value: _formatDate(_arrivalDate),
-                            icon: Icons.calendar_month_rounded,
-                            onTap: _pickArrivalDate,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _PickerTile(
-                            label: 'Arrival Time',
-                            value: _formatTime(_arrivalTime),
-                            icon: Icons.access_time_rounded,
-                            onTap: _pickArrivalTime,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _StyledInput(
-                            controller: _arrivalFromController,
-                            hint: 'Country / city of origin',
-                            prefixIcon: Icons.location_on_outlined,
-                            validator: (v) {
-                              if (v == null || v.trim().isEmpty) {
-                                return 'Arrival location is required';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+              const SizedBox(height: 14),
+              const _SectionLabel(title: 'Arrival Details'),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _arrivalDetailsController,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return 'Arrival details are required';
+                  }
+                  return null;
+                },
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: 'Example: Arriving on Monday at 2:30 PM from Indonesia',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: primary.withOpacity(0.10)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: primary, width: 1.3),
+                  ),
                 ),
               ),
 
@@ -940,6 +891,20 @@ class _CampaignFormSheetState extends State<_CampaignFormSheet> {
       ),
     );
   }
+}
+
+class _CampaignFormResult {
+  final String campaignName;
+  final String campaignNumber;
+  final int numberOfPilgrims;
+  final String arrivalDetails;
+
+  _CampaignFormResult({
+    required this.campaignName,
+    required this.campaignNumber,
+    required this.numberOfPilgrims,
+    required this.arrivalDetails,
+  });
 }
 
 class _SectionLabel extends StatelessWidget {
@@ -1017,92 +982,6 @@ class _StyledInput extends StatelessWidget {
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: mint.withOpacity(0.40)),
-        ),
-      ),
-    );
-  }
-}
-
-class _PickerTile extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final VoidCallback? onTap;
-  final bool readOnly;
-
-  const _PickerTile({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.onTap,
-    this.readOnly = false,
-  });
-
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color mint = Color(0xFFA8E7CF);
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: primary.withOpacity(0.10)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE6F6F0),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: mint.withOpacity(0.60)),
-                ),
-                child: Icon(icon, color: primary.withOpacity(0.85), size: 19),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11.4,
-                        color: Colors.black.withOpacity(0.52),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      value,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13.2,
-                        color: Color(0xFF052720),
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (!readOnly)
-                Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: primary.withOpacity(0.82),
-                ),
-            ],
-          ),
         ),
       ),
     );
@@ -1286,85 +1165,3 @@ class _InfoRow extends StatelessWidget {
 }
 
 enum _FormMode { add, edit }
-
-class _CampaignItem {
-  final String id;
-  final String? campaignNumber;
-  final String name;
-  final int numberOfPilgrims;
-  final String arrivalDay;
-  final DateTime arrivalDate;
-  final TimeOfDay arrivalTime;
-  final String arrivalFrom;
-
-  const _CampaignItem({
-    required this.id,
-    this.campaignNumber,
-    required this.name,
-    required this.numberOfPilgrims,
-    required this.arrivalDay,
-    required this.arrivalDate,
-    required this.arrivalTime,
-    required this.arrivalFrom,
-  });
-
-  _CampaignItem copyWith({
-    String? id,
-    String? campaignNumber,
-    bool clearCampaignNumber = false,
-    String? name,
-    int? numberOfPilgrims,
-    String? arrivalDay,
-    DateTime? arrivalDate,
-    TimeOfDay? arrivalTime,
-    String? arrivalFrom,
-  }) {
-    return _CampaignItem(
-      id: id ?? this.id,
-      campaignNumber: clearCampaignNumber
-          ? null
-          : (campaignNumber ?? this.campaignNumber),
-      name: name ?? this.name,
-      numberOfPilgrims: numberOfPilgrims ?? this.numberOfPilgrims,
-      arrivalDay: arrivalDay ?? this.arrivalDay,
-      arrivalDate: arrivalDate ?? this.arrivalDate,
-      arrivalTime: arrivalTime ?? this.arrivalTime,
-      arrivalFrom: arrivalFrom ?? this.arrivalFrom,
-    );
-  }
-}
-
-String _formatDate(DateTime date) {
-  final dd = date.day.toString().padLeft(2, '0');
-  final mm = date.month.toString().padLeft(2, '0');
-  final yyyy = date.year.toString();
-  return '$dd/$mm/$yyyy';
-}
-
-String _formatTime(TimeOfDay time) {
-  final hh = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
-  final mm = time.minute.toString().padLeft(2, '0');
-  final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-  return '$hh:$mm $period';
-}
-
-String _dayNameFromDate(DateTime date) {
-  switch (date.weekday) {
-    case DateTime.monday:
-      return 'Monday';
-    case DateTime.tuesday:
-      return 'Tuesday';
-    case DateTime.wednesday:
-      return 'Wednesday';
-    case DateTime.thursday:
-      return 'Thursday';
-    case DateTime.friday:
-      return 'Friday';
-    case DateTime.saturday:
-      return 'Saturday';
-    case DateTime.sunday:
-      return 'Sunday';
-    default:
-      return '';
-  }
-}

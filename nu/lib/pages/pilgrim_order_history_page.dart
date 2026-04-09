@@ -57,6 +57,10 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
         uiStatus = "Completed";
       } else if (status == "rejected") {
         uiStatus = "Rejected";
+      } else if (status == "cancelled") {
+        uiStatus = "Cancelled";
+      } else if (status == "accepted") {
+        uiStatus = "Accepted";
       } else {
         uiStatus = order.status;
       }

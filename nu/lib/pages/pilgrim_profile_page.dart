@@ -5,6 +5,7 @@ import '../session/user_session.dart';
 import '../models/health_profile.dart';
 import '../models/pilgrim_profile.dart';
 import '../services/pilgrim_service.dart';
+import 'login_page.dart';
 
 class PilgrimProfilePage extends StatefulWidget {
   static const String routeName = '/pilgrim-profile';
@@ -455,6 +456,41 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
     );
   }
 
+    Future<void> _logout() async {
+  final shouldLogout = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text("Log Out"),
+      content: const Text("Are you sure you want to log out?"),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text("Cancel"),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text(
+            "Log Out",
+            style: TextStyle(color: Colors.red),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  if (shouldLogout == true) {
+    UserSession.clear();
+
+    if (!mounted) return;
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      LoginScreen.routeName, 
+      (route) => false,
+    );
+  }
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -562,12 +598,14 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
             ),
             const SizedBox(height: 22),
 
-            const _LogoutButton(),
+           _LogoutButton(onTap: _logout),
           ],
         ),
       ),
     );
   }
+
+
 }
 
 class _PilgrimProfileAppBar extends StatelessWidget
@@ -1123,14 +1161,16 @@ class _SettingsCard extends StatelessWidget {
 }
 
 class _LogoutButton extends StatelessWidget {
-  const _LogoutButton();
+  final VoidCallback onTap;
+
+  const _LogoutButton({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
-        onPressed: () {},
+        onPressed: onTap,
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 15),
           side: BorderSide(color: Colors.red.withOpacity(0.22)),

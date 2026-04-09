@@ -79,7 +79,13 @@ class OrderController {
         });
       }
 
-      const allowedStatuses = ['pending', 'accepted', 'rejected'];
+      const allowedStatuses = [
+        'pending',
+        'accepted',
+        'completed',
+        'cancelled',
+        'rejected',
+      ];
 
       if (!allowedStatuses.includes(status.toLowerCase())) {
         return res.status(400).json({
@@ -89,10 +95,10 @@ class OrderController {
 
       await db.query(
         `
-        UPDATE meal_order
-        SET status = ?
-        WHERE orderID = ?
-        `,
+      UPDATE meal_order
+      SET status = ?
+      WHERE orderID = ?
+      `,
         [status.toLowerCase(), orderID]
       );
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/meal_order.dart';
+import '../models/rate.dart';
 import '../services/meal_service.dart';
+import '../services/rate_service.dart';
 import '../session/user_session.dart';
 import '../widgets/provider_bottom_nav.dart';
 import 'provider_home_screen.dart';
@@ -24,6 +26,7 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
   static const Color softMint = Color(0xFFE6F6F0);
 
   final MealService _mealService = MealService();
+  final RateService _rateService = RateService();
 
   bool _isLoading = true;
   String? _error;
@@ -139,6 +142,7 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
 
     if (v == 'completed') return 'Completed';
     if (v == 'rejected') return 'Rejected';
+    if (v == 'cancelled') return 'Cancelled';
     if (v == 'pending') return 'Pending';
     if (v == 'accepted') return 'Accepted';
 
@@ -157,18 +161,17 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
       final okDate = selectedDateValue == null
           ? true
           : order.requestDate.year == selectedDateValue!.year &&
-              order.requestDate.month == selectedDateValue!.month &&
-              order.requestDate.day == selectedDateValue!.day;
+                order.requestDate.month == selectedDateValue!.month &&
+                order.requestDate.day == selectedDateValue!.day;
 
       final okMealType = selectedMealTypeValue == null
           ? true
           : order.mealType.toLowerCase() ==
-              selectedMealTypeValue!.toLowerCase();
+                selectedMealTypeValue!.toLowerCase();
 
       final okStatus = selectedStatusValue == null
           ? true
-          : order.status.toLowerCase() ==
-              selectedStatusValue!.toLowerCase();
+          : order.status.toLowerCase() == selectedStatusValue!.toLowerCase();
 
       return okDate && okMealType && okStatus;
     }).toList();
@@ -381,17 +384,33 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
     );
   }
 
-  void _openReviewBottomSheet(MealOrder order) {
+  Future<void> _openReviewBottomSheet(MealOrder order) async {
     if (!order.isReviewed || order.reviewRating == null) return;
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (_) => _ReviewViewSheet(order: order),
-    );
+    try {
+      final rate = await _rateService.getRateByOrder(order.orderID);
+
+      if (!mounted) return;
+
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        ),
+        builder: (_) => _ReviewViewSheet(
+          order: order,
+          rate: rate,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load review details: $e')),
+      );
+    }
   }
 
   @override
@@ -561,9 +580,7 @@ class _HistoryMainAppBar extends StatelessWidget
           ),
         ],
       ),
-      actions: [
-        const SizedBox(width: 6),
-      ],
+      actions: const [SizedBox(width: 6)],
     );
   }
 }
@@ -767,10 +784,7 @@ class _DropdownChip extends StatelessWidget {
 }
 
 class _HistoryCard extends StatelessWidget {
-  const _HistoryCard({
-    required this.order,
-    required this.onViewReview,
-  });
+  const _HistoryCard({required this.order, required this.onViewReview});
 
   final MealOrder order;
   final VoidCallback? onViewReview;
@@ -956,10 +970,7 @@ class _HistoryCard extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: primary,
-                                  width: 1.3,
-                                ),
+                                border: Border.all(color: primary, width: 1.3),
                               ),
                               child: const Text(
                                 "View Review",
@@ -1013,6 +1024,13 @@ class _StatusPill {
           fg: Color(0xFFB3261E),
           border: Color(0xFFFFC7C7),
         );
+      case 'cancelled':
+        return const _StatusPill(
+          text: "Cancelled",
+          bg: Color(0xFFF3F3F3),
+          fg: Color(0xFF666666),
+          border: Color(0xFFE0E0E0),
+        );
       case 'pending':
         return const _StatusPill(
           text: "Pending",
@@ -1059,75 +1077,190 @@ class _Stars extends StatelessWidget {
 }
 
 class _ReviewViewSheet extends StatelessWidget {
-  const _ReviewViewSheet({required this.order});
+  const _ReviewViewSheet({
+    required this.order,
+    required this.rate,
+  });
 
   final MealOrder order;
+  final Rate rate;
 
   static const Color primaryDark = Color(0xFF052720);
+  static const Color primary = Color(0xFF0B4A40);
   static const Color mint = Color(0xFFA8E7CF);
   static const Color softMint = Color(0xFFE6F6F0);
 
+  String _formatDateTime(String value) {
+    if (value.trim().isEmpty) return 'Not available';
+
+    try {
+      final dt = DateTime.parse(value).toLocal();
+      final dd = dt.day.toString().padLeft(2, '0');
+      final mm = dt.month.toString().padLeft(2, '0');
+      final yyyy = dt.year.toString();
+      final hh = dt.hour.toString().padLeft(2, '0');
+      final min = dt.minute.toString().padLeft(2, '0');
+      return '$dd/$mm/$yyyy  •  $hh:$min';
+    } catch (_) {
+      return value;
+    }
+  }
+
+  Widget _infoBox({
+    required String title,
+    required String value,
+    bool highlighted = false,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: highlighted ? softMint : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: highlighted
+              ? mint.withOpacity(0.65)
+              : Colors.black.withOpacity(0.08),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              color: Colors.black.withOpacity(0.55),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value.trim().isEmpty ? 'No text provided' : value,
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+              color: primaryDark,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final hasReply = rate.providerReply.trim().isNotEmpty;
+
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                height: 4,
-                width: 44,
-                margin: const EdgeInsets.only(bottom: 14),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(50),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  height: 4,
+                  width: 44,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(50),
+                  ),
                 ),
               ),
-            ),
-            Text(
-              "Review • #${order.orderID}",
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
-                color: primaryDark,
+              Text(
+                "Review Details • #${order.orderID}",
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 17,
+                  color: primaryDark,
+                ),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              order.mealName,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Colors.black.withOpacity(0.70),
+              const SizedBox(height: 6),
+              Text(
+                order.mealName,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black.withOpacity(0.72),
+                  fontSize: 14,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            _Stars(rating: order.reviewRating ?? 0),
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: softMint,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: mint.withOpacity(0.55)),
+              const SizedBox(height: 4),
+              Text(
+                "${order.pilgrimName} • ${order.campaignName}",
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black.withOpacity(0.55),
+                  fontSize: 12.5,
+                ),
               ),
-              child: Text(
-                "This order was reviewed with ${order.reviewRating ?? 0} stars.",
-                style: const TextStyle(fontWeight: FontWeight.w600),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: softMint,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: mint.withOpacity(0.60)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.star_rounded,
+                      color: Color(0xFFF4B400),
+                      size: 24,
+                    ),
+                    const SizedBox(width: 8),
+                    _Stars(rating: rate.stars),
+                    const Spacer(),
+                    Text(
+                      "${rate.stars}/5",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                        color: primary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Close"),
+              const SizedBox(height: 14),
+              _infoBox(
+                title: "Pilgrim Comment",
+                value: rate.comment,
+                highlighted: true,
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              _infoBox(
+                title: "Review Date",
+                value: _formatDateTime(rate.reviewDateTime),
+              ),
+              const SizedBox(height: 12),
+              _infoBox(
+                title: "Provider Reply",
+                value: hasReply ? rate.providerReply : 'No reply yet',
+              ),
+              const SizedBox(height: 12),
+              _infoBox(
+                title: "Reply Date",
+                value: hasReply
+                    ? _formatDateTime(rate.replyDateTime)
+                    : 'Not available',
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Close"),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -9,7 +9,7 @@ const pilgrimRoutes = require('./routes/pilgrimRoutes');
 const rateRoutes = require('./routes/rateRoutes');
 const healthRoutes = require('./routes/healthRoutes');
 const providerRoutes = require('./routes/providerRoutes');
-
+const campaignRoutes = require('./routes/campaignRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,6 +24,7 @@ app.use('/api/pilgrims', pilgrimRoutes);
 app.use('/api/rates', rateRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/providers', providerRoutes);
+app.use('/api/campaigns', campaignRoutes);
 
 // استدعاء الداتابيس
 const db = require('./config/db');
