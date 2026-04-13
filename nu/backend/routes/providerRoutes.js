@@ -5,15 +5,16 @@ const {
   getProviderHomeData,
   getProviderProfile,
   updateProviderProfile,
+  getProviderProfileSummary,
 } = require('../controllers/providerController');
 
-// 🔹 Home
+
 router.get('/home/:providerID', getProviderHomeData);
 
-// 🔹 Profile
 router.get('/:providerID', getProviderProfile);
 
-// 🔹 Update Profile
 router.post('/update', updateProviderProfile);
+
+router.get('/profile-summary/:providerID', getProviderProfileSummary);
 
 module.exports = router;

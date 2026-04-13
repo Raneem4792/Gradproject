@@ -26,6 +26,8 @@ class ProviderProfilePage extends StatefulWidget {
 class _ProviderProfilePageState extends State<ProviderProfilePage> {
   final ProviderService _providerService = ProviderService();
   bool _isProfileLoading = true;
+  bool _isSummaryLoading = true;
+  Map<String, dynamic>? _profileSummary;
 
   bool isEditingBasicInfo = false;
   bool isChangingPassword = false;
@@ -77,12 +79,21 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     final providerId = UserSession.userId;
 
     if (providerId == null || providerId.isEmpty) {
-      setState(() => _isProfileLoading = false);
+      setState(() {
+        _isProfileLoading = false;
+        _isSummaryLoading = false;
+      });
       return;
     }
 
     try {
-      final profile = await _providerService.getProfile(providerId);
+      final results = await Future.wait([
+        _providerService.getProfile(providerId),
+        _providerService.getProfileSummary(providerId),
+      ]);
+
+      final profile = results[0] as ProviderProfile;
+      final summary = results[1] as Map<String, dynamic>;
 
       setState(() {
         providerName = profile.fullName;
@@ -94,10 +105,16 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
         emailController.text = email;
         phoneController.text = phone;
 
+        _profileSummary = summary;
+
         _isProfileLoading = false;
+        _isSummaryLoading = false;
       });
     } catch (e) {
-      setState(() => _isProfileLoading = false);
+      setState(() {
+        _isProfileLoading = false;
+        _isSummaryLoading = false;
+      });
     }
   }
 
@@ -276,39 +293,36 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
   }
 
   Future<void> _logout() async {
-  final shouldLogout = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text("Log Out"),
-      content: const Text("Are you sure you want to log out?"),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text("Cancel"),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, true),
-          child: const Text(
-            "Log Out",
-            style: TextStyle(color: Colors.red),
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Log Out"),
+        content: const Text("Are you sure you want to log out?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
           ),
-        ),
-      ],
-    ),
-  );
-
-  if (shouldLogout == true) {
-    UserSession.clear();
-
-    if (!mounted) return;
-
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      LoginScreen.routeName,
-      (route) => false,
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Log Out", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
+
+    if (shouldLogout == true) {
+      UserSession.clear();
+
+      if (!mounted) return;
+
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        LoginScreen.routeName,
+        (route) => false,
+      );
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -383,12 +397,18 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
 
             const _SectionTitle(title: "Orders Summary"),
             const SizedBox(height: 10),
-            const _StatsGrid(),
+            _isSummaryLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _StatsGrid(summary: _profileSummary),
             const SizedBox(height: 16),
 
             const _SectionTitle(title: "Linked Campaigns"),
             const SizedBox(height: 10),
-            const _CampaignsCard(),
+            _CampaignsCard(
+              campaigns: List<Map<String, dynamic>>.from(
+                _profileSummary?['campaigns'] ?? const [],
+              ),
+            ),
             const SizedBox(height: 16),
 
             const _SectionTitle(title: "Settings"),
@@ -924,46 +944,48 @@ class _CardHeader extends StatelessWidget {
 }
 
 class _StatsGrid extends StatelessWidget {
-  const _StatsGrid();
+  final Map<String, dynamic>? summary;
+
+  const _StatsGrid({required this.summary});
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       children: [
         Row(
           children: [
             Expanded(
               child: _StatCard(
                 title: "Total Orders",
-                value: "145",
+                value: "${summary?['totalOrders'] ?? 0}",
                 icon: Icons.receipt_long_rounded,
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: _StatCard(
                 title: "Accepted",
-                value: "120",
+                value: "${summary?['acceptedOrders'] ?? 0}",
                 icon: Icons.check_circle_outline_rounded,
               ),
             ),
           ],
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
               child: _StatCard(
                 title: "Rejected",
-                value: "25",
+                value: "${summary?['rejectedOrders'] ?? 0}",
                 icon: Icons.cancel_outlined,
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: _StatCard(
                 title: "Campaigns",
-                value: "3",
+                value: "${summary?['campaignsCount'] ?? 0}",
                 icon: Icons.campaign_rounded,
               ),
             ),
@@ -1025,43 +1047,49 @@ class _StatCard extends StatelessWidget {
 }
 
 class _CampaignsCard extends StatelessWidget {
-  const _CampaignsCard();
+  final List<Map<String, dynamic>> campaigns;
+
+  const _CampaignsCard({required this.campaigns});
 
   @override
   Widget build(BuildContext context) {
+    if (campaigns.isEmpty) {
+      return _WhiteCard(
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Center(
+            child: Text(
+              "No linked campaigns",
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Colors.black.withOpacity(0.55),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return _WhiteCard(
       child: Column(
-        children: const [
-          _CampaignTile(
-            title: "Al Noor Hajj Campaign",
-            campaignId: "CN-1001",
-            pilgrimsCount: "45 pilgrims",
-            arrivalDay: "Monday",
-            arrivalDate: "25/05/2026",
-            arrivalTime: "2:30 PM",
-            fromCountry: "Indonesia",
-          ),
-          SizedBox(height: 12),
-          _CampaignTile(
-            title: "Rahma Hajj Campaign",
-            campaignId: "CN-1002",
-            pilgrimsCount: "38 pilgrims",
-            arrivalDay: "Wednesday",
-            arrivalDate: "27/05/2026",
-            arrivalTime: "11:00 AM",
-            fromCountry: "Turkey",
-          ),
-          SizedBox(height: 12),
-          _CampaignTile(
-            title: "Al Huda Hajj Campaign",
-            campaignId: "CN-1003",
-            pilgrimsCount: "52 pilgrims",
-            arrivalDay: "Friday",
-            arrivalDate: "29/05/2026",
-            arrivalTime: "4:15 PM",
-            fromCountry: "Malaysia",
-          ),
-        ],
+        children: List.generate(campaigns.length, (i) {
+          final c = campaigns[i];
+
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: i == campaigns.length - 1 ? 0 : 12,
+            ),
+            child: _CampaignTile(
+              title: c['campaignName'] ?? '',
+              campaignId: c['campaignNumber'] ?? '',
+              pilgrimsCount: "${c['numberOfPilgrims'] ?? 0} pilgrims",
+              arrivalDay: "",
+              arrivalDate: "",
+              arrivalTime: c['arrivalDetails'] ?? '',
+              fromCountry: "",
+            ),
+          );
+        }),
       ),
     );
   }

@@ -186,10 +186,6 @@ class _ProviderMainAppBar extends StatelessWidget
       titleSpacing: 8,
       title: Row(
         children: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.menu_rounded, color: Colors.black87),
-          ),
           const SizedBox(width: 4),
           const Text(
             "NUSUQ",

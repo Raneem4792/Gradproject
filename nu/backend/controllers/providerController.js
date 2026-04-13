@@ -132,8 +132,73 @@ const updateProviderProfile = async (req, res) => {
     }
 };
 
+const getProviderProfileSummary = async (req, res) => {
+  try {
+    const { providerID } = req.params;
+
+    const [totalOrdersRows] = await db.query(
+      `
+      SELECT COUNT(*) AS totalOrders
+      FROM meal_order mo
+      JOIN meal m ON mo.mealID = m.mealID
+      WHERE m.providerID = ?
+      `,
+      [providerID]
+    );
+
+    const [acceptedRows] = await db.query(
+      `
+      SELECT COUNT(*) AS acceptedOrders
+      FROM meal_order mo
+      JOIN meal m ON mo.mealID = m.mealID
+      WHERE m.providerID = ? AND mo.status = 'accepted'
+      `,
+      [providerID]
+    );
+
+    const [rejectedRows] = await db.query(
+      `
+      SELECT COUNT(*) AS rejectedOrders
+      FROM meal_order mo
+      JOIN meal m ON mo.mealID = m.mealID
+      WHERE m.providerID = ? AND mo.status = 'rejected'
+      `,
+      [providerID]
+    );
+
+    const [campaignRows] = await db.query(
+      `
+      SELECT
+        campaignID,
+        campaignName,
+        campaignNumber,
+        numberOfPilgrims,
+        arrivalDetails
+      FROM campaign
+      WHERE providerID = ?
+      ORDER BY campaignID DESC
+      `,
+      [providerID]
+    );
+
+    return res.status(200).json({
+      totalOrders: totalOrdersRows[0].totalOrders || 0,
+      acceptedOrders: acceptedRows[0].acceptedOrders || 0,
+      rejectedOrders: rejectedRows[0].rejectedOrders || 0,
+      campaignsCount: campaignRows.length,
+      campaigns: campaignRows,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: 'Failed to load provider profile summary',
+    });
+  }
+};
+
 module.exports = {
     getProviderHomeData,
     getProviderProfile,
     updateProviderProfile,
+    getProviderProfileSummary,
 };
