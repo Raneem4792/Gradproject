@@ -7,6 +7,8 @@ import 'provider_notifications_page.dart';
 import '../models/provider_dashboard_report.dart';
 import '../services/report_service.dart';
 import '../session/user_session.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart';
 
 class ProviderDashboardPage extends StatefulWidget {
   static const String routeName = '/provider-dashboard';
@@ -33,7 +35,7 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
   String? _error;
 
   final ReportService _reportService = ReportService(
-    baseUrl: 'http://localhost:3000',
+    baseUrl: kIsWeb ? 'http://localhost:3000' : 'http://10.0.2.2:3000',
   );
 
   String? _providerId;
@@ -90,6 +92,26 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
         _error = e.toString();
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _openPdfReport() async {
+    if (_providerId == null || _providerId!.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Provider ID is missing')));
+      return;
+    }
+
+    final pdfUrl = _reportService.getProviderDashboardPdfUrl(_providerId!);
+    final uri = Uri.parse(pdfUrl);
+
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open PDF report')),
+      );
     }
   }
 
@@ -231,7 +253,12 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
 
             const SizedBox(height: 18),
 
-            _GenerateReportButton(onTap: () => HapticFeedback.selectionClick()),
+            _GenerateReportButton(
+              onTap: () async {
+                HapticFeedback.selectionClick();
+                await _openPdfReport();
+              },
+            ),
             const SizedBox(height: 10),
           ],
         ),

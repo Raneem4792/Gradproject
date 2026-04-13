@@ -16,8 +16,12 @@ class ReportService {
 
     if (response.statusCode == 200) {
       return ProviderDashboardReport.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to load provider dashboard');
     }
+  }
 
-    throw Exception('Failed to load provider dashboard');
+  String getProviderDashboardPdfUrl(String providerId) {
+    return '$baseUrl/api/reports/provider-dashboard/$providerId/pdf';
   }
 }
