@@ -10,6 +10,7 @@ const rateRoutes = require('./routes/rateRoutes');
 const healthRoutes = require('./routes/healthRoutes');
 const providerRoutes = require('./routes/providerRoutes');
 const campaignRoutes = require('./routes/campaignRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +26,7 @@ app.use('/api/rates', rateRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/providers', providerRoutes);
 app.use('/api/campaigns', campaignRoutes);
+app.use('/api/reports', reportRoutes);
 
 // استدعاء الداتابيس
 const db = require('./config/db');

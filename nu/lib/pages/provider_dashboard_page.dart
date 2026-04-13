@@ -4,6 +4,9 @@ import '../widgets/provider_bottom_nav.dart';
 import 'provider_home_screen.dart';
 import 'incoming_meal_requests_page.dart';
 import 'provider_notifications_page.dart';
+import '../models/provider_dashboard_report.dart';
+import '../services/report_service.dart';
+import '../session/user_session.dart';
 
 class ProviderDashboardPage extends StatefulWidget {
   static const String routeName = '/provider-dashboard';
@@ -25,6 +28,71 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
 
   int _navIndex = 2;
 
+  ProviderDashboardReport? _report;
+  bool _isLoading = true;
+  String? _error;
+
+  final ReportService _reportService = ReportService(
+    baseUrl: 'http://localhost:3000',
+  );
+
+  String? _providerId;
+
+  @override
+  void initState() {
+    super.initState();
+    _initDashboard();
+  }
+
+  Future<void> _initDashboard() async {
+    try {
+      final providerId = UserSession.userId;
+
+      if (providerId == null || providerId.isEmpty) {
+        throw Exception('Provider ID not found in session');
+      }
+
+      setState(() {
+        _providerId = providerId;
+      });
+
+      await _loadDashboard();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadDashboard() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      if (_providerId == null || _providerId!.isEmpty) {
+        throw Exception('Provider ID is missing');
+      }
+
+      final data = await _reportService.getProviderDashboard(_providerId!);
+
+      if (!mounted) return;
+      setState(() {
+        _report = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
   void _openNotificationsPage() {
     Navigator.push(
       context,
@@ -33,14 +101,10 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
   }
 
   void _handleBack() {
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const ProviderHomeScreen()),
-      );
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const ProviderHomeScreen()),
+    );
   }
 
   void _handleBottomNavTap(int i) {
@@ -64,6 +128,117 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
     }
   }
 
+  Widget _buildContent() {
+    final report = _report!;
+
+    return RefreshIndicator(
+      onRefresh: _loadDashboard,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _DashboardPageHeader(updatedAt: report.updatedAt),
+            const SizedBox(height: 14),
+
+            _HeroSummaryCard(
+              totalOrders: report.todayOrders,
+              campaignsCount: report.campaigns,
+              acceptancePercent: report.mealAcceptance.toDouble(),
+            ),
+
+            const SizedBox(height: 14),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _KpiCard(
+                    title: "Meal Acceptance",
+                    value: "${report.mealAcceptance}%",
+                    sub: "Accepted requests",
+                    icon: Icons.check_circle_outline_rounded,
+                    tone: KpiTone.green,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _KpiCard(
+                    title: "Feedback Average",
+                    value: report.averageScore.toStringAsFixed(1),
+                    sub: "Average rating",
+                    icon: Icons.star_border_rounded,
+                    tone: KpiTone.mint,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 14),
+
+            _AnalyticsCard(
+              title: "Order Trend",
+              subtitle: "Daily orders over the last 7 days",
+              child: _OrderTrendChart(data: report.orderTrend),
+            ),
+
+            const SizedBox(height: 14),
+
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _FeedbackCard(
+                      rating: report.averageScore,
+                      starsFilled: report.starsFilled,
+                      totalReviews: report.totalReviews,
+                      highestScore: report.highestScore,
+                      latestReview: report.latestReview,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _AISuggestionsCard(
+                      headline: "Smart Suggestions",
+                      suggestions: report.aiSuggestions,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            _AnalyticsCard(
+              title: "Pilgrim Health Snapshot",
+              subtitle: "Common dietary and health indicators",
+              child: _HealthInsightsGrid(
+                diabetes: report.healthSnapshot['diabetes'] ?? 0,
+                allergies: report.healthSnapshot['allergies'] ?? 0,
+                lowSodium: report.healthSnapshot['lowSodium'] ?? 0,
+                highProtein: report.healthSnapshot['highProtein'] ?? 0,
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            _AnalyticsCard(
+              title: "Top Requested Meals",
+              subtitle: "Most ordered meals today",
+              child: _TopMealsList(items: report.topMeals),
+            ),
+
+            const SizedBox(height: 18),
+
+            _GenerateReportButton(onTap: () => HapticFeedback.selectionClick()),
+            const SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,127 +249,32 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
       ),
       body: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _DashboardPageHeader(),
-              const SizedBox(height: 14),
-
-              const _HeroSummaryCard(totalOrders: 140, wastePercent: 7.8),
-
-              const SizedBox(height: 14),
-
-              Row(
-                children: const [
-                  Expanded(
-                    child: _KpiCard(
-                      title: "Waste Rate",
-                      value: "7.8%",
-                      sub: "Lower than yesterday",
-                      icon: Icons.delete_outline_rounded,
-                      tone: KpiTone.green,
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: _KpiCard(
-                      title: "Diet Match",
-                      value: "86%",
-                      sub: "Matched with profiles",
-                      icon: Icons.health_and_safety_outlined,
-                      tone: KpiTone.mint,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: const [
-                  Expanded(
-                    child: _KpiCard(
-                      title: "Meal Acceptance",
-                      value: "91%",
-                      sub: "Accepted requests",
-                      icon: Icons.check_circle_outline_rounded,
-                      tone: KpiTone.green,
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: _KpiCard(
-                      title: "Campaigns",
-                      value: "6",
-                      sub: "Active campaigns",
-                      icon: Icons.campaign_outlined,
-                      tone: KpiTone.mint,
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 14),
-
-              _AnalyticsCard(
-                title: "Waste Trend",
-                subtitle: "Daily meal waste over the last 7 days",
-                child: const _WasteTrendChart(),
-              ),
-
-              const SizedBox(height: 14),
-
-              SizedBox(
-                height: 220,
-                child: Row(
-                  children: const [
-                    Expanded(
-                      child: _FeedbackCard(
-                        rating: 4.2,
-                        starsFilled: 4,
-                        feedbackLines: 4,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline_rounded, size: 40),
+                      const SizedBox(height: 12),
+                      Text(
+                        _error!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: _AISuggestionsCard(
-                        headline: "AI Suggestions",
-                        suggestions: [
-                          "Reduce rice quantity in lunch meals.",
-                          "Increase diabetic-friendly meals tomorrow.",
-                          "Shrimp meals are trending in Campaign #21.",
-                        ],
+                      const SizedBox(height: 14),
+                      ElevatedButton(
+                        onPressed: _loadDashboard,
+                        child: const Text('Retry'),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-
-              const SizedBox(height: 14),
-
-              _AnalyticsCard(
-                title: "Pilgrim Health Snapshot",
-                subtitle: "Common dietary and health indicators",
-                child: const _HealthInsightsGrid(),
-              ),
-
-              const SizedBox(height: 14),
-
-              _AnalyticsCard(
-                title: "Top Requested Meals",
-                subtitle: "Most ordered meals today",
-                child: const _TopMealsList(),
-              ),
-
-              const SizedBox(height: 18),
-
-              _GenerateReportButton(
-                onTap: () => HapticFeedback.selectionClick(),
-              ),
-              const SizedBox(height: 10),
-            ],
-          ),
-        ),
+              )
+            : _buildContent(),
       ),
       bottomNavigationBar: ProviderBottomNav(
         currentIndex: _navIndex,
@@ -270,7 +350,18 @@ class _DashboardMainAppBar extends StatelessWidget
 /// PAGE HEADER
 /// =======================
 class _DashboardPageHeader extends StatelessWidget {
-  const _DashboardPageHeader();
+  final String updatedAt;
+  const _DashboardPageHeader({required this.updatedAt});
+
+  String _formatUpdatedAt(String value) {
+    if (value.isEmpty) return "Updated recently";
+    try {
+      final dt = DateTime.parse(value).toLocal();
+      return "Updated ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+    } catch (_) {
+      return "Updated recently";
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -283,7 +374,7 @@ class _DashboardPageHeader extends StatelessWidget {
           ),
         ),
         Text(
-          "Updated 5 min ago",
+          _formatUpdatedAt(updatedAt),
           style: TextStyle(
             fontSize: 11.8,
             fontWeight: FontWeight.w800,
@@ -300,11 +391,13 @@ class _DashboardPageHeader extends StatelessWidget {
 /// =======================
 class _HeroSummaryCard extends StatelessWidget {
   final int totalOrders;
-  final double wastePercent;
+  final int campaignsCount;
+  final double acceptancePercent;
 
   const _HeroSummaryCard({
     required this.totalOrders,
-    required this.wastePercent,
+    required this.campaignsCount,
+    required this.acceptancePercent,
   });
 
   static const Color primaryDark = Color(0xFF052720);
@@ -383,7 +476,7 @@ class _HeroSummaryCard extends StatelessWidget {
                       border: Border.all(color: Colors.white.withOpacity(0.12)),
                     ),
                     child: Text(
-                      "AI Powered",
+                      "Live Data",
                       style: TextStyle(
                         color: gold.withOpacity(0.95),
                         fontSize: 11.5,
@@ -406,8 +499,8 @@ class _HeroSummaryCard extends StatelessWidget {
                   const SizedBox(width: 14),
                   Expanded(
                     child: _HeroMetric(
-                      title: "Waste",
-                      value: "${wastePercent.toStringAsFixed(1)}%",
+                      title: "Campaigns",
+                      value: "$campaignsCount",
                       dotColor: gold,
                     ),
                   ),
@@ -415,8 +508,8 @@ class _HeroSummaryCard extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               _HeroProgressPill(
-                label: "Waste control",
-                percent: (100 - wastePercent).clamp(0, 100).toDouble(),
+                label: "Acceptance Rate",
+                percent: acceptancePercent,
               ),
             ],
           ),
@@ -701,23 +794,29 @@ class _AnalyticsCard extends StatelessWidget {
 }
 
 /// =======================
-/// Waste trend chart
+/// Order trend chart
 /// =======================
-class _WasteTrendChart extends StatelessWidget {
-  const _WasteTrendChart();
+class _OrderTrendChart extends StatelessWidget {
+  final List<Map<String, dynamic>> data;
+  const _OrderTrendChart({required this.data});
 
   @override
   Widget build(BuildContext context) {
-    final values = [14, 11, 10, 8, 9, 7, 6];
-    final labels = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
-    final maxV = values.reduce((a, b) => a > b ? a : b).toDouble();
+    final values = data
+        .map((e) => (e['value'] as num?)?.toDouble() ?? 0.0)
+        .toList();
+
+    final labels = data.map((e) => (e['label'] ?? '').toString()).toList();
+
+    final maxV = values.isEmpty ? 1.0 : values.reduce((a, b) => a > b ? a : b);
 
     return SizedBox(
       height: 150,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: List.generate(values.length, (i) {
-          final h = (values[i] / maxV) * 86.0;
+          final h = maxV == 0 ? 10.0 : (values[i] / maxV) * 86.0;
+
           return Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -725,7 +824,7 @@ class _WasteTrendChart extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
-                    "${values[i]}",
+                    values[i].toInt().toString(),
                     style: TextStyle(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w800,
@@ -768,12 +867,16 @@ class _WasteTrendChart extends StatelessWidget {
 class _FeedbackCard extends StatelessWidget {
   final double rating;
   final int starsFilled;
-  final int feedbackLines;
+  final int totalReviews;
+  final int highestScore;
+  final String latestReview;
 
   const _FeedbackCard({
     required this.rating,
     required this.starsFilled,
-    required this.feedbackLines,
+    required this.totalReviews,
+    required this.highestScore,
+    required this.latestReview,
   });
 
   static const Color primary = Color(0xFF0B4A40);
@@ -782,6 +885,7 @@ class _FeedbackCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -800,6 +904,15 @@ class _FeedbackCard extends StatelessWidget {
         children: [
           const Text("Feedback", style: TextStyle(fontWeight: FontWeight.w900)),
           const SizedBox(height: 10),
+          Container(
+            width: 44,
+            height: 6,
+            decoration: BoxDecoration(
+              color: mint.withOpacity(0.75),
+              borderRadius: BorderRadius.circular(99),
+            ),
+          ),
+          const SizedBox(height: 10),
           Row(
             children: List.generate(5, (i) {
               final filled = i < starsFilled;
@@ -811,21 +924,42 @@ class _FeedbackCard extends StatelessWidget {
             }),
           ),
           const SizedBox(height: 12),
-          ...List.generate(
-            feedbackLines,
-            (i) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Container(
-                height: 5,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(99),
-                ),
+          _FeedbackInfoRow(label: "Reviews", value: "$totalReviews"),
+          const SizedBox(height: 6),
+          _FeedbackInfoRow(label: "Average", value: rating.toStringAsFixed(1)),
+          const SizedBox(height: 6),
+          _FeedbackInfoRow(label: "Highest", value: "$highestScore/5"),
+          const SizedBox(height: 10),
+          Text(
+            "Latest review",
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w800,
+              color: Colors.black.withOpacity(0.55),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: mint.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: mint.withOpacity(0.45)),
+            ),
+            child: Text(
+              latestReview,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11.8,
+                height: 1.3,
+                fontWeight: FontWeight.w700,
+                color: Colors.black.withOpacity(0.72),
               ),
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: 12),
           Row(
             children: [
               Container(
@@ -861,8 +995,36 @@ class _FeedbackCard extends StatelessWidget {
   }
 }
 
+class _FeedbackInfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _FeedbackInfoRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.8,
+            fontWeight: FontWeight.w700,
+            color: Colors.black.withOpacity(0.56),
+          ),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900),
+        ),
+      ],
+    );
+  }
+}
+
 /// =======================
-/// AI card
+/// suggestions card
 /// =======================
 class _AISuggestionsCard extends StatelessWidget {
   final String headline;
@@ -876,7 +1038,12 @@ class _AISuggestionsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final visibleSuggestions = suggestions.isEmpty
+        ? ["No suggestions available yet."]
+        : suggestions;
+
     return Container(
+      height: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -908,49 +1075,47 @@ class _AISuggestionsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Expanded(
-            child: ListView.separated(
-              padding: EdgeInsets.zero,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: suggestions.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (_, i) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 9,
-                  ),
-                  decoration: BoxDecoration(
-                    color: softMint,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: mint.withOpacity(0.55)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        Icons.auto_awesome_rounded,
-                        size: 16,
-                        color: primary.withOpacity(0.82),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          suggestions[i],
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black.withOpacity(0.70),
-                            height: 1.25,
-                          ),
+
+          ...List.generate(visibleSuggestions.length, (i) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: i == visibleSuggestions.length - 1 ? 0 : 8,
+              ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 9,
+                ),
+                decoration: BoxDecoration(
+                  color: softMint,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: mint.withOpacity(0.55)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 16,
+                      color: primary.withOpacity(0.82),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        visibleSuggestions[i],
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black.withOpacity(0.70),
+                          height: 1.25,
                         ),
                       ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -961,46 +1126,56 @@ class _AISuggestionsCard extends StatelessWidget {
 /// Health insights
 /// =======================
 class _HealthInsightsGrid extends StatelessWidget {
-  const _HealthInsightsGrid();
+  final int diabetes;
+  final int allergies;
+  final int lowSodium;
+  final int highProtein;
+
+  const _HealthInsightsGrid({
+    required this.diabetes,
+    required this.allergies,
+    required this.lowSodium,
+    required this.highProtein,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       children: [
         Row(
           children: [
             Expanded(
               child: _HealthInsightCard(
                 title: "Diabetes",
-                value: "18%",
+                value: "$diabetes%",
                 icon: Icons.bloodtype_outlined,
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: _HealthInsightCard(
                 title: "Allergies",
-                value: "12%",
+                value: "$allergies%",
                 icon: Icons.warning_amber_rounded,
               ),
             ),
           ],
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
               child: _HealthInsightCard(
                 title: "Low Sodium",
-                value: "9%",
+                value: "$lowSodium%",
                 icon: Icons.health_and_safety_outlined,
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: _HealthInsightCard(
                 title: "High Protein",
-                value: "22%",
+                value: "$highProtein%",
                 icon: Icons.fitness_center_rounded,
               ),
             ),
@@ -1080,22 +1255,34 @@ class _HealthInsightCard extends StatelessWidget {
 /// Top meals
 /// =======================
 class _TopMealsList extends StatelessWidget {
-  const _TopMealsList();
+  final List<Map<String, dynamic>> items;
+  const _TopMealsList({required this.items});
 
   static const Color primary = Color(0xFF0B4A40);
   static const Color mint = Color(0xFFA8E7CF);
 
   @override
   Widget build(BuildContext context) {
-    final items = const [
-      ("Grilled Chicken + Rice", "320 orders"),
-      ("Shrimp Meal", "270 orders"),
-      ("Vegetarian Bowl", "190 orders"),
-    ];
+    if (items.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        alignment: Alignment.center,
+        child: Text(
+          "No meal requests yet",
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.black.withOpacity(0.55),
+          ),
+        ),
+      );
+    }
 
     return Column(
       children: List.generate(items.length, (i) {
-        final (name, count) = items[i];
+        final item = items[i];
+        final name = (item['name'] ?? '').toString();
+        final count = (item['orders'] ?? 0).toString();
+
         return Padding(
           padding: EdgeInsets.only(bottom: i == items.length - 1 ? 0 : 10),
           child: Container(
@@ -1128,7 +1315,7 @@ class _TopMealsList extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  count,
+                  "$count orders",
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     color: Colors.black.withOpacity(0.55),
