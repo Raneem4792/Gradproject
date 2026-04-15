@@ -11,6 +11,7 @@ const healthRoutes = require('./routes/healthRoutes');
 const providerRoutes = require('./routes/providerRoutes');
 const campaignRoutes = require('./routes/campaignRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,6 +28,9 @@ app.use('/api/health', healthRoutes);
 app.use('/api/providers', providerRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/reports', reportRoutes);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // استدعاء الداتابيس
 const db = require('./config/db');

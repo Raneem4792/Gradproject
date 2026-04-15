@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../widgets/provider_bottom_nav.dart';
 import 'provider_home_screen.dart';
 import 'incoming_meal_requests_page.dart';
@@ -37,40 +38,40 @@ class _ProviderCampaignManagementScreenState
     _loadCampaigns();
   }
 
-Future<void> _loadCampaigns() async {
-  print('1- _loadCampaigns started');
+  Future<void> _loadCampaigns() async {
+    print('1- _loadCampaigns started');
 
-  try {
-    final providerID = UserSession.userId;
-    print('2- providerID = $providerID');
+    try {
+      final providerID = UserSession.userId;
+      print('2- providerID = $providerID');
 
-    if (providerID == null || providerID.isEmpty) {
-      throw Exception('Provider ID not found in session');
+      if (providerID == null || providerID.isEmpty) {
+        throw Exception('Provider ID not found in session');
+      }
+
+      final campaigns =
+          await _campaignService.getCampaignsByProvider(providerID);
+
+      print('3- campaigns fetched = ${campaigns.length}');
+
+      if (!mounted) return;
+
+      setState(() {
+        _campaigns = campaigns;
+        _isLoading = false;
+      });
+
+      print('4- setState done');
+    } catch (e) {
+      print('ERROR in _loadCampaigns: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
     }
-
-    final campaigns =
-        await _campaignService.getCampaignsByProvider(providerID);
-
-    print('3- campaigns fetched = ${campaigns.length}');
-
-    if (!mounted) return;
-
-    setState(() {
-      _campaigns = campaigns;
-      _isLoading = false;
-    });
-
-    print('4- setState done');
-  } catch (e) {
-    print('ERROR in _loadCampaigns: $e');
-
-    if (!mounted) return;
-
-    setState(() {
-      _isLoading = false;
-    });
   }
-}
 
   void _handleBack() {
     if (Navigator.canPop(context)) {
@@ -518,8 +519,23 @@ class _CampaignCard extends StatelessWidget {
   static const Color mint = Color(0xFFA8E7CF);
   static const Color softMint = Color(0xFFE6F6F0);
 
+  String _extractLine(String source, String prefix) {
+    final lines = source.split('\n');
+    for (final line in lines) {
+      if (line.startsWith(prefix)) {
+        return line.replaceFirst(prefix, '').trim();
+      }
+    }
+    return '';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final fromText = _extractLine(campaign.arrivalDetails, 'From:');
+    final timeText = _extractLine(campaign.arrivalDetails, 'Arrival Time:');
+    final descriptionText =
+        _extractLine(campaign.arrivalDetails, 'Description:');
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -539,10 +555,11 @@ class _CampaignCard extends StatelessWidget {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 8,
-            height: 132,
+            height: 165,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
@@ -591,10 +608,30 @@ class _CampaignCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 10),
-                _InfoRow(
-                  icon: Icons.info_outline_rounded,
-                  text: campaign.arrivalDetails,
-                ),
+                if (fromText.isNotEmpty)
+                  _InfoRow(
+                    icon: Icons.place_outlined,
+                    text: 'From: $fromText',
+                  ),
+                if (timeText.isNotEmpty) const SizedBox(height: 6),
+                if (timeText.isNotEmpty)
+                  _InfoRow(
+                    icon: Icons.schedule_rounded,
+                    text: 'Arrival: $timeText',
+                  ),
+                if (descriptionText.isNotEmpty) const SizedBox(height: 6),
+                if (descriptionText.isNotEmpty)
+                  _InfoRow(
+                    icon: Icons.description_outlined,
+                    text: descriptionText,
+                  ),
+                if (fromText.isEmpty &&
+                    timeText.isEmpty &&
+                    descriptionText.isEmpty)
+                  _InfoRow(
+                    icon: Icons.info_outline_rounded,
+                    text: campaign.arrivalDetails,
+                  ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -665,15 +702,16 @@ class _CampaignFormSheetState extends State<_CampaignFormSheet> {
   static const Color primaryDark = Color(0xFF052720);
   static const Color primary = Color(0xFF0B4A40);
   static const Color mint = Color(0xFFA8E7CF);
-  static const Color softMint = Color(0xFFE6F6F0);
 
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _nameController;
   late final TextEditingController _campaignNumberController;
-  late final TextEditingController _arrivalDetailsController;
+  late final TextEditingController _pilgrimsCountController;
+  late final TextEditingController _arrivalFromController;
+  late final TextEditingController _descriptionController;
 
-  late int _pilgrimsCount;
+  DateTime? _selectedArrivalDateTime;
 
   bool get _isEdit => widget.mode == _FormMode.edit;
 
@@ -686,45 +724,139 @@ class _CampaignFormSheetState extends State<_CampaignFormSheet> {
     _nameController = TextEditingController(
       text: initial?.campaignName ?? '',
     );
+
     _campaignNumberController = TextEditingController(
       text: initial?.campaignNumber ?? '',
     );
-    _arrivalDetailsController = TextEditingController(
-      text: initial?.arrivalDetails ?? '',
+
+    _pilgrimsCountController = TextEditingController(
+      text: initial?.numberOfPilgrims.toString() ?? '',
     );
 
-    _pilgrimsCount = initial?.numberOfPilgrims ?? 1;
+    final parsed = _parseArrivalDetails(initial?.arrivalDetails ?? '');
+
+    _arrivalFromController = TextEditingController(
+      text: parsed['from'] ?? '',
+    );
+
+    _descriptionController = TextEditingController(
+      text: parsed['description'] ?? '',
+    );
+
+    if ((parsed['time'] ?? '').isNotEmpty) {
+      _selectedArrivalDateTime = DateTime.tryParse(parsed['time']!);
+    }
+  }
+
+  Map<String, String> _parseArrivalDetails(String details) {
+    final result = <String, String>{};
+
+    final lines = details.split('\n');
+    for (final line in lines) {
+      if (line.startsWith('From:')) {
+        result['from'] = line.replaceFirst('From:', '').trim();
+      } else if (line.startsWith('Arrival Time:')) {
+        result['time'] = line.replaceFirst('Arrival Time:', '').trim();
+      } else if (line.startsWith('Description:')) {
+        result['description'] = line.replaceFirst('Description:', '').trim();
+      }
+    }
+
+    return result;
+  }
+
+  String _buildArrivalDetails() {
+    final from = _arrivalFromController.text.trim();
+    final description = _descriptionController.text.trim();
+    final timeText = _selectedArrivalDateTime?.toIso8601String() ?? '';
+
+    return '''
+From: $from
+Arrival Time: $timeText
+Description: $description
+'''.trim();
+  }
+
+  String _formatDateTime(DateTime? value) {
+    if (value == null) return 'Select arrival date & time';
+
+    String two(int n) => n.toString().padLeft(2, '0');
+
+    int hour = value.hour;
+    final minute = two(value.minute);
+    final amPm = hour >= 12 ? 'PM' : 'AM';
+    hour = hour % 12;
+    if (hour == 0) hour = 12;
+
+    return '${value.year}-${two(value.month)}-${two(value.day)}  $hour:$minute $amPm';
+  }
+
+  Future<void> _pickArrivalDateTime() async {
+    final now = DateTime.now();
+
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedArrivalDateTime ?? now,
+      firstDate: DateTime(now.year - 1),
+      lastDate: DateTime(now.year + 5),
+    );
+
+    if (pickedDate == null) return;
+    if (!mounted) return;
+
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: _selectedArrivalDateTime != null
+          ? TimeOfDay.fromDateTime(_selectedArrivalDateTime!)
+          : TimeOfDay.now(),
+    );
+
+    if (pickedTime == null) return;
+
+    setState(() {
+      _selectedArrivalDateTime = DateTime(
+        pickedDate.year,
+        pickedDate.month,
+        pickedDate.day,
+        pickedTime.hour,
+        pickedTime.minute,
+      );
+    });
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _campaignNumberController.dispose();
-    _arrivalDetailsController.dispose();
+    _pilgrimsCountController.dispose();
+    _arrivalFromController.dispose();
+    _descriptionController.dispose();
     super.dispose();
-  }
-
-  void _increasePilgrims() {
-    setState(() {
-      _pilgrimsCount++;
-    });
-  }
-
-  void _decreasePilgrims() {
-    if (_pilgrimsCount <= 1) return;
-    setState(() {
-      _pilgrimsCount--;
-    });
   }
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
 
+    final pilgrimsCount = int.tryParse(_pilgrimsCountController.text.trim());
+    if (pilgrimsCount == null || pilgrimsCount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid pilgrims count')),
+      );
+      return;
+    }
+
+    if (_selectedArrivalDateTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select arrival date and time')),
+      );
+      return;
+    }
+
     final result = _CampaignFormResult(
       campaignName: _nameController.text.trim(),
       campaignNumber: _campaignNumberController.text.trim(),
-      numberOfPilgrims: _pilgrimsCount,
-      arrivalDetails: _arrivalDetailsController.text.trim(),
+      numberOfPilgrims: pilgrimsCount,
+      arrivalDetails: _buildArrivalDetails(),
     );
 
     Navigator.pop(context, result);
@@ -808,26 +940,93 @@ class _CampaignFormSheetState extends State<_CampaignFormSheet> {
               const SizedBox(height: 14),
               const _SectionLabel(title: 'Number of Pilgrims'),
               const SizedBox(height: 8),
-              _PilgrimsCounter(
-                count: _pilgrimsCount,
-                onIncrease: _increasePilgrims,
-                onDecrease: _decreasePilgrims,
-              ),
-
-              const SizedBox(height: 14),
-              const _SectionLabel(title: 'Arrival Details'),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _arrivalDetailsController,
+              _StyledInput(
+                controller: _pilgrimsCountController,
+                hint: 'Enter pilgrims count',
+                prefixIcon: Icons.groups_rounded,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
-                    return 'Arrival details are required';
+                    return 'Number of pilgrims is required';
+                  }
+                  final number = int.tryParse(v.trim());
+                  if (number == null || number <= 0) {
+                    return 'Enter a valid number';
                   }
                   return null;
                 },
+              ),
+
+              const SizedBox(height: 14),
+              const _SectionLabel(title: 'Arrival From'),
+              const SizedBox(height: 8),
+              _StyledInput(
+                controller: _arrivalFromController,
+                hint: 'Example: Indonesia / Jakarta',
+                prefixIcon: Icons.place_outlined,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return 'Arrival origin is required';
+                  }
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 14),
+              const _SectionLabel(title: 'Arrival Date & Time'),
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: _pickArrivalDateTime,
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: primary.withOpacity(0.10)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.schedule_rounded,
+                        color: primary.withOpacity(0.78),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _formatDateTime(_selectedArrivalDateTime),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: _selectedArrivalDateTime == null
+                                ? Colors.black.withOpacity(0.38)
+                                : Colors.black87,
+                          ),
+                        ),
+                      ),
+                      const Icon(Icons.arrow_drop_down_rounded),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 14),
+              const _SectionLabel(title: 'Description'),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _descriptionController,
                 maxLines: 4,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return 'Description is required';
+                  }
+                  return null;
+                },
                 decoration: InputDecoration(
-                  hintText: 'Example: Arriving on Monday at 2:30 PM from Indonesia',
+                  hintText: 'Write extra notes about the campaign',
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -840,6 +1039,15 @@ class _CampaignFormSheetState extends State<_CampaignFormSheet> {
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: const BorderSide(color: primary, width: 1.3),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Color(0xFFB3261E)),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide:
+                        const BorderSide(color: Color(0xFFB3261E), width: 1.2),
                   ),
                 ),
               ),
@@ -931,6 +1139,7 @@ class _StyledInput extends StatelessWidget {
   final IconData prefixIcon;
   final String? Function(String?)? validator;
   final TextInputType keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
 
   const _StyledInput({
     required this.controller,
@@ -938,6 +1147,7 @@ class _StyledInput extends StatelessWidget {
     required this.prefixIcon,
     required this.validator,
     this.keyboardType = TextInputType.text,
+    this.inputFormatters,
   });
 
   static const Color primary = Color(0xFF0B4A40);
@@ -949,6 +1159,7 @@ class _StyledInput extends StatelessWidget {
       controller: controller,
       validator: validator,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       style: const TextStyle(fontWeight: FontWeight.w700),
       decoration: InputDecoration(
         hintText: hint,
@@ -982,96 +1193,6 @@ class _StyledInput extends StatelessWidget {
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: mint.withOpacity(0.40)),
-        ),
-      ),
-    );
-  }
-}
-
-class _PilgrimsCounter extends StatelessWidget {
-  final int count;
-  final VoidCallback onIncrease;
-  final VoidCallback onDecrease;
-
-  const _PilgrimsCounter({
-    required this.count,
-    required this.onIncrease,
-    required this.onDecrease,
-  });
-
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color mint = Color(0xFFA8E7CF);
-  static const Color softMint = Color(0xFFE6F6F0);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: primary.withOpacity(0.10)),
-      ),
-      child: Row(
-        children: [
-          _CounterButton(icon: Icons.remove_rounded, onTap: onDecrease),
-          Expanded(
-            child: Center(
-              child: Column(
-                children: [
-                  Text(
-                    '$count',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF052720),
-                    ),
-                  ),
-                  Text(
-                    'Pilgrims',
-                    style: TextStyle(
-                      fontSize: 12.2,
-                      color: Colors.black.withOpacity(0.55),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          _CounterButton(icon: Icons.add_rounded, onTap: onIncrease),
-        ],
-      ),
-    );
-  }
-}
-
-class _CounterButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _CounterButton({required this.icon, required this.onTap});
-
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color mint = Color(0xFFA8E7CF);
-  static const Color softMint = Color(0xFFE6F6F0);
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: softMint,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: mint.withOpacity(0.65)),
-          ),
-          child: Icon(icon, color: primary.withOpacity(0.90), size: 22),
         ),
       ),
     );
@@ -1146,6 +1267,7 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 16, color: primary.withOpacity(0.80)),
         const SizedBox(width: 7),
