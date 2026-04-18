@@ -43,22 +43,75 @@ class AuthService {
     password,
     campaignID,
   }) {
-    const [existingRows] = await db.query(
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const normalizedPhone = String(phoneNumber).trim();
+    const normalizedFullName = String(fullName).trim();
+    const normalizedPilgrimID = String(pilgrimID).trim();
+
+    const [pilgrimIdRows] = await db.query(
       `SELECT pilgrimID
        FROM Pilgrim
-       WHERE pilgrimID = ? OR email = ? OR phoneNumber = ?`,
-      [pilgrimID, email, phoneNumber]
+       WHERE pilgrimID = ?`,
+      [normalizedPilgrimID]
     );
 
-    if (existingRows.length > 0) {
-      throw new Error('Account already exists');
+    if (pilgrimIdRows.length > 0) {
+      const error = new Error('This pilgrim ID is already registered');
+      error.field = 'pilgrimID';
+      throw error;
+    }
+
+    const [emailRows] = await db.query(
+      `SELECT email
+       FROM Pilgrim
+       WHERE email = ?`,
+      [normalizedEmail]
+    );
+
+    if (emailRows.length > 0) {
+      const error = new Error('This email is already registered');
+      error.field = 'email';
+      throw error;
+    }
+
+    const [phoneRows] = await db.query(
+      `SELECT phoneNumber
+       FROM Pilgrim
+       WHERE phoneNumber = ?`,
+      [normalizedPhone]
+    );
+
+    if (phoneRows.length > 0) {
+      const error = new Error('This phone number is already registered');
+      error.field = 'phoneNumber';
+      throw error;
+    }
+
+    const [campaignRows] = await db.query(
+      `SELECT campaignID
+       FROM Campaign
+       WHERE campaignID = ?`,
+      [campaignID]
+    );
+
+    if (campaignRows.length === 0) {
+      const error = new Error('Campaign ID does not exist');
+      error.field = 'campaignID';
+      throw error;
     }
 
     await db.query(
       `INSERT INTO Pilgrim
        (pilgrimID, fullName, email, phoneNumber, password, campaignID)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [pilgrimID, fullName, email, phoneNumber, password, campaignID]
+      [
+        normalizedPilgrimID,
+        normalizedFullName,
+        normalizedEmail,
+        normalizedPhone,
+        password,
+        campaignID,
+      ]
     );
 
     return {
@@ -73,22 +126,61 @@ class AuthService {
     phoneNumber,
     password,
   }) {
-    const [existingRows] = await db.query(
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const normalizedPhone = String(phoneNumber).trim();
+    const normalizedFullName = String(fullName).trim();
+    const normalizedProviderID = String(providerID).trim();
+
+    const [providerIdRows] = await db.query(
       `SELECT providerID
        FROM Provider
-       WHERE providerID = ? OR email = ? OR phoneNumber = ?`,
-      [providerID, email, phoneNumber]
+       WHERE providerID = ?`,
+      [normalizedProviderID]
     );
 
-    if (existingRows.length > 0) {
-      throw new Error('Account already exists');
+    if (providerIdRows.length > 0) {
+      const error = new Error('This provider ID is already registered');
+      error.field = 'providerID';
+      throw error;
+    }
+
+    const [emailRows] = await db.query(
+      `SELECT email
+       FROM Provider
+       WHERE email = ?`,
+      [normalizedEmail]
+    );
+
+    if (emailRows.length > 0) {
+      const error = new Error('This email is already registered');
+      error.field = 'email';
+      throw error;
+    }
+
+    const [phoneRows] = await db.query(
+      `SELECT phoneNumber
+       FROM Provider
+       WHERE phoneNumber = ?`,
+      [normalizedPhone]
+    );
+
+    if (phoneRows.length > 0) {
+      const error = new Error('This phone number is already registered');
+      error.field = 'phoneNumber';
+      throw error;
     }
 
     await db.query(
       `INSERT INTO Provider
        (providerID, fullName, email, phoneNumber, password)
        VALUES (?, ?, ?, ?, ?)`,
-      [providerID, fullName, email, phoneNumber, password]
+      [
+        normalizedProviderID,
+        normalizedFullName,
+        normalizedEmail,
+        normalizedPhone,
+        password,
+      ]
     );
 
     return {

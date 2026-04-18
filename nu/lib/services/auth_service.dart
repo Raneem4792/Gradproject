@@ -12,25 +12,38 @@ class AuthService {
     }
   }
 
-  Future<User> login({
-    required String id,
-    required String password,
-  }) async {
+  String _extractMessage(
+    http.Response response, {
+    String fallback = 'Request failed',
+  }) {
+    try {
+      final data = jsonDecode(response.body);
+      if (data is Map<String, dynamic> && data['message'] != null) {
+        return data['message'].toString();
+      }
+      return fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  Future<User> login({required String id, required String password}) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'id': id,
-        'password': password,
-      }),
+      body: jsonEncode({'id': id, 'password': password}),
     );
 
-    final data = jsonDecode(response.body);
-
     if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
       return User.fromJson(data);
     } else {
-      throw Exception(data['message'] ?? 'Login failed');
+      throw Exception(
+        _extractMessage(
+          response,
+          fallback: 'Login failed. Please check your ID and password.',
+        ),
+      );
     }
   }
 
@@ -55,12 +68,11 @@ class AuthService {
       }),
     );
 
-    final data = jsonDecode(response.body);
-
     if (response.statusCode == 201) {
+      final data = jsonDecode(response.body);
       return data['message'] ?? 'Signup successful';
     } else {
-      throw Exception(data['message'] ?? 'Signup failed');
+      throw Exception(response.body);
     }
   }
 
@@ -83,12 +95,11 @@ class AuthService {
       }),
     );
 
-    final data = jsonDecode(response.body);
-
     if (response.statusCode == 201) {
+      final data = jsonDecode(response.body);
       return data['message'] ?? 'Signup successful';
     } else {
-      throw Exception(data['message'] ?? 'Signup failed');
+      throw Exception(response.body);
     }
   }
 }
