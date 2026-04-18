@@ -73,11 +73,9 @@ class _PilgrimSubmitMealRequestPageState
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to submit request: $e'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to submit request: $e')));
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
@@ -191,10 +189,7 @@ class _PilgrimSubmitMealRequestPageState
                         ),
                         focusedBorder: const OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(16)),
-                          borderSide: BorderSide(
-                            color: primary,
-                            width: 1.2,
-                          ),
+                          borderSide: BorderSide(color: primary, width: 1.2),
                         ),
                       ),
                     ),
@@ -223,8 +218,9 @@ class _PilgrimSubmitMealRequestPageState
                           height: 22,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.4,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : const Text(
@@ -249,6 +245,8 @@ class _PilgrimSubmitMealRequestPageState
       barrierDismissible: false,
       builder: (_) {
         return Dialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
@@ -273,10 +271,7 @@ class _PilgrimSubmitMealRequestPageState
                 const SizedBox(height: 14),
                 const Text(
                   "Request Submitted",
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -321,8 +316,7 @@ class _PilgrimSubmitMealRequestPageState
   }
 }
 
-class _SubmitMealAppBar extends StatelessWidget
-    implements PreferredSizeWidget {
+class _SubmitMealAppBar extends StatelessWidget implements PreferredSizeWidget {
   const _SubmitMealAppBar();
 
   @override
@@ -402,9 +396,7 @@ class _MealSummaryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(24),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             child: Container(
               height: 150,
               width: double.infinity,
@@ -412,10 +404,7 @@ class _MealSummaryCard extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    softMint,
-                    mint.withOpacity(0.35),
-                  ],
+                  colors: [softMint, mint.withOpacity(0.35)],
                 ),
               ),
               child: Center(
@@ -516,10 +505,7 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: const TextStyle(
-        fontSize: 14.5,
-        fontWeight: FontWeight.w900,
-      ),
+      style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w900),
     );
   }
 }

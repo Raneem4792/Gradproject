@@ -5,6 +5,7 @@ import '../session/user_session.dart';
 import '../models/health_profile.dart';
 import '../models/pilgrim_profile.dart';
 import '../services/pilgrim_service.dart';
+import '../services/meal_service.dart';
 import 'login_page.dart';
 
 class PilgrimProfilePage extends StatefulWidget {
@@ -456,40 +457,37 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
     );
   }
 
-    Future<void> _logout() async {
-  final shouldLogout = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text("Log Out"),
-      content: const Text("Are you sure you want to log out?"),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text("Cancel"),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, true),
-          child: const Text(
-            "Log Out",
-            style: TextStyle(color: Colors.red),
+  Future<void> _logout() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Log Out"),
+        content: const Text("Are you sure you want to log out?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
           ),
-        ),
-      ],
-    ),
-  );
-
-  if (shouldLogout == true) {
-    UserSession.clear();
-
-    if (!mounted) return;
-
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      LoginScreen.routeName, 
-      (route) => false,
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Log Out", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
+
+    if (shouldLogout == true) {
+      UserSession.clear();
+
+      if (!mounted) return;
+
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        LoginScreen.routeName,
+        (route) => false,
+      );
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -579,11 +577,6 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
               ),
             const SizedBox(height: 16),
 
-            const _SectionTitle(title: "Meal Preference Summary"),
-            const SizedBox(height: 10),
-            const _MealSummaryCard(),
-            const SizedBox(height: 16),
-
             const _SectionTitle(title: "Settings"),
             const SizedBox(height: 10),
             _SettingsCard(
@@ -598,14 +591,12 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
             ),
             const SizedBox(height: 22),
 
-           _LogoutButton(onTap: _logout),
+            _LogoutButton(onTap: _logout),
           ],
         ),
       ),
     );
   }
-
-
 }
 
 class _PilgrimProfileAppBar extends StatelessWidget
@@ -1060,61 +1051,6 @@ class _HealthProfileCard extends StatelessWidget {
             const SizedBox(height: 14),
             _TagsWrap(tags: tags),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class _MealSummaryCard extends StatelessWidget {
-  const _MealSummaryCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return _WhiteCard(
-      child: Column(
-        children: const [
-          _CardHeader(title: "Preference Summary"),
-          SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _MiniStatCard(
-                  title: "Orders",
-                  value: "12",
-                  icon: Icons.receipt_long_rounded,
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: _MiniStatCard(
-                  title: "AI Match",
-                  value: "ON",
-                  icon: Icons.auto_awesome_rounded,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _MiniStatCard(
-                  title: "Last Meal",
-                  value: "Salad",
-                  icon: Icons.lunch_dining_rounded,
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: _MiniStatCard(
-                  title: "Main Plan",
-                  value: "Healthy",
-                  icon: Icons.favorite_outline_rounded,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -1782,50 +1718,6 @@ class _SwitchSettingRow extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _MiniStatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-
-  const _MiniStatCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFA),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withOpacity(0.05)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 22, color: PilgrimProfilePage.primary),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.black.withOpacity(0.58),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
