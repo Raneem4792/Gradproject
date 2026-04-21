@@ -1103,10 +1103,7 @@ class _CampaignsCard extends StatelessWidget {
               title: c['campaignName'] ?? '',
               campaignId: c['campaignNumber'] ?? '',
               pilgrimsCount: "${c['numberOfPilgrims'] ?? 0} pilgrims",
-              arrivalDay: "",
-              arrivalDate: "",
-              arrivalTime: c['arrivalDetails'] ?? '',
-              fromCountry: "",
+              arrivalDetails: c['arrivalDetails'] ?? '',
             ),
           );
         }),
@@ -1119,22 +1116,58 @@ class _CampaignTile extends StatelessWidget {
   final String title;
   final String campaignId;
   final String pilgrimsCount;
-  final String arrivalDay;
-  final String arrivalDate;
-  final String arrivalTime;
-  final String fromCountry;
+  final String arrivalDetails;
 
   const _CampaignTile({
     required this.title,
     required this.campaignId,
     required this.pilgrimsCount,
-    required this.arrivalDay,
-    required this.arrivalDate,
-    required this.arrivalTime,
-    required this.fromCountry,
+    required this.arrivalDetails,
   });
 
+  String _extractLine(String source, String prefix) {
+    final lines = source.split('\n');
+    for (final line in lines) {
+      if (line.startsWith(prefix)) {
+        return line.replaceFirst(prefix, '').trim();
+      }
+    }
+    return '';
+  }
+
+  String _formatArrivalDate(String raw) {
+    if (raw.isEmpty) return 'Not available';
+
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return raw;
+
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${parsed.year}-${two(parsed.month)}-${two(parsed.day)}';
+  }
+
+  String _formatArrivalTime(String raw) {
+    if (raw.isEmpty) return 'Not available';
+
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return raw;
+
+    String two(int n) => n.toString().padLeft(2, '0');
+    int hour = parsed.hour;
+    final minute = two(parsed.minute);
+    final amPm = hour >= 12 ? 'PM' : 'AM';
+    hour = hour % 12;
+    if (hour == 0) hour = 12;
+
+    return '$hour:$minute $amPm';
+  }
+
   void _showCampaignDialog(BuildContext context) {
+    final fromText = _extractLine(arrivalDetails, 'From:');
+    final rawArrivalTime = _extractLine(arrivalDetails, 'Arrival Time:');
+
+    final formattedDate = _formatArrivalDate(rawArrivalTime);
+    final formattedTime = _formatArrivalTime(rawArrivalTime);
+
     showDialog(
       context: context,
       builder: (_) {
@@ -1152,7 +1185,7 @@ class _CampaignTile extends StatelessWidget {
               children: [
                 Container(
                   width: 8,
-                  height: 150,
+                  height: 170,
                   decoration: BoxDecoration(
                     color: const Color(0xFF8ED8C0),
                     borderRadius: BorderRadius.circular(999),
@@ -1199,6 +1232,7 @@ class _CampaignTile extends StatelessWidget {
                               children: [
                                 Wrap(
                                   spacing: 10,
+                                  runSpacing: 10,
                                   children: [
                                     _DialogBadge(text: campaignId),
                                     _DialogBadge(text: pilgrimsCount),
@@ -1207,14 +1241,18 @@ class _CampaignTile extends StatelessWidget {
                                 const SizedBox(height: 14),
                                 _DialogDetailRow(
                                   icon: Icons.calendar_today_outlined,
-                                  text:
-                                      "Arrival Day: $arrivalDay • $arrivalDate",
+                                  text: "Arrival Date: $formattedDate",
                                 ),
                                 const SizedBox(height: 10),
                                 _DialogDetailRow(
                                   icon: Icons.access_time_rounded,
+                                  text: "Arrival Time: $formattedTime",
+                                ),
+                                const SizedBox(height: 10),
+                                _DialogDetailRow(
+                                  icon: Icons.place_outlined,
                                   text:
-                                      "Arrival Time: $arrivalTime • From $fromCountry",
+                                      "From: ${fromText.isEmpty ? 'Not available' : fromText}",
                                 ),
                               ],
                             ),
@@ -1230,6 +1268,7 @@ class _CampaignTile extends StatelessWidget {
                             style: TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: 15,
+                              color: ProviderProfilePage.primary,
                             ),
                           ),
                         ),
