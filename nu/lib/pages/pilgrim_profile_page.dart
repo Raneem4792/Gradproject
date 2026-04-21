@@ -461,16 +461,36 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Log Out"),
-        content: const Text("Are you sure you want to log out?"),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: const Text(
+          "Log Out",
+          style: TextStyle(fontWeight: FontWeight.w900, color: Colors.black87),
+        ),
+        content: const Text(
+          "Are you sure you want to log out?",
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancel"),
+            child: const Text(
+              "Cancel",
+              style: TextStyle(
+                color: PilgrimProfilePage.primary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text("Log Out", style: TextStyle(color: Colors.red)),
+            child: const Text(
+              "Log Out",
+              style: TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
         ],
       ),
@@ -1429,15 +1449,42 @@ class _DropdownField extends StatelessWidget {
         Expanded(
           child: DropdownButtonFormField<String>(
             value: value,
+            dropdownColor: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            icon: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Colors.black54,
+            ),
+            style: const TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w700,
+              fontSize: 14.2,
+            ),
             items: items
                 .map(
-                  (item) =>
-                      DropdownMenuItem<String>(value: item, child: Text(item)),
+                  (item) => DropdownMenuItem<String>(
+                    value: item,
+                    child: Text(
+                      item,
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 )
                 .toList(),
             onChanged: onChanged,
             decoration: InputDecoration(
               labelText: label,
+              labelStyle: const TextStyle(
+                color: PilgrimProfilePage.primary,
+                fontWeight: FontWeight.w600,
+              ),
+              floatingLabelStyle: const TextStyle(
+                color: PilgrimProfilePage.primary,
+                fontWeight: FontWeight.w700,
+              ),
               isDense: true,
               filled: true,
               fillColor: const Color(0xFFF8FAFA),

@@ -296,16 +296,36 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Log Out"),
-        content: const Text("Are you sure you want to log out?"),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: const Text(
+          "Log Out",
+          style: TextStyle(fontWeight: FontWeight.w900, color: Colors.black87),
+        ),
+        content: const Text(
+          "Are you sure you want to log out?",
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancel"),
+            child: const Text(
+              "Cancel",
+              style: TextStyle(
+                color: ProviderProfilePage.primary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text("Log Out", style: TextStyle(color: Colors.red)),
+            child: const Text(
+              "Log Out",
+              style: TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
         ],
       ),
