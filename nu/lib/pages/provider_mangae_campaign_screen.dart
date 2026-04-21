@@ -49,8 +49,9 @@ class _ProviderCampaignManagementScreenState
         throw Exception('Provider ID not found in session');
       }
 
-      final campaigns =
-          await _campaignService.getCampaignsByProvider(providerID);
+      final campaigns = await _campaignService.getCampaignsByProvider(
+        providerID,
+      );
 
       print('3- campaigns fetched = ${campaigns.length}');
 
@@ -140,12 +141,15 @@ class _ProviderCampaignManagementScreenState
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Campaign added successfully')),
+        const SnackBar(
+          content: Text('Campaign added successfully'),
+          backgroundColor: primary,
+        ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to add campaign: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to add campaign: $e')));
     }
   }
 
@@ -157,10 +161,8 @@ class _ProviderCampaignManagementScreenState
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
-      builder: (_) => _CampaignFormSheet(
-        mode: _FormMode.edit,
-        initial: campaign,
-      ),
+      builder: (_) =>
+          _CampaignFormSheet(mode: _FormMode.edit, initial: campaign),
     );
 
     if (updated == null) return;
@@ -178,12 +180,15 @@ class _ProviderCampaignManagementScreenState
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Campaign updated successfully')),
+        const SnackBar(
+          content: Text('Campaign updated successfully'),
+          backgroundColor: primary,
+        ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update campaign: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to update campaign: $e')));
     }
   }
 
@@ -241,12 +246,15 @@ class _ProviderCampaignManagementScreenState
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Campaign deleted successfully')),
+        const SnackBar(
+          content: Text('Campaign deleted successfully'),
+          backgroundColor: primary,
+        ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete campaign: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to delete campaign: $e')));
     }
   }
 
@@ -533,8 +541,10 @@ class _CampaignCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final fromText = _extractLine(campaign.arrivalDetails, 'From:');
     final timeText = _extractLine(campaign.arrivalDetails, 'Arrival Time:');
-    final descriptionText =
-        _extractLine(campaign.arrivalDetails, 'Description:');
+    final descriptionText = _extractLine(
+      campaign.arrivalDetails,
+      'Description:',
+    );
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -609,10 +619,7 @@ class _CampaignCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 if (fromText.isNotEmpty)
-                  _InfoRow(
-                    icon: Icons.place_outlined,
-                    text: 'From: $fromText',
-                  ),
+                  _InfoRow(icon: Icons.place_outlined, text: 'From: $fromText'),
                 if (timeText.isNotEmpty) const SizedBox(height: 6),
                 if (timeText.isNotEmpty)
                   _InfoRow(
@@ -721,9 +728,7 @@ class _CampaignFormSheetState extends State<_CampaignFormSheet> {
 
     final initial = widget.initial;
 
-    _nameController = TextEditingController(
-      text: initial?.campaignName ?? '',
-    );
+    _nameController = TextEditingController(text: initial?.campaignName ?? '');
 
     _campaignNumberController = TextEditingController(
       text: initial?.campaignNumber ?? '',
@@ -735,9 +740,11 @@ class _CampaignFormSheetState extends State<_CampaignFormSheet> {
 
     final parsed = _parseArrivalDetails(initial?.arrivalDetails ?? '');
 
-    _arrivalFromController = TextEditingController(
-      text: parsed['from'] ?? '',
-    );
+    _arrivalFromController = TextEditingController(text: parsed['from'] ?? '');
+
+    _selectedArrivalCountry = _arrivalFromController.text.trim().isEmpty
+        ? null
+        : _arrivalFromController.text.trim();
 
     _descriptionController = TextEditingController(
       text: parsed['description'] ?? '',
@@ -774,7 +781,8 @@ class _CampaignFormSheetState extends State<_CampaignFormSheet> {
 From: $from
 Arrival Time: $timeText
 Description: $description
-'''.trim();
+'''
+        .trim();
   }
 
   String _formatDateTime(DateTime? value) {
@@ -799,6 +807,28 @@ Description: $description
       initialDate: _selectedArrivalDateTime ?? now,
       firstDate: DateTime(now.year - 1),
       lastDate: DateTime(now.year + 5),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: primary,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black87,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(foregroundColor: primary),
+            ),
+            datePickerTheme: const DatePickerThemeData(
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.white,
+              headerBackgroundColor: Colors.white,
+              headerForegroundColor: Colors.black87,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (pickedDate == null) return;
@@ -809,6 +839,22 @@ Description: $description
       initialTime: _selectedArrivalDateTime != null
           ? TimeOfDay.fromDateTime(_selectedArrivalDateTime!)
           : TimeOfDay.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: primary,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black87,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(foregroundColor: primary),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (pickedTime == null) return;
@@ -832,6 +878,107 @@ Description: $description
     _arrivalFromController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  String? _requiredText(String? value, String fieldName) {
+    if (value == null || value.trim().isEmpty) {
+      return '$fieldName is required';
+    }
+    return null;
+  }
+
+  String? _campaignNameValidator(String? value) {
+    final basic = _requiredText(value, 'Campaign Name');
+    if (basic != null) return basic;
+
+    final trimmed = value!.trim();
+    final hasArabic = RegExp(r'[\u0600-\u06FF]').hasMatch(trimmed);
+    final hasEnglish = RegExp(r'[A-Za-z]').hasMatch(trimmed);
+    final hasDigits = RegExp(r'\d').hasMatch(trimmed);
+    final hasSymbols = RegExp(r'[^A-Za-z\u0600-\u06FF\s]').hasMatch(trimmed);
+
+    if (hasDigits) {
+      return 'Campaign Name must not contain numbers';
+    }
+
+    if (hasSymbols) {
+      return 'Campaign Name must not contain symbols';
+    }
+
+    if (hasArabic && hasEnglish) {
+      return 'Campaign Name must be either Arabic or English only';
+    }
+
+    return null;
+  }
+
+  String? _campaignNumberValidator(String? value) {
+    final basic = _requiredText(value, 'Campaign Number');
+    if (basic != null) return basic;
+
+    if (!RegExp(r'^\d+$').hasMatch(value!.trim())) {
+      return 'Campaign Number must contain numbers only';
+    }
+
+    return null;
+  }
+
+  String? _pilgrimsCountValidator(String? value) {
+    final basic = _requiredText(value, 'Number of Pilgrims');
+    if (basic != null) return basic;
+
+    final trimmed = value!.trim();
+    final number = int.tryParse(trimmed);
+
+    if (number == null) {
+      return 'Number of Pilgrims must be a valid number';
+    }
+
+    if (number <= 0) {
+      return 'Enter a valid number';
+    }
+
+    return null;
+  }
+
+  String? _arrivalFromValidator(String? value) {
+    final basic = _requiredText(value, 'Arrival From');
+    if (basic != null) return basic;
+
+    final trimmed = value!.trim();
+    final hasArabic = RegExp(r'[\u0600-\u06FF]').hasMatch(trimmed);
+    final hasEnglish = RegExp(r'[A-Za-z]').hasMatch(trimmed);
+    final hasDigits = RegExp(r'\d').hasMatch(trimmed);
+    final hasSymbols = RegExp(r'[^A-Za-z\u0600-\u06FF\s]').hasMatch(trimmed);
+
+    if (hasDigits) {
+      return 'Arrival From must not contain numbers';
+    }
+
+    if (hasSymbols) {
+      return 'Arrival From must not contain symbols';
+    }
+
+    if (hasArabic && hasEnglish) {
+      return 'Arrival From must be either Arabic or English only';
+    }
+
+    return null;
+  }
+
+  String? _descriptionValidator(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+
+    final trimmed = value.trim();
+    final hasSymbols = RegExp(r'[^A-Za-z\u0600-\u06FF0-9\s]').hasMatch(trimmed);
+
+    if (hasSymbols) {
+      return 'Description must not contain symbols';
+    }
+
+    return null;
   }
 
   void _submit() {
@@ -914,12 +1061,7 @@ Description: $description
                 controller: _nameController,
                 hint: 'Enter campaign name',
                 prefixIcon: Icons.campaign_rounded,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Campaign name is required';
-                  }
-                  return null;
-                },
+                validator: _campaignNameValidator,
               ),
 
               const SizedBox(height: 14),
@@ -929,12 +1071,9 @@ Description: $description
                 controller: _campaignNumberController,
                 hint: 'Enter campaign number',
                 prefixIcon: Icons.confirmation_number_outlined,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Campaign number is required';
-                  }
-                  return null;
-                },
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                validator: _campaignNumberValidator,
               ),
 
               const SizedBox(height: 14),
@@ -945,36 +1084,75 @@ Description: $description
                 hint: 'Enter pilgrims count',
                 prefixIcon: Icons.groups_rounded,
                 keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                ],
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Number of pilgrims is required';
-                  }
-                  final number = int.tryParse(v.trim());
-                  if (number == null || number <= 0) {
-                    return 'Enter a valid number';
-                  }
-                  return null;
-                },
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                validator: _pilgrimsCountValidator,
               ),
 
               const SizedBox(height: 14),
               const _SectionLabel(title: 'Arrival From'),
               const SizedBox(height: 8),
-              _StyledInput(
-                controller: _arrivalFromController,
-                hint: 'Example: Indonesia / Jakarta',
-                prefixIcon: Icons.place_outlined,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Arrival origin is required';
+              DropdownButtonFormField<String>(
+                value: _selectedArrivalCountry,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                items: _arrivalCountries
+                    .map(
+                      (country) => DropdownMenuItem<String>(
+                        value: country,
+                        child: Text(
+                          country,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedArrivalCountry = value;
+                    _arrivalFromController.text = value ?? '';
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Arrival From is required';
                   }
                   return null;
                 },
+                decoration: InputDecoration(
+                  hintText: 'Select country',
+                  prefixIcon: Icon(
+                    Icons.place_outlined,
+                    color: primary.withOpacity(0.78),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: primary.withOpacity(0.10)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: primary, width: 1.3),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Color(0xFFB3261E)),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFB3261E),
+                      width: 1.2,
+                    ),
+                  ),
+                ),
+                dropdownColor: Colors.white,
+                icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                borderRadius: BorderRadius.circular(18),
               ),
-
               const SizedBox(height: 14),
               const _SectionLabel(title: 'Arrival Date & Time'),
               const SizedBox(height: 8),
@@ -982,8 +1160,10 @@ Description: $description
                 onTap: _pickArrivalDateTime,
                 borderRadius: BorderRadius.circular(16),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 16,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
@@ -1019,12 +1199,8 @@ Description: $description
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 4,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Description is required';
-                  }
-                  return null;
-                },
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                validator: _descriptionValidator,
                 decoration: InputDecoration(
                   hintText: 'Write extra notes about the campaign',
                   filled: true,
@@ -1046,8 +1222,10 @@ Description: $description
                   ),
                   focusedErrorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide:
-                        const BorderSide(color: Color(0xFFB3261E), width: 1.2),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFB3261E),
+                      width: 1.2,
+                    ),
                   ),
                 ),
               ),
@@ -1099,6 +1277,52 @@ Description: $description
       ),
     );
   }
+
+  static const List<String> _arrivalCountries = [
+    'Saudi Arabia',
+    'United Arab Emirates',
+    'Kuwait',
+    'Qatar',
+    'Bahrain',
+    'Oman',
+    'Jordan',
+    'Egypt',
+    'Morocco',
+    'Algeria',
+    'Tunisia',
+    'Libya',
+    'Sudan',
+    'Yemen',
+    'Iraq',
+    'Syria',
+    'Lebanon',
+    'Palestine',
+    'Turkey',
+    'Pakistan',
+    'India',
+    'Bangladesh',
+    'Indonesia',
+    'Malaysia',
+    'Brunei',
+    'Iran',
+    'Afghanistan',
+    'Nigeria',
+    'Senegal',
+    'Somalia',
+    'Ethiopia',
+    'Kenya',
+    'South Africa',
+    'United Kingdom',
+    'France',
+    'Germany',
+    'Italy',
+    'Spain',
+    'United States',
+    'Canada',
+    'Australia',
+  ];
+
+  String? _selectedArrivalCountry;
 }
 
 class _CampaignFormResult {
@@ -1160,6 +1384,7 @@ class _StyledInput extends StatelessWidget {
       validator: validator,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       style: const TextStyle(fontWeight: FontWeight.w700),
       decoration: InputDecoration(
         hintText: hint,

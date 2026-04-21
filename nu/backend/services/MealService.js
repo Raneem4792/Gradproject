@@ -18,6 +18,7 @@ class MealService {
         Provider.fullName AS providerName
       FROM Meal
       LEFT JOIN Provider ON Meal.providerID = Provider.providerID
+      ORDER BY Meal.mealID DESC
     `);
 
     const baseUrl = `${req.protocol}://${req.get('host')}`;
