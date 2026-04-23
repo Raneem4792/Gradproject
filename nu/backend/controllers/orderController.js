@@ -74,41 +74,56 @@ class OrderController {
       const { status } = req.body;
 
       if (!status) {
-        return res.status(400).json({
-          message: 'status is required',
-        });
-      }
-
-      const allowedStatuses = [
-        'pending',
-        'accepted',
-        'completed',
-        'cancelled',
-        'rejected',
-      ];
-
-      if (!allowedStatuses.includes(status.toLowerCase())) {
-        return res.status(400).json({
-          message: 'Invalid status value',
-        });
+        return res.status(400).json({ message: 'status is required' });
       }
 
       await db.query(
-        `
-      UPDATE meal_order
-      SET status = ?
-      WHERE orderID = ?
-      `,
+        `UPDATE meal_order SET status = ? WHERE orderID = ?`,
         [status.toLowerCase(), orderID]
       );
 
-      return res.status(200).json({
-        message: 'Order status updated successfully',
+      // 2. البدء في منطق الإشعارات التلقائية
+      const [order] = await db.query(
+        'SELECT pilgrimID FROM meal_order WHERE orderID = ?', 
+        [orderID]
+      );
+
+      if (order.length > 0) {
+        const pilgrimID = order[0].pilgrimID;
+        let notificationMsg = '';
+        let notificationType = '';
+
+        if (status.toLowerCase() === 'accepted') {
+          notificationType = 'success';
+          notificationMsg = 'تم قبول طلب الوجبة الخاص بك بنجاح!';
+        } 
+        else if (status.toLowerCase() === 'rejected') {
+          notificationType = 'highlight';
+          notificationMsg = 'نعتذر، تم رفض طلب الوجبة الخاص بك من قبل المزود.';
+        }
+        // else if (status.toLowerCase() === 'completed') {
+        //   notificationType = 'info';
+        //   notificationMsg = 'تم إكمال طلبك، بالهناء و العافية!';
+        // }
+
+        // إرسال الإشعار إلى جدول الإشعارات فقط إذا كانت الحالة تتطلب ذلك
+        if (notificationMsg !== '') {
+          await db.query(
+            `INSERT INTO notification (notificationType, messageContent, recipientUserID, recipientType) 
+             VALUES (?, ?, ?, ?)`,
+            [notificationType, notificationMsg, pilgrimID, 'pilgrim']
+          );
+        }
+      }
+
+      return res.status(200).json({ 
+        message: 'Order status updated successfully' 
       });
+
     } catch (error) {
       console.error('Update order status error:', error);
-      return res.status(500).json({
-        message: 'Failed to update order status',
+      return res.status(500).json({ 
+        message: 'Failed to update order status' 
       });
     }
   }

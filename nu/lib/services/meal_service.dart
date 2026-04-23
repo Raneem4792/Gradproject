@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import '../models/meal.dart';
 import '../models/meal_order.dart';
+import '../models/notification_model.dart';
 
 class MealService {
   String get baseUrl {
@@ -256,4 +257,23 @@ class MealService {
       throw Exception(data['message'] ?? 'Failed to update order status');
     }
   }
+
+  Future<List<AppNotification>> getNotifications(String userId, String userType) async {
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/notifications/$userId/$userType'),
+    );
+
+    if (response.statusCode == 200) {
+      List data = json.decode(response.body);
+      return data.map((item) => AppNotification.fromJson(item)).toList();
+    } else {
+      print("Server Error: ${response.statusCode}");
+      return [];
+    }
+  } catch (e) {
+    print("Error fetching notifications: $e");
+    return [];
+  }
+}
 }

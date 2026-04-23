@@ -28,6 +28,11 @@ class MealController {
       };
 
       const result = await mealService.createMeal(mealData);
+      await db.query(
+        `INSERT INTO notification (notificationType, messageContent, recipientUserID, recipientType) 
+         VALUES (?, ?, ?, ?)`,
+        ['highlight', `تمت إضافة الوجبة "${mealData.mealName}" بنجاح إلى قائمتك.`, mealData.providerID, 'provider']
+      );
 
       return res.status(201).json({
         message: 'Meal added successfully',
