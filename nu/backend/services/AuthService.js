@@ -1,34 +1,56 @@
 const db = require('../config/db');
+const bcrypt = require('bcrypt');
 
 class AuthService {
   async login(id, password) {
     const [pilgrimRows] = await db.query(
-      `SELECT pilgrimID, fullName, email, phoneNumber, campaignID
+      `SELECT pilgrimID, fullName, email, phoneNumber, password, campaignID
        FROM Pilgrim
-       WHERE pilgrimID = ? AND password = ?`,
-      [id, password]
+       WHERE pilgrimID = ?`,
+      [id]
     );
 
     if (pilgrimRows.length > 0) {
+      const user = pilgrimRows[0];
+      const isMatch = await bcrypt.compare(password, user.password);
+
+      if (!isMatch) return null;
+
       return {
         message: 'Login successful',
         role: 'pilgrim',
-        user: pilgrimRows[0],
+        user: {
+          pilgrimID: user.pilgrimID,
+          fullName: user.fullName,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+          campaignID: user.campaignID,
+        },
       };
     }
 
     const [providerRows] = await db.query(
-      `SELECT providerID, fullName, email, phoneNumber
+      `SELECT providerID, fullName, email, phoneNumber, password
        FROM Provider
-       WHERE providerID = ? AND password = ?`,
-      [id, password]
+       WHERE providerID = ?`,
+      [id]
     );
 
     if (providerRows.length > 0) {
+      const user = providerRows[0];
+      const isMatch = await bcrypt.compare(password, user.password);
+
+      if (!isMatch) return null;
+
       return {
         message: 'Login successful',
         role: 'provider',
-        user: providerRows[0],
+        user: {
+          providerID: user.providerID,
+          fullName: user.fullName,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+        },
       };
     }
 
@@ -100,6 +122,8 @@ class AuthService {
       throw error;
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     await db.query(
       `INSERT INTO Pilgrim
        (pilgrimID, fullName, email, phoneNumber, password, campaignID)
@@ -109,7 +133,7 @@ class AuthService {
         normalizedFullName,
         normalizedEmail,
         normalizedPhone,
-        password,
+        hashedPassword,
         campaignID,
       ]
     );
@@ -170,6 +194,8 @@ class AuthService {
       throw error;
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     await db.query(
       `INSERT INTO Provider
        (providerID, fullName, email, phoneNumber, password)
@@ -179,7 +205,7 @@ class AuthService {
         normalizedFullName,
         normalizedEmail,
         normalizedPhone,
-        password,
+        hashedPassword,
       ]
     );
 
