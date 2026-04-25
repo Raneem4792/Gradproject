@@ -6,6 +6,7 @@ import 'incoming_meal_requests_page.dart';
 import 'provider_notifications_page.dart';
 import '../models/provider_dashboard_report.dart';
 import '../services/report_service.dart';
+import '../services/ai_dashboard_service.dart';
 import '../session/user_session.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart';
@@ -37,6 +38,11 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
   final ReportService _reportService = ReportService(
     baseUrl: kIsWeb ? 'http://localhost:3000' : 'http://10.0.2.2:3000',
   );
+
+  final AiDashboardService _aiDashboardService = AiDashboardService();
+
+  String? _aiAnalysis;
+  bool _isAiLoading = false;
 
   String? _providerId;
 
@@ -86,11 +92,38 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
         _report = data;
         _isLoading = false;
       });
+
+      await _loadAiAnalysis();
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _error = e.toString();
         _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadAiAnalysis() async {
+    try {
+      if (_providerId == null || _providerId!.isEmpty) return;
+
+      setState(() {
+        _isAiLoading = true;
+        _aiAnalysis = null;
+      });
+
+      final result = await _aiDashboardService.getProviderAnalysis(_providerId!);
+
+      if (!mounted) return;
+      setState(() {
+        _aiAnalysis = result;
+        _isAiLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _aiAnalysis = 'AI analysis is currently unavailable.';
+        _isAiLoading = false;
       });
     }
   }
@@ -168,6 +201,14 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
               totalOrders: report.todayOrders,
               campaignsCount: report.campaigns,
               acceptancePercent: report.mealAcceptance.toDouble(),
+            ),
+
+            const SizedBox(height: 14),
+
+            _AiDashboardSection(
+              analysis: _aiAnalysis,
+              isLoading: _isAiLoading,
+              onRefresh: _loadAiAnalysis,
             ),
 
             const SizedBox(height: 14),
@@ -1396,4 +1437,342 @@ class _GenerateReportButton extends StatelessWidget {
       ),
     );
   }
+}
+
+
+/// =======================
+/// AI dashboard insights
+/// =======================
+class _AiDashboardSection extends StatelessWidget {
+  final String? analysis;
+  final bool isLoading;
+  final VoidCallback onRefresh;
+
+  const _AiDashboardSection({
+    required this.analysis,
+    required this.isLoading,
+    required this.onRefresh,
+  });
+
+  static const Color primaryDark = Color(0xFF052720);
+  static const Color primary = Color(0xFF0B4A40);
+  static const Color primaryMid = Color(0xFF167062);
+  static const Color mint = Color(0xFFA8E7CF);
+  static const Color softMint = Color(0xFFE8F7F1);
+  static const Color gold = Color(0xFFF0E0C0);
+
+  @override
+  Widget build(BuildContext context) {
+    final parsed = _parseAnalysis(analysis ?? '');
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [primaryDark, primary, primaryMid],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 24,
+            offset: const Offset(0, 14),
+            color: primary.withOpacity(0.22),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white.withOpacity(0.14)),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: gold,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "AI Dashboard Insights",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      "Smart analysis based on orders, meals, ratings, and risks",
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: isLoading ? null : onRefresh,
+                icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          if (isLoading)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.10),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: Colors.white.withOpacity(0.12)),
+              ),
+              child: const Row(
+                children: [
+                  SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      "Generating AI insights...",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            _AiInsightCard(
+              title: "AI Summary",
+              icon: Icons.analytics_rounded,
+              content: parsed.summary,
+            ),
+            const SizedBox(height: 10),
+            _AiInsightCard(
+              title: "Feedback & Risk Analysis",
+              icon: Icons.warning_amber_rounded,
+              content: parsed.risks,
+            ),
+            const SizedBox(height: 10),
+            _AiInsightCard(
+              title: "Smart Recommendations",
+              icon: Icons.tips_and_updates_rounded,
+              content: parsed.recommendations,
+              highlighted: true,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  _ParsedAiAnalysis _parseAnalysis(String value) {
+    final cleaned = _cleanText(value);
+
+    if (cleaned.trim().isEmpty) {
+      return const _ParsedAiAnalysis(
+        summary: 'No AI summary available yet.',
+        risks: 'No feedback or risk analysis available yet.',
+        recommendations: 'No smart recommendations available yet.',
+      );
+    }
+
+    final summary = _extractSection(
+      cleaned,
+      ['Overall Summary', 'AI Summary', 'Summary'],
+      ['Most Requested Meals', 'Problems or Risks', 'Feedback Analysis', 'Recommendations'],
+    );
+
+    final meals = _extractSection(
+      cleaned,
+      ['Most Requested Meals'],
+      ['Problems or Risks', 'Feedback Analysis', 'Recommendations'],
+    );
+
+    final risks = _extractSection(
+      cleaned,
+      ['Problems or Risks', 'Feedback Analysis', 'Risk Analysis'],
+      ['Recommendations', 'Smart Recommendations'],
+    );
+
+    final recommendations = _extractSection(
+      cleaned,
+      ['Recommendations', 'Smart Recommendations'],
+      [],
+    );
+
+    return _ParsedAiAnalysis(
+      summary: _joinNonEmpty([
+        summary,
+        if (meals.isNotEmpty) 'Most Requested Meals:\n$meals',
+      ], fallback: 'No AI summary available yet.'),
+      risks: risks.isEmpty ? 'No feedback or risk analysis available yet.' : risks,
+      recommendations: recommendations.isEmpty
+          ? 'No smart recommendations available yet.'
+          : recommendations,
+    );
+  }
+
+  String _cleanText(String value) {
+    return value
+        .replaceAll('###', '')
+        .replaceAll('##', '')
+        .replaceAll('#', '')
+        .replaceAll('**', '')
+        .replaceAll('*', '')
+        .trim();
+  }
+
+  String _joinNonEmpty(List<String> parts, {required String fallback}) {
+    final filtered = parts.map((e) => e.trim()).where((e) => e.isNotEmpty);
+    if (filtered.isEmpty) return fallback;
+    return filtered.join('\n\n');
+  }
+
+  String _extractSection(
+    String text,
+    List<String> startLabels,
+    List<String> endLabels,
+  ) {
+    final lower = text.toLowerCase();
+
+    int startIndex = -1;
+    String selectedLabel = '';
+
+    for (final label in startLabels) {
+      final index = lower.indexOf(label.toLowerCase());
+      if (index != -1 && (startIndex == -1 || index < startIndex)) {
+        startIndex = index;
+        selectedLabel = label;
+      }
+    }
+
+    if (startIndex == -1) return '';
+
+    final contentStart = startIndex + selectedLabel.length;
+    int endIndex = text.length;
+
+    for (final label in endLabels) {
+      final index = lower.indexOf(label.toLowerCase(), contentStart);
+      if (index != -1 && index < endIndex) {
+        endIndex = index;
+      }
+    }
+
+    return text
+        .substring(contentStart, endIndex)
+        .replaceFirst(RegExp(r'^\s*:\s*'), '')
+        .trim();
+  }
+}
+
+class _AiInsightCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final String content;
+  final bool highlighted;
+
+  const _AiInsightCard({
+    required this.title,
+    required this.icon,
+    required this.content,
+    this.highlighted = false,
+  });
+
+  static const Color primary = Color(0xFF0B4A40);
+  static const Color mint = Color(0xFFA8E7CF);
+  static const Color softMint = Color(0xFFE8F7F1);
+  static const Color gold = Color(0xFFF0E0C0);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: highlighted ? gold.withOpacity(0.96) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: highlighted ? gold.withOpacity(0.9) : mint.withOpacity(0.45),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: highlighted ? Colors.white.withOpacity(0.70) : softMint,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: primary, size: 20),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w900,
+                    color: primary,
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  content,
+                  style: TextStyle(
+                    fontSize: 12.3,
+                    height: 1.42,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black.withOpacity(0.76),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ParsedAiAnalysis {
+  final String summary;
+  final String risks;
+  final String recommendations;
+
+  const _ParsedAiAnalysis({
+    required this.summary,
+    required this.risks,
+    required this.recommendations,
+  });
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/ai_chat_service.dart';
+import '../session/user_session.dart';
 
 class PilgrimAIChatPage extends StatefulWidget {
   static const String routeName = '/pilgrim-ai-chat';
@@ -14,12 +16,13 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
   static const Color primaryDark = Color(0xFF062C26);
   static const Color primary = Color(0xFF0D4C4A);
   static const Color primaryMid = Color(0xFF1A6B66);
-  static const Color mint = Color(0xFF9FE5C9);
   static const Color softMint = Color(0xFFEAF4F2);
-  static const Color gold = Color(0xFFF0E0C0);
 
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final AiChatService _aiChatService = AiChatService();
+
+  bool _isLoading = false;
 
   final List<String> _quickQuestions = [
     "What meals match my health profile?",
@@ -43,53 +46,60 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
     super.dispose();
   }
 
-  void _sendMessage([String? quickMessage]) {
+  Future<void> _sendMessage([String? quickMessage]) async {
     final text = (quickMessage ?? _messageController.text).trim();
-    if (text.isEmpty) return;
+
+    if (text.isEmpty || _isLoading) return;
+
+    final pilgrimID = UserSession.userId;
+
+    if (pilgrimID == null || pilgrimID.isEmpty) {
+      setState(() {
+        _messages.add(
+          _ChatMessage(
+            text: "User session not found. Please login again.",
+            isUser: false,
+          ),
+        );
+      });
+      return;
+    }
 
     setState(() {
       _messages.add(_ChatMessage(text: text, isUser: true));
+      _isLoading = true;
     });
 
     _messageController.clear();
     _scrollToBottom();
 
-    Future.delayed(const Duration(milliseconds: 450), () {
+    try {
+      final reply = await _aiChatService.sendMessage(
+        message: text,
+        pilgrimID: pilgrimID,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _messages.add(_ChatMessage(text: reply, isUser: false));
+        _isLoading = false;
+      });
+    } catch (e) {
       if (!mounted) return;
 
       setState(() {
         _messages.add(
           _ChatMessage(
-            text: _generateReply(text),
+            text: "Sorry, something went wrong. Please try again.",
             isUser: false,
           ),
         );
+        _isLoading = false;
       });
-
-      _scrollToBottom();
-    });
-  }
-
-  String _generateReply(String message) {
-    final lower = message.toLowerCase();
-
-    if (lower.contains("health profile") || lower.contains("match")) {
-      return "Based on your health profile, I recommend lighter meals with balanced carbs and protein. Grilled Chicken Salad and Baked Fish with Rice are suitable options for you.";
     }
 
-    if (lower.contains("low-sugar")) {
-      return "A good low-sugar option is Grilled Chicken Salad. It is lighter and more suitable if you are trying to reduce sugar intake.";
-    }
-
-    if (lower.contains("schedule") || lower.contains("today")) {
-      return "Today’s meal schedule is:\n• Breakfast: 7:30 AM\n• Lunch: 1:00 PM\n• Dinner: 8:00 PM";
-    }
-
-    if (lower.contains("high-protein")) {
-      return "For high-protein meals, I suggest Baked Fish with Rice or Grilled Chicken Salad. Both provide a strong protein intake.";
-    }
-
-    return "I can help with meal suggestions, nutrition details, and matching meals to your health profile. Try asking about today’s meals or suitable options for your diet.";
+    _scrollToBottom();
   }
 
   void _scrollToBottom() {
@@ -140,6 +150,7 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
                 _buildQuickQuestions(),
                 const SizedBox(height: 14),
                 ..._messages.map((message) => _ChatBubble(message: message)),
+                if (_isLoading) const _TypingBubble(),
               ],
             ),
           ),
@@ -148,7 +159,6 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
       ),
     );
   }
-
 
   Widget _buildQuickQuestions() {
     return Column(
@@ -168,7 +178,7 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
           children: _quickQuestions
               .map(
                 (question) => InkWell(
-                  onTap: () => _sendMessage(question),
+                  onTap: _isLoading ? null : () => _sendMessage(question),
                   borderRadius: BorderRadius.circular(999),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -239,10 +249,11 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
                   controller: _messageController,
                   minLines: 1,
                   maxLines: 4,
+                  enabled: !_isLoading,
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => _sendMessage(),
                   decoration: InputDecoration(
-                    hintText: "Ask something...",
+                    hintText: _isLoading ? "Please wait..." : "Ask something...",
                     hintStyle: TextStyle(
                       color: Colors.black.withOpacity(0.40),
                       fontWeight: FontWeight.w600,
@@ -258,31 +269,36 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
             ),
             const SizedBox(width: 10),
             InkWell(
-              onTap: _sendMessage,
+              onTap: _isLoading ? null : () => _sendMessage(),
               borderRadius: BorderRadius.circular(16),
               child: Container(
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [primaryDark, primary, primaryMid],
+                    colors: _isLoading
+                        ? [
+                            Colors.grey.shade500,
+                            Colors.grey.shade600,
+                            Colors.grey.shade700,
+                          ]
+                        : const [primaryDark, primary, primaryMid],
                   ),
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      blurRadius: 14,
-                      offset: const Offset(0, 6),
-                      color: primary.withOpacity(0.22),
-                    ),
-                  ],
                 ),
-                child: const Icon(
-                  Icons.send_rounded,
-                  color: Colors.white,
-                  size: 22,
-                ),
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.send_rounded,
+                        color: Colors.white,
+                      ),
               ),
             ),
           ],
@@ -308,66 +324,34 @@ class _ChatBubble extends StatelessWidget {
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 10),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 290),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-            decoration: BoxDecoration(
-              color: isUser ? primary : Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(18),
-                topRight: const Radius.circular(18),
-                bottomLeft: Radius.circular(isUser ? 18 : 6),
-                bottomRight: Radius.circular(isUser ? 6 : 18),
-              ),
-              border: Border.all(
-                color: isUser
-                    ? primary.withOpacity(0.2)
-                    : Colors.black.withOpacity(0.05),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                  color: Colors.black.withOpacity(0.04),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (!isUser) ...[
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: softMint,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.auto_awesome_rounded,
-                      color: primary,
-                      size: 16,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                Flexible(
-                  child: Text(
-                    message.text,
-                    style: TextStyle(
-                      fontSize: 13,
-                      height: 1.4,
-                      fontWeight: FontWeight.w600,
-                      color: isUser ? Colors.white : Colors.black87,
-                    ),
-                  ),
-                ),
-              ],
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isUser ? primary : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Text(
+            message.text,
+            style: TextStyle(
+              color: isUser ? Colors.white : Colors.black87,
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _TypingBubble extends StatelessWidget {
+  const _TypingBubble();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: 10),
+        child: Text("Typing..."),
       ),
     );
   }
@@ -377,8 +361,5 @@ class _ChatMessage {
   final String text;
   final bool isUser;
 
-  _ChatMessage({
-    required this.text,
-    required this.isUser,
-  });
+  _ChatMessage({required this.text, required this.isUser});
 }

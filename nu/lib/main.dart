@@ -7,7 +7,7 @@ import 'pages/login_page.dart';
 import 'pages/provider_history_screen.dart';
 import 'pages/provider_manage_meals_screen.dart';
 import 'pages/provider_mangae_campaign_screen.dart';
-
+import 'pages/forgot_password_page.dart';
 import 'pages/pilgrim_profile_page.dart';
 import 'pages/provider_profile_page.dart';
 import 'pages/pilgrim_meals_page.dart';
@@ -48,6 +48,8 @@ class NusuqApp extends StatelessWidget {
         '/pilgrimProfile': (context) => const PilgrimProfilePage(),
         '/providerProfile': (context) => const ProviderProfilePage(),
         PilgrimMealsPage.routeName: (_) => const PilgrimMealsPage(),
+
+  ForgotPasswordPage.routeName: (context) => const ForgotPasswordPage(),
       },
     );
   }

@@ -102,4 +102,36 @@ class AuthService {
       throw Exception(response.body);
     }
   }
+
+  Future<void> sendResetCode(String email) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/password-reset/send-code'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({'email': email}),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception('Failed to send code');
+  }
+}
+
+Future<void> resetPassword({
+  required String email,
+  required String code,
+  required String newPassword,
+}) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/password-reset/reset-password'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({
+      'email': email,
+      'code': code,
+      'newPassword': newPassword,
+    }),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception('Failed to reset password');
+  }
+}
 }

@@ -5,6 +5,7 @@ import 'provider_home_screen.dart';
 import 'pilgrim_home_screen.dart';
 import '../services/auth_service.dart';
 import '../session/user_session.dart';
+import 'forgot_password_page.dart';
 
 class LoginScreen extends StatefulWidget {
   static const String routeName = '/login';
@@ -49,25 +50,13 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _validateId(String? value) {
     final text = (value ?? '').trim();
 
-    if (text.isEmpty) {
-      return 'Please enter your ID';
-    }
-
-    if (text.contains(' ')) {
-      return 'ID must not contain spaces';
-    }
-
+    if (text.isEmpty) return 'Please enter your ID';
+    if (text.contains(' ')) return 'ID must not contain spaces';
     if (!RegExp(r'^[0-9]+$').hasMatch(text)) {
       return 'ID must contain numbers only';
     }
-
-    if (text.length < 6) {
-      return 'ID number is too short';
-    }
-
-    if (text.length > 20) {
-      return 'ID number is too long';
-    }
+    if (text.length < 6) return 'ID number is too short';
+    if (text.length > 20) return 'ID number is too long';
 
     return null;
   }
@@ -75,21 +64,10 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _validatePassword(String? value) {
     final text = value ?? '';
 
-    if (text.isEmpty) {
-      return 'Please enter your password';
-    }
-
-    if (text.contains(' ')) {
-      return 'Password must not contain spaces';
-    }
-
-    if (text.length < 8) {
-      return 'Password must be at least 8 characters';
-    }
-
-    if (text.length > 20) {
-      return 'Password must not exceed 20 characters';
-    }
+    if (text.isEmpty) return 'Please enter your password';
+    if (text.contains(' ')) return 'Password must not contain spaces';
+    if (text.length < 8) return 'Password must be at least 8 characters';
+    if (text.length > 20) return 'Password must not exceed 20 characters';
 
     return null;
   }
@@ -233,7 +211,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                       const SizedBox(height: 22),
-
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
@@ -271,7 +248,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-
                               if (_generalError != null) ...[
                                 const SizedBox(height: 14),
                                 Container(
@@ -309,9 +285,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                               ],
-
                               const SizedBox(height: 16),
-
                               _FieldLabel('ID Number'),
                               const SizedBox(height: 6),
                               _AppField(
@@ -332,9 +306,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   }
                                 },
                               ),
-
                               const SizedBox(height: 12),
-
                               _FieldLabel('Password'),
                               const SizedBox(height: 6),
                               _AppField(
@@ -364,6 +336,28 @@ class _LoginScreenState extends State<LoginScreen> {
                                     setState(() => _generalError = null);
                                   }
                                 },
+                              ),
+
+                              const SizedBox(height: 8),
+
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      ForgotPasswordPage.routeName,
+                                    );
+                                  },
+                                  child: const Text(
+                                    'Forgot Password?',
+                                    style: TextStyle(
+                                      color: primary,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
                               ),
 
                               const SizedBox(height: 18),
@@ -412,9 +406,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ),
                                 ),
                               ),
-
                               const SizedBox(height: 12),
-
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -446,7 +438,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 18),
                       Text(
                         '© NUSUQ 2026 - All rights reserved',

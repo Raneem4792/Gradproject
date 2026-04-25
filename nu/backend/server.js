@@ -13,6 +13,9 @@ const campaignRoutes = require('./routes/campaignRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const path = require('path');
+const aiChatRoutes = require('./routes/aiChatRoutes');
+const aiDashboardRoutes = require('./routes/aiDashboardRoutes');
+const passwordResetRoutes = require('./routes/passwordResetRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -33,6 +36,10 @@ app.use('/api/notifications', notificationRoutes);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api', aiChatRoutes);
+app.use('/api', aiDashboardRoutes);
+app.use('/api/password-reset', passwordResetRoutes);
+
 
 // استدعاء الداتابيس
 const db = require('./config/db');
