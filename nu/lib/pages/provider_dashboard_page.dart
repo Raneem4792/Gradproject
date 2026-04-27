@@ -42,36 +42,41 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
   bool _isAiLoading = false;
 
   String? _providerId;
+  bool _didInitDashboard = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _initDashboard();
-  }
+@override
+void initState() {
+  super.initState();
 
-  Future<void> _initDashboard() async {
-    try {
-      final providerId = UserSession.userId;
-
-      if (providerId == null || providerId.isEmpty) {
-        throw Exception('Provider ID not found in session');
-      }
-
-      setState(() {
-        _providerId = providerId;
-      });
-
-      await _loadDashboard();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      _initDashboard();
     }
-  }
+  });
+}
 
-  Future<void> _loadDashboard() async {
+Future<void> _initDashboard() async {
+  try {
+    final providerId = UserSession.userId;
+
+    if (providerId == null || providerId.isEmpty) {
+      throw Exception('Provider ID not found in session');
+    }
+
+    _providerId = providerId;
+
+    await _loadDashboard();
+  } catch (e) {
+    if (!mounted) return;
+
+    setState(() {
+      _error = e.toString();
+      _isLoading = false;
+    });
+  }
+}
+
+Future<void> _loadDashboard() async {
   try {
     setState(() {
       _isLoading = true;
@@ -92,14 +97,17 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
     );
 
     if (!mounted) return;
+
     setState(() {
       _report = data;
       _isLoading = false;
     });
 
-    await _loadAiAnalysis();
+    // نخلي تحليل AI يشتغل بالخلفية بدون ما يعلّق الصفحة
+    _loadAiAnalysis();
   } catch (e) {
     if (!mounted) return;
+
     setState(() {
       _error = e.toString();
       _isLoading = false;
@@ -107,36 +115,45 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
   }
 }
 
-  Future<void> _loadAiAnalysis() async {
-    final l10n = AppLocalizations.of(context)!;
+Future<void> _loadAiAnalysis() async {
+  final l10n = AppLocalizations.of(context)!;
 
-    try {
-      if (_providerId == null || _providerId!.isEmpty) return;
+  try {
+    final providerId = _providerId;
 
-      setState(() {
-        _isAiLoading = true;
-        _aiAnalysis = null;
-      });
+    if (providerId == null || providerId.isEmpty) return;
 
-      final result = await _aiDashboardService.getProviderAnalysis(
-        _providerId!,
-      );
+    setState(() {
+      _isAiLoading = true;
+      _aiAnalysis = null;
+    });
 
-      if (!mounted) return;
-      setState(() {
-        _aiAnalysis = result;
-        _isAiLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _aiAnalysis = l10n.aiAnalysisUnavailable;
-        _isAiLoading = false;
-      });
-    }
+    final result = await _aiDashboardService
+        .getProviderAnalysis(providerId)
+        .timeout(
+          const Duration(seconds: 15),
+          onTimeout: () {
+            throw Exception('AI analysis timed out');
+          },
+        );
+
+    if (!mounted) return;
+
+    setState(() {
+      _aiAnalysis = result;
+      _isAiLoading = false;
+    });
+  } catch (e) {
+    if (!mounted) return;
+
+    setState(() {
+      _aiAnalysis = l10n.aiAnalysisUnavailable;
+      _isAiLoading = false;
+    });
   }
+}
 
-  Future<void> _openPdfReport() async {
+Future<void> _openPdfReport() async {
   final l10n = AppLocalizations.of(context)!;
 
   final providerId = _providerId;
