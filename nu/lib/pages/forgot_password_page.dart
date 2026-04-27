@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import '../l10n/app_localizations.dart';
+import '../main.dart';
 import '../services/auth_service.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
@@ -48,50 +51,54 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   }
 
   String? validateEmail(String? value) {
+    final l10n = AppLocalizations.of(context)!;
     final text = (value ?? '').trim();
 
-    if (text.isEmpty) return 'Please enter your email';
+    if (text.isEmpty) return l10n.pleaseEnterEmail;
     if (!RegExp(r'^[\w\.-]+@[\w\.-]+\.\w+$').hasMatch(text)) {
-      return 'Please enter a valid email';
+      return l10n.pleaseEnterValidEmail;
     }
 
     return null;
   }
 
   String? validateCode(String? value) {
+    final l10n = AppLocalizations.of(context)!;
     final text = (value ?? '').trim();
 
     if (!codeSent) return null;
-    if (text.isEmpty) return 'Please enter the reset code';
-    if (text.length != 6) return 'Code must be 6 digits';
+    if (text.isEmpty) return l10n.pleaseEnterResetCode;
+    if (text.length != 6) return l10n.codeMustBe6Digits;
 
     return null;
   }
 
   String? validatePassword(String? value) {
+    final l10n = AppLocalizations.of(context)!;
     final text = value ?? '';
 
     if (!codeSent) return null;
-    if (text.isEmpty) return 'Please enter your new password';
-    if (text.contains(' ')) return 'Password must not contain spaces';
-    if (text.length < 8) return 'Password must be at least 8 characters';
-    if (text.length > 20) return 'Password must not exceed 20 characters';
+    if (text.isEmpty) return l10n.pleaseEnterNewPassword;
+    if (text.contains(' ')) return l10n.passwordNoSpaces;
+    if (text.length < 8) return l10n.passwordTooShort;
+    if (text.length > 20) return l10n.passwordTooLong;
     if (!RegExp(r'[A-Za-z]').hasMatch(text)) {
-      return 'Password must contain at least one letter';
+      return l10n.passwordNeedsLetter;
     }
     if (!RegExp(r'[0-9]').hasMatch(text)) {
-      return 'Password must contain at least one number';
+      return l10n.passwordNeedsNumber;
     }
 
     return null;
   }
 
   String? validateConfirmPassword(String? value) {
+    final l10n = AppLocalizations.of(context)!;
     final text = value ?? '';
 
     if (!codeSent) return null;
-    if (text.isEmpty) return 'Please confirm your password';
-    if (text != newPassController.text) return 'Passwords do not match';
+    if (text.isEmpty) return l10n.pleaseConfirmPassword;
+    if (text != newPassController.text) return l10n.passwordsDoNotMatch;
 
     return null;
   }
@@ -118,7 +125,66 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     });
   }
 
+  Future<void> _changeLanguage() async {
+    final currentLocale = Localizations.localeOf(context).languageCode;
+
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      l10n.chooseLanguage,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+                ListTile(
+                  title: Text(l10n.arabic),
+                  trailing: currentLocale == "ar"
+                      ? const Icon(Icons.check, color: primary)
+                      : null,
+                  onTap: () => Navigator.pop(context, "ar"),
+                ),
+                ListTile(
+                  title: Text(l10n.english),
+                  trailing: currentLocale == "en"
+                      ? const Icon(Icons.check, color: primary)
+                      : null,
+                  onTap: () => Navigator.pop(context, "en"),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selected != null) {
+      NusuqApp.of(context).setLocale(Locale(selected));
+    }
+  }
+
   Future<void> sendCode() async {
+    final l10n = AppLocalizations.of(context)!;
+
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() => isLoading = true);
@@ -135,11 +201,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       startTimer();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: primary,
           content: Text(
-            'Code sent to your email',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+            l10n.codeSentToYourEmail,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       );
@@ -166,6 +235,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   }
 
   Future<void> resetPassword() async {
+    final l10n = AppLocalizations.of(context)!;
+
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() => isLoading = true);
@@ -180,11 +251,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: primary,
           content: Text(
-            'Password changed successfully',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+            l10n.passwordChangedSuccessfully,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       );
@@ -261,16 +335,31 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: primaryDark,
       appBar: AppBar(
         backgroundColor: primaryDark,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Forgot Password',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+        title: Text(
+          l10n.forgotPasswordTitle,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+          ),
         ),
+        actions: [
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: IconButton(
+              onPressed: _changeLanguage,
+              icon: const Icon(Icons.language_rounded, color: Colors.white),
+            ),
+          ),
+          const SizedBox(width: 6),
+        ],
       ),
       body: Stack(
         children: [
@@ -313,9 +402,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
-                            'Reset Password',
-                            style: TextStyle(
+                          Text(
+                            l10n.resetPassword,
+                            style: const TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w900,
                               color: Color(0xFF1F2937),
@@ -324,8 +413,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           const SizedBox(height: 6),
                           Text(
                             codeSent
-                                ? 'Enter the code sent to your email and create a new password'
-                                : 'Enter your email to receive a password reset code',
+                                ? l10n.enterCodeAndCreateNewPassword
+                                : l10n.enterEmailToReceiveResetCode,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 12.5,
@@ -335,7 +424,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           ),
                           const SizedBox(height: 18),
 
-                          _FieldLabel('Email'),
+                          _FieldLabel(l10n.email),
                           const SizedBox(height: 6),
                           TextFormField(
                             controller: emailController,
@@ -344,7 +433,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             validator: validateEmail,
                             textInputAction: TextInputAction.next,
                             decoration: inputStyle(
-                              hint: 'Enter your email',
+                              hint: l10n.enterYourEmail,
                               icon: Icons.email_outlined,
                             ),
                           ),
@@ -352,7 +441,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           if (codeSent) ...[
                             const SizedBox(height: 12),
 
-                            _FieldLabel('Verification Code'),
+                            _FieldLabel(l10n.verificationCode),
                             const SizedBox(height: 6),
                             TextFormField(
                               controller: codeController,
@@ -364,7 +453,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                               ],
                               textInputAction: TextInputAction.next,
                               decoration: inputStyle(
-                                hint: 'Enter 6-digit code',
+                                hint: l10n.enter6DigitCode,
                                 icon: Icons.pin_outlined,
                               ),
                             ),
@@ -372,7 +461,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             const SizedBox(height: 8),
 
                             Align(
-                              alignment: Alignment.centerRight,
+                              alignment: AlignmentDirectional.centerEnd,
                               child: GestureDetector(
                                 onTap: canResend && !isLoading
                                     ? () {
@@ -381,8 +470,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                     : null,
                                 child: Text(
                                   canResend
-                                      ? 'Resend Code'
-                                      : 'Resend in $seconds s',
+                                      ? l10n.resendCode
+                                      : l10n.resendInSeconds(seconds),
                                   style: TextStyle(
                                     color: canResend ? primary : Colors.grey,
                                     fontWeight: FontWeight.w900,
@@ -394,7 +483,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
                             const SizedBox(height: 12),
 
-                            _FieldLabel('New Password'),
+                            _FieldLabel(l10n.newPassword),
                             const SizedBox(height: 6),
                             TextFormField(
                               controller: newPassController,
@@ -402,7 +491,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                               validator: validatePassword,
                               textInputAction: TextInputAction.next,
                               decoration: inputStyle(
-                                hint: 'Enter new password',
+                                hint: l10n.enterNewPassword,
                                 icon: Icons.lock_outline,
                                 suffixIcon: IconButton(
                                   onPressed: () {
@@ -424,7 +513,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
                             const SizedBox(height: 12),
 
-                            _FieldLabel('Confirm Password'),
+                            _FieldLabel(l10n.confirmPassword),
                             const SizedBox(height: 6),
                             TextFormField(
                               controller: confirmPassController,
@@ -432,7 +521,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                               validator: validateConfirmPassword,
                               textInputAction: TextInputAction.done,
                               decoration: inputStyle(
-                                hint: 'Re-enter new password',
+                                hint: l10n.reEnterNewPassword,
                                 icon: Icons.lock_outline,
                                 suffixIcon: IconButton(
                                   onPressed: () {
@@ -483,8 +572,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                     )
                                   : Text(
                                       codeSent
-                                          ? 'Reset Password'
-                                          : 'Send Code',
+                                          ? l10n.resetPassword
+                                          : l10n.sendCode,
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w900,
@@ -510,9 +599,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                         confirmPassController.clear();
                                       });
                                     },
-                              child: const Text(
-                                'Change email',
-                                style: TextStyle(
+                              child: Text(
+                                l10n.changeEmail,
+                                style: const TextStyle(
                                   color: primary,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 13,
@@ -542,7 +631,7 @@ class _FieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: AlignmentDirectional.centerStart,
       child: Text(
         text,
         style: const TextStyle(

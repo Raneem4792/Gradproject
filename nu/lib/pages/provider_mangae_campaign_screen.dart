@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import '../l10n/app_localizations.dart';
 import '../widgets/provider_bottom_nav.dart';
 import 'provider_home_screen.dart';
 import 'incoming_meal_requests_page.dart';
@@ -7,6 +9,60 @@ import 'provider_dashboard_page.dart';
 import '../services/campaign_service.dart';
 import '../models/campaign.dart';
 import '../session/user_session.dart';
+
+enum _FormMode { add, edit }
+
+String _localizedCountry(BuildContext context, String country) {
+  final isAr = Localizations.localeOf(context).languageCode == 'ar';
+
+  if (!isAr) return country;
+
+  const countriesAr = {
+    'Saudi Arabia': 'السعودية',
+    'United Arab Emirates': 'الإمارات العربية المتحدة',
+    'Kuwait': 'الكويت',
+    'Qatar': 'قطر',
+    'Bahrain': 'البحرين',
+    'Oman': 'عُمان',
+    'Jordan': 'الأردن',
+    'Egypt': 'مصر',
+    'Morocco': 'المغرب',
+    'Algeria': 'الجزائر',
+    'Tunisia': 'تونس',
+    'Libya': 'ليبيا',
+    'Sudan': 'السودان',
+    'Yemen': 'اليمن',
+    'Iraq': 'العراق',
+    'Syria': 'سوريا',
+    'Lebanon': 'لبنان',
+    'Palestine': 'فلسطين',
+    'Turkey': 'تركيا',
+    'Pakistan': 'باكستان',
+    'India': 'الهند',
+    'Bangladesh': 'بنغلاديش',
+    'Indonesia': 'إندونيسيا',
+    'Malaysia': 'ماليزيا',
+    'Brunei': 'بروناي',
+    'Iran': 'إيران',
+    'Afghanistan': 'أفغانستان',
+    'Nigeria': 'نيجيريا',
+    'Senegal': 'السنغال',
+    'Somalia': 'الصومال',
+    'Ethiopia': 'إثيوبيا',
+    'Kenya': 'كينيا',
+    'South Africa': 'جنوب أفريقيا',
+    'United Kingdom': 'المملكة المتحدة',
+    'France': 'فرنسا',
+    'Germany': 'ألمانيا',
+    'Italy': 'إيطاليا',
+    'Spain': 'إسبانيا',
+    'United States': 'الولايات المتحدة',
+    'Canada': 'كندا',
+    'Australia': 'أستراليا',
+  };
+
+  return countriesAr[country] ?? country;
+}
 
 class ProviderCampaignManagementScreen extends StatefulWidget {
   const ProviderCampaignManagementScreen({super.key});
@@ -24,7 +80,6 @@ class _ProviderCampaignManagementScreenState
   static const Color primary = Color(0xFF0B4A40);
   static const Color primaryMid = Color(0xFF167062);
   static const Color mint = Color(0xFFA8E7CF);
-  static const Color softMint = Color(0xFFE6F6F0);
 
   final CampaignService _campaignService = CampaignService();
   List<Campaign> _campaigns = [];
@@ -111,6 +166,8 @@ class _ProviderCampaignManagementScreenState
   }
 
   void _openAddSheet() async {
+    final l10n = AppLocalizations.of(context)!;
+
     final created = await showModalBottomSheet<_CampaignFormResult>(
       context: context,
       isScrollControlled: true,
@@ -141,19 +198,22 @@ class _ProviderCampaignManagementScreenState
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Campaign added successfully'),
+        SnackBar(
+          content: Text(l10n.campaignAddedSuccessfully),
           backgroundColor: primary,
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to add campaign: $e')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${l10n.failedToAddCampaign}: $e')),
+      );
     }
   }
 
   void _openEditSheet(Campaign campaign) async {
+    final l10n = AppLocalizations.of(context)!;
+
     final updated = await showModalBottomSheet<_CampaignFormResult>(
       context: context,
       isScrollControlled: true,
@@ -180,30 +240,33 @@ class _ProviderCampaignManagementScreenState
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Campaign updated successfully'),
+        SnackBar(
+          content: Text(l10n.campaignUpdatedSuccessfully),
           backgroundColor: primary,
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to update campaign: $e')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${l10n.failedToUpdateCampaign}: $e')),
+      );
     }
   }
 
   Future<void> _deleteCampaign(Campaign campaign) async {
+    final l10n = AppLocalizations.of(context)!;
+
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text(
-          'Delete campaign?',
-          style: TextStyle(fontWeight: FontWeight.w900),
+        title: Text(
+          l10n.deleteCampaignQuestion,
+          style: const TextStyle(fontWeight: FontWeight.w900),
         ),
         content: Text(
-          'Are you sure you want to delete "${campaign.campaignName}"?',
+          l10n.areYouSureDeleteCampaign(campaign.campaignName),
           style: TextStyle(
             color: Colors.black.withOpacity(0.66),
             fontWeight: FontWeight.w600,
@@ -213,7 +276,7 @@ class _ProviderCampaignManagementScreenState
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(
-              'Cancel',
+              l10n.cancel,
               style: TextStyle(
                 color: primary.withOpacity(0.85),
                 fontWeight: FontWeight.w900,
@@ -229,9 +292,9 @@ class _ProviderCampaignManagementScreenState
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
-              'Delete',
-              style: TextStyle(fontWeight: FontWeight.w900),
+            child: Text(
+              l10n.delete,
+              style: const TextStyle(fontWeight: FontWeight.w900),
             ),
           ),
         ],
@@ -246,20 +309,23 @@ class _ProviderCampaignManagementScreenState
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Campaign deleted successfully'),
+        SnackBar(
+          content: Text(l10n.campaignDeletedSuccessfully),
           backgroundColor: primary,
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to delete campaign: $e')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${l10n.failedToDeleteCampaign}: $e')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: bg,
       appBar: _CampaignManagementMainAppBar(onBack: _handleBack),
@@ -273,8 +339,8 @@ class _ProviderCampaignManagementScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _CampaignManagementHeaderCard(
-                      title: "Manage Campaigns",
-                      badgeText: "${_campaigns.length} campaigns",
+                      title: l10n.manageCampaigns,
+                      badgeText: '${_campaigns.length} ${l10n.campaigns}',
                     ),
                     const SizedBox(height: 14),
                     _AddCampaignWideButton(onTap: _openAddSheet),
@@ -294,12 +360,12 @@ class _ProviderCampaignManagementScreenState
                       },
                     ),
                     if (_campaigns.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 28),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 28),
                         child: Center(
                           child: Text(
-                            "No campaigns added yet",
-                            style: TextStyle(
+                            l10n.noCampaignsAddedYet,
+                            style: const TextStyle(
                               color: Colors.black45,
                               fontWeight: FontWeight.w700,
                             ),
@@ -456,6 +522,8 @@ class _AddCampaignWideButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -480,7 +548,7 @@ class _AddCampaignWideButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                "Add Campaign",
+                l10n.addCampaign,
                 style: TextStyle(
                   color: primary.withOpacity(0.92),
                   fontWeight: FontWeight.w900,
@@ -539,6 +607,8 @@ class _CampaignCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     final fromText = _extractLine(campaign.arrivalDetails, 'From:');
     final timeText = _extractLine(campaign.arrivalDetails, 'Arrival Time:');
     final descriptionText = _extractLine(
@@ -619,12 +689,15 @@ class _CampaignCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 if (fromText.isNotEmpty)
-                  _InfoRow(icon: Icons.place_outlined, text: 'From: $fromText'),
+                  _InfoRow(
+                    icon: Icons.place_outlined,
+                    text: '${l10n.from}: ${_localizedCountry(context, fromText)}',
+                  ),
                 if (timeText.isNotEmpty) const SizedBox(height: 6),
                 if (timeText.isNotEmpty)
                   _InfoRow(
                     icon: Icons.schedule_rounded,
-                    text: 'Arrival: $timeText',
+                    text: '${l10n.arrival}: $timeText',
                   ),
                 if (descriptionText.isNotEmpty) const SizedBox(height: 6),
                 if (descriptionText.isNotEmpty)
@@ -655,9 +728,9 @@ class _CampaignCard extends StatelessWidget {
                           ),
                         ),
                         icon: const Icon(Icons.edit_rounded, size: 18),
-                        label: const Text(
-                          'Edit',
-                          style: TextStyle(fontWeight: FontWeight.w900),
+                        label: Text(
+                          l10n.edit,
+                          style: const TextStyle(fontWeight: FontWeight.w900),
                         ),
                       ),
                     ),
@@ -678,9 +751,9 @@ class _CampaignCard extends StatelessWidget {
                           Icons.delete_outline_rounded,
                           size: 18,
                         ),
-                        label: const Text(
-                          'Delete',
-                          style: TextStyle(fontWeight: FontWeight.w900),
+                        label: Text(
+                          l10n.delete,
+                          style: const TextStyle(fontWeight: FontWeight.w900),
                         ),
                       ),
                     ),
@@ -708,7 +781,6 @@ class _CampaignFormSheet extends StatefulWidget {
 class _CampaignFormSheetState extends State<_CampaignFormSheet> {
   static const Color primaryDark = Color(0xFF052720);
   static const Color primary = Color(0xFF0B4A40);
-  static const Color mint = Color(0xFFA8E7CF);
 
   final _formKey = GlobalKey<FormState>();
 
@@ -721,6 +793,52 @@ class _CampaignFormSheetState extends State<_CampaignFormSheet> {
   DateTime? _selectedArrivalDateTime;
 
   bool get _isEdit => widget.mode == _FormMode.edit;
+
+  static const List<String> _arrivalCountries = [
+    'Saudi Arabia',
+    'United Arab Emirates',
+    'Kuwait',
+    'Qatar',
+    'Bahrain',
+    'Oman',
+    'Jordan',
+    'Egypt',
+    'Morocco',
+    'Algeria',
+    'Tunisia',
+    'Libya',
+    'Sudan',
+    'Yemen',
+    'Iraq',
+    'Syria',
+    'Lebanon',
+    'Palestine',
+    'Turkey',
+    'Pakistan',
+    'India',
+    'Bangladesh',
+    'Indonesia',
+    'Malaysia',
+    'Brunei',
+    'Iran',
+    'Afghanistan',
+    'Nigeria',
+    'Senegal',
+    'Somalia',
+    'Ethiopia',
+    'Kenya',
+    'South Africa',
+    'United Kingdom',
+    'France',
+    'Germany',
+    'Italy',
+    'Spain',
+    'United States',
+    'Canada',
+    'Australia',
+  ];
+
+  String? _selectedArrivalCountry;
 
   @override
   void initState() {
@@ -785,8 +903,8 @@ Description: $description
         .trim();
   }
 
-  String _formatDateTime(DateTime? value) {
-    if (value == null) return 'Select arrival date & time';
+  String _formatDateTime(DateTime? value, AppLocalizations l10n) {
+    if (value == null) return l10n.selectArrivalDateTime;
 
     String two(int n) => n.toString().padLeft(2, '0');
 
@@ -881,14 +999,18 @@ Description: $description
   }
 
   String? _requiredText(String? value, String fieldName) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (value == null || value.trim().isEmpty) {
-      return '$fieldName is required';
+      return l10n.fieldIsRequired(fieldName);
     }
     return null;
   }
 
   String? _campaignNameValidator(String? value) {
-    final basic = _requiredText(value, 'Campaign Name');
+    final l10n = AppLocalizations.of(context)!;
+
+    final basic = _requiredText(value, l10n.campaignName);
     if (basic != null) return basic;
 
     final trimmed = value!.trim();
@@ -897,76 +1019,46 @@ Description: $description
     final hasDigits = RegExp(r'\d').hasMatch(trimmed);
     final hasSymbols = RegExp(r'[^A-Za-z\u0600-\u06FF\s]').hasMatch(trimmed);
 
-    if (hasDigits) {
-      return 'Campaign Name must not contain numbers';
-    }
-
-    if (hasSymbols) {
-      return 'Campaign Name must not contain symbols';
-    }
-
+    if (hasDigits) return l10n.campaignNameMustNotContainNumbers;
+    if (hasSymbols) return l10n.campaignNameMustNotContainSymbols;
     if (hasArabic && hasEnglish) {
-      return 'Campaign Name must be either Arabic or English only';
+      return l10n.campaignNameMustBeArabicOrEnglishOnly;
     }
 
     return null;
   }
 
   String? _campaignNumberValidator(String? value) {
-    final basic = _requiredText(value, 'Campaign Number');
+    final l10n = AppLocalizations.of(context)!;
+
+    final basic = _requiredText(value, l10n.campaignNumber);
     if (basic != null) return basic;
 
     if (!RegExp(r'^\d+$').hasMatch(value!.trim())) {
-      return 'Campaign Number must contain numbers only';
+      return l10n.campaignNumberMustContainNumbersOnly;
     }
 
     return null;
   }
 
   String? _pilgrimsCountValidator(String? value) {
-    final basic = _requiredText(value, 'Number of Pilgrims');
+    final l10n = AppLocalizations.of(context)!;
+
+    final basic = _requiredText(value, l10n.numberOfPilgrims);
     if (basic != null) return basic;
 
     final trimmed = value!.trim();
     final number = int.tryParse(trimmed);
 
-    if (number == null) {
-      return 'Number of Pilgrims must be a valid number';
-    }
-
-    if (number <= 0) {
-      return 'Enter a valid number';
-    }
-
-    return null;
-  }
-
-  String? _arrivalFromValidator(String? value) {
-    final basic = _requiredText(value, 'Arrival From');
-    if (basic != null) return basic;
-
-    final trimmed = value!.trim();
-    final hasArabic = RegExp(r'[\u0600-\u06FF]').hasMatch(trimmed);
-    final hasEnglish = RegExp(r'[A-Za-z]').hasMatch(trimmed);
-    final hasDigits = RegExp(r'\d').hasMatch(trimmed);
-    final hasSymbols = RegExp(r'[^A-Za-z\u0600-\u06FF\s]').hasMatch(trimmed);
-
-    if (hasDigits) {
-      return 'Arrival From must not contain numbers';
-    }
-
-    if (hasSymbols) {
-      return 'Arrival From must not contain symbols';
-    }
-
-    if (hasArabic && hasEnglish) {
-      return 'Arrival From must be either Arabic or English only';
-    }
+    if (number == null) return l10n.numberOfPilgrimsMustBeValidNumber;
+    if (number <= 0) return l10n.enterValidNumber;
 
     return null;
   }
 
   String? _descriptionValidator(String? value) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (value == null || value.trim().isEmpty) {
       return null;
     }
@@ -975,26 +1067,28 @@ Description: $description
     final hasSymbols = RegExp(r'[^A-Za-z\u0600-\u06FF0-9\s]').hasMatch(trimmed);
 
     if (hasSymbols) {
-      return 'Description must not contain symbols';
+      return l10n.descriptionMustNotContainSymbols;
     }
 
     return null;
   }
 
   void _submit() {
+    final l10n = AppLocalizations.of(context)!;
+
     if (!_formKey.currentState!.validate()) return;
 
     final pilgrimsCount = int.tryParse(_pilgrimsCountController.text.trim());
     if (pilgrimsCount == null || pilgrimsCount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid pilgrims count')),
+        SnackBar(content: Text(l10n.pleaseEnterValidPilgrimsCount)),
       );
       return;
     }
 
     if (_selectedArrivalDateTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select arrival date and time')),
+        SnackBar(content: Text(l10n.pleaseSelectArrivalDateTime)),
       );
       return;
     }
@@ -1011,6 +1105,7 @@ Description: $description
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Padding(
@@ -1034,7 +1129,7 @@ Description: $description
               ),
               const SizedBox(height: 18),
               Text(
-                _isEdit ? 'Edit Campaign' : 'Add New Campaign',
+                _isEdit ? l10n.editCampaign : l10n.addNewCampaign,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
@@ -1044,8 +1139,8 @@ Description: $description
               const SizedBox(height: 6),
               Text(
                 _isEdit
-                    ? 'Update campaign details below.'
-                    : 'Enter campaign information below.',
+                    ? l10n.updateCampaignDetailsBelow
+                    : l10n.enterCampaignInformationBelow,
                 style: TextStyle(
                   fontSize: 13.3,
                   height: 1.35,
@@ -1055,21 +1150,21 @@ Description: $description
               ),
               const SizedBox(height: 18),
 
-              const _SectionLabel(title: 'Campaign Name'),
+              _SectionLabel(title: l10n.campaignName),
               const SizedBox(height: 8),
               _StyledInput(
                 controller: _nameController,
-                hint: 'Enter campaign name',
+                hint: l10n.enterCampaignName,
                 prefixIcon: Icons.campaign_rounded,
                 validator: _campaignNameValidator,
               ),
 
               const SizedBox(height: 14),
-              const _SectionLabel(title: 'Campaign Number'),
+              _SectionLabel(title: l10n.campaignNumber),
               const SizedBox(height: 8),
               _StyledInput(
                 controller: _campaignNumberController,
-                hint: 'Enter campaign number',
+                hint: l10n.enterCampaignNumber,
                 prefixIcon: Icons.confirmation_number_outlined,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1077,11 +1172,11 @@ Description: $description
               ),
 
               const SizedBox(height: 14),
-              const _SectionLabel(title: 'Number of Pilgrims'),
+              _SectionLabel(title: l10n.numberOfPilgrims),
               const SizedBox(height: 8),
               _StyledInput(
                 controller: _pilgrimsCountController,
-                hint: 'Enter pilgrims count',
+                hint: l10n.enterPilgrimsCount,
                 prefixIcon: Icons.groups_rounded,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1089,7 +1184,7 @@ Description: $description
               ),
 
               const SizedBox(height: 14),
-              const _SectionLabel(title: 'Arrival From'),
+              _SectionLabel(title: l10n.arrivalFrom),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: _selectedArrivalCountry,
@@ -1099,7 +1194,7 @@ Description: $description
                       (country) => DropdownMenuItem<String>(
                         value: country,
                         child: Text(
-                          country,
+                          _localizedCountry(context, country),
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ),
@@ -1113,12 +1208,12 @@ Description: $description
                 },
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Arrival From is required';
+                    return l10n.fieldIsRequired(l10n.arrivalFrom);
                   }
                   return null;
                 },
                 decoration: InputDecoration(
-                  hintText: 'Select country',
+                  hintText: l10n.selectCountry,
                   prefixIcon: Icon(
                     Icons.place_outlined,
                     color: primary.withOpacity(0.78),
@@ -1154,7 +1249,7 @@ Description: $description
                 borderRadius: BorderRadius.circular(18),
               ),
               const SizedBox(height: 14),
-              const _SectionLabel(title: 'Arrival Date & Time'),
+              _SectionLabel(title: l10n.arrivalDateTime),
               const SizedBox(height: 8),
               InkWell(
                 onTap: _pickArrivalDateTime,
@@ -1178,7 +1273,7 @@ Description: $description
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          _formatDateTime(_selectedArrivalDateTime),
+                          _formatDateTime(_selectedArrivalDateTime, l10n),
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             color: _selectedArrivalDateTime == null
@@ -1194,7 +1289,7 @@ Description: $description
               ),
 
               const SizedBox(height: 14),
-              const _SectionLabel(title: 'Description'),
+              _SectionLabel(title: l10n.description),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _descriptionController,
@@ -1202,7 +1297,7 @@ Description: $description
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 validator: _descriptionValidator,
                 decoration: InputDecoration(
-                  hintText: 'Write extra notes about the campaign',
+                  hintText: l10n.writeExtraNotesAboutCampaign,
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -1244,9 +1339,9 @@ Description: $description
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(fontWeight: FontWeight.w900),
+                      child: Text(
+                        l10n.cancel,
+                        style: const TextStyle(fontWeight: FontWeight.w900),
                       ),
                     ),
                   ),
@@ -1264,7 +1359,7 @@ Description: $description
                         ),
                       ),
                       child: Text(
-                        _isEdit ? 'Save Changes' : 'Add Campaign',
+                        _isEdit ? l10n.saveChanges : l10n.addCampaign,
                         style: const TextStyle(fontWeight: FontWeight.w900),
                       ),
                     ),
@@ -1277,52 +1372,6 @@ Description: $description
       ),
     );
   }
-
-  static const List<String> _arrivalCountries = [
-    'Saudi Arabia',
-    'United Arab Emirates',
-    'Kuwait',
-    'Qatar',
-    'Bahrain',
-    'Oman',
-    'Jordan',
-    'Egypt',
-    'Morocco',
-    'Algeria',
-    'Tunisia',
-    'Libya',
-    'Sudan',
-    'Yemen',
-    'Iraq',
-    'Syria',
-    'Lebanon',
-    'Palestine',
-    'Turkey',
-    'Pakistan',
-    'India',
-    'Bangladesh',
-    'Indonesia',
-    'Malaysia',
-    'Brunei',
-    'Iran',
-    'Afghanistan',
-    'Nigeria',
-    'Senegal',
-    'Somalia',
-    'Ethiopia',
-    'Kenya',
-    'South Africa',
-    'United Kingdom',
-    'France',
-    'Germany',
-    'Italy',
-    'Spain',
-    'United States',
-    'Canada',
-    'Australia',
-  ];
-
-  String? _selectedArrivalCountry;
 }
 
 class _CampaignFormResult {
@@ -1462,6 +1511,8 @@ class _PilgrimsCountPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
@@ -1470,7 +1521,7 @@ class _PilgrimsCountPill extends StatelessWidget {
         border: Border.all(color: primary.withOpacity(0.12)),
       ),
       child: Text(
-        '$count pilgrims',
+        '$count ${l10n.pilgrims}',
         style: TextStyle(
           fontSize: 11.5,
           color: primary.withOpacity(0.88),
@@ -1510,5 +1561,3 @@ class _InfoRow extends StatelessWidget {
     );
   }
 }
-
-enum _FormMode { add, edit }

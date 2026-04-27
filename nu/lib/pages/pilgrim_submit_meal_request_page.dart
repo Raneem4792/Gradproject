@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import '../services/meal_service.dart';
 import '../session/user_session.dart';
 
@@ -35,10 +37,8 @@ class _PilgrimSubmitMealRequestPageState
   static const Color bg = Color(0xFFF3F6F5);
   static const Color primaryDark = Color(0xFF062C26);
   static const Color primary = Color(0xFF0D4C4A);
-  static const Color primaryMid = Color(0xFF1A6B66);
   static const Color mint = Color(0xFF9FE5C9);
   static const Color softMint = Color(0xFFEAF4F2);
-  static const Color gold = Color(0xFFF0E0C0);
 
   @override
   void dispose() {
@@ -47,13 +47,12 @@ class _PilgrimSubmitMealRequestPageState
   }
 
   Future<void> _submitRequest() async {
+    final l10n = AppLocalizations.of(context)!;
     final pilgrimId = UserSession.userId;
 
     if (pilgrimId == null || pilgrimId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('User session not found. Please log in again.'),
-        ),
+        SnackBar(content: Text(l10n.userSessionNotFoundLoginAgain)),
       );
       return;
     }
@@ -73,9 +72,9 @@ class _PilgrimSubmitMealRequestPageState
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to submit request: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${l10n.failedToSubmitRequest}: $e')),
+      );
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
@@ -85,13 +84,15 @@ class _PilgrimSubmitMealRequestPageState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     final now = DateTime.now();
     final submitDate =
         "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
     final submitTime =
         "${now.hour % 12 == 0 ? 12 : now.hour % 12}:${now.minute.toString().padLeft(2, '0')} ${now.hour >= 12 ? 'PM' : 'AM'}";
 
-    final pilgrimId = UserSession.userId ?? "Not Available";
+    final pilgrimId = UserSession.userId ?? l10n.notAvailable;
 
     return Scaffold(
       backgroundColor: bg,
@@ -112,7 +113,7 @@ class _PilgrimSubmitMealRequestPageState
               ),
               const SizedBox(height: 16),
 
-              const _SectionTitle(title: "Request Details"),
+              _SectionTitle(title: l10n.requestDetails),
               const SizedBox(height: 10),
 
               _WhiteCard(
@@ -120,25 +121,25 @@ class _PilgrimSubmitMealRequestPageState
                   children: [
                     _InfoRow(
                       icon: Icons.badge_outlined,
-                      title: "Pilgrim ID",
+                      title: l10n.pilgrimId,
                       value: pilgrimId,
                     ),
                     const Divider(height: 22),
                     _InfoRow(
                       icon: Icons.confirmation_number_outlined,
-                      title: "Meal ID",
+                      title: l10n.mealId,
                       value: widget.mealID.toString(),
                     ),
                     const Divider(height: 22),
                     _InfoRow(
                       icon: Icons.calendar_today_outlined,
-                      title: "Submit Date",
+                      title: l10n.submitDate,
                       value: submitDate,
                     ),
                     const Divider(height: 22),
                     _InfoRow(
                       icon: Icons.access_time_rounded,
-                      title: "Submit Time",
+                      title: l10n.submitTime,
                       value: submitTime,
                     ),
                   ],
@@ -147,7 +148,7 @@ class _PilgrimSubmitMealRequestPageState
 
               const SizedBox(height: 16),
 
-              const _SectionTitle(title: "Add Notes"),
+              _SectionTitle(title: l10n.addNotes),
               const SizedBox(height: 10),
 
               _WhiteCard(
@@ -155,7 +156,7 @@ class _PilgrimSubmitMealRequestPageState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Optional notes for your meal request",
+                      l10n.optionalNotesForMealRequest,
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
@@ -167,7 +168,7 @@ class _PilgrimSubmitMealRequestPageState
                       controller: _notesController,
                       maxLines: 5,
                       decoration: InputDecoration(
-                        hintText: "Write any note here...",
+                        hintText: l10n.writeAnyNoteHere,
                         hintStyle: TextStyle(
                           color: Colors.black.withOpacity(0.38),
                           fontWeight: FontWeight.w600,
@@ -223,9 +224,9 @@ class _PilgrimSubmitMealRequestPageState
                             ),
                           ),
                         )
-                      : const Text(
-                          "Submit Request",
-                          style: TextStyle(
+                      : Text(
+                          l10n.submitRequest,
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w900,
                           ),
@@ -240,6 +241,8 @@ class _PilgrimSubmitMealRequestPageState
   }
 
   void _showSuccessDialog(BuildContext context, dynamic orderId) {
+    final l10n = AppLocalizations.of(context)!;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -269,13 +272,16 @@ class _PilgrimSubmitMealRequestPageState
                   ),
                 ),
                 const SizedBox(height: 14),
-                const Text(
-                  "Request Submitted",
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+                Text(
+                  l10n.requestSubmitted,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Order ID: $orderId\nYour meal request has been submitted successfully.",
+                  '${l10n.orderId}: $orderId\n${l10n.mealRequestSubmittedSuccessfully}',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,
@@ -301,9 +307,9 @@ class _PilgrimSubmitMealRequestPageState
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    child: const Text(
-                      "Done",
-                      style: TextStyle(fontWeight: FontWeight.w800),
+                    child: Text(
+                      l10n.done,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
                     ),
                   ),
                 ),
@@ -324,35 +330,40 @@ class _SubmitMealAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0.6,
-      shadowColor: Colors.black.withOpacity(0.08),
-      surfaceTintColor: Colors.white,
-      automaticallyImplyLeading: false,
-      titleSpacing: 8,
-      title: Row(
-        children: [
-          IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.black87,
-              size: 20,
+    final l10n = AppLocalizations.of(context)!;
+
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.6,
+        shadowColor: Colors.black.withOpacity(0.08),
+        surfaceTintColor: Colors.white,
+        automaticallyImplyLeading: false,
+        titleSpacing: 8,
+        title: Row(
+          children: [
+            IconButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.black87,
+                size: 20,
+              ),
             ),
-          ),
-          const SizedBox(width: 2),
-          const Text(
-            "Request Meal",
-            style: TextStyle(
-              color: Colors.black87,
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
+            const SizedBox(width: 2),
+            Text(
+              l10n.requestMeal,
+              style: const TextStyle(
+                color: Colors.black87,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -379,6 +390,8 @@ class _MealSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -438,7 +451,7 @@ class _MealSummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  "Provided by $providerName",
+                  '${l10n.providedBy} $providerName',
                   style: TextStyle(
                     fontSize: 12.2,
                     color: Colors.black.withOpacity(0.58),

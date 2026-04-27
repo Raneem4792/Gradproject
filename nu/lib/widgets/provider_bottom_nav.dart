@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+
 class ProviderBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -14,6 +16,8 @@ class ProviderBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: onTap,
@@ -23,17 +27,23 @@ class ProviderBottomNav extends StatelessWidget {
       unselectedItemColor: Colors.black54,
       selectedFontSize: 12,
       unselectedFontSize: 12,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
+      items: [
         BottomNavigationBarItem(
-          icon: Icon(Icons.inbox_rounded),
-          label: "Requests",
+          icon: const Icon(Icons.home_filled),
+          label: l10n.home,
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.bar_chart_rounded),
-          label: "Reports",
+          icon: const Icon(Icons.inbox_rounded),
+          label: l10n.requests,
         ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.bar_chart_rounded),
+          label: l10n.reports,
+        ),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.person),
+          label: l10n.account,
+        ),
       ],
     );
   }

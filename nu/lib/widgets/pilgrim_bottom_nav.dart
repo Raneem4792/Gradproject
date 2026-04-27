@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+
 class PilgrimBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -14,6 +16,8 @@ class PilgrimBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: onTap,
@@ -23,14 +27,23 @@ class PilgrimBottomNav extends StatelessWidget {
       unselectedItemColor: Colors.black54,
       selectedFontSize: 12,
       unselectedFontSize: 12,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
+      items: [
         BottomNavigationBarItem(
-          icon: Icon(Icons.restaurant_menu),
-          label: "Meals",
+          icon: const Icon(Icons.home_filled),
+          label: l10n.home,
         ),
-        BottomNavigationBarItem(icon: Icon(Icons.history), label: "History"),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.restaurant_menu),
+          label: l10n.meals,
+        ),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.history),
+          label: l10n.history,
+        ),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.person),
+          label: l10n.account,
+        ),
       ],
     );
   }

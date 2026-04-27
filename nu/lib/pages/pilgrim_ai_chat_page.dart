@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import '../services/ai_chat_service.dart';
 import '../session/user_session.dart';
 
@@ -16,28 +18,40 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
   static const Color primaryDark = Color(0xFF062C26);
   static const Color primary = Color(0xFF0D4C4A);
   static const Color primaryMid = Color(0xFF1A6B66);
-  static const Color softMint = Color(0xFFEAF4F2);
 
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final AiChatService _aiChatService = AiChatService();
 
   bool _isLoading = false;
+  bool _welcomeMessageAdded = false;
 
-  final List<String> _quickQuestions = [
-    "What meals match my health profile?",
-    "Suggest a low-sugar meal.",
-    "What is today’s meal schedule?",
-    "Show me high-protein options.",
+  final List<String> _quickQuestionKeys = [
+    "healthProfileMeals",
+    "lowSugarMeal",
+    "todayMealSchedule",
+    "highProteinOptions",
   ];
 
-  final List<_ChatMessage> _messages = [
-    _ChatMessage(
-      text:
-          "Assalamu Alaikum 👋 I’m your AI assistant. I can help you choose meals, explain nutrition, and suggest options based on your health profile.",
-      isUser: false,
-    ),
-  ];
+  final List<_ChatMessage> _messages = [];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (!_welcomeMessageAdded) {
+      final l10n = AppLocalizations.of(context)!;
+
+      _messages.add(
+        _ChatMessage(
+          text: l10n.aiWelcomeMessage,
+          isUser: false,
+        ),
+      );
+
+      _welcomeMessageAdded = true;
+    }
+  }
 
   @override
   void dispose() {
@@ -46,7 +60,23 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
     super.dispose();
   }
 
+  String _quickQuestionText(AppLocalizations l10n, String key) {
+    switch (key) {
+      case "healthProfileMeals":
+        return l10n.quickQuestionHealthProfileMeals;
+      case "lowSugarMeal":
+        return l10n.quickQuestionLowSugarMeal;
+      case "todayMealSchedule":
+        return l10n.quickQuestionTodayMealSchedule;
+      case "highProteinOptions":
+        return l10n.quickQuestionHighProteinOptions;
+      default:
+        return key;
+    }
+  }
+
   Future<void> _sendMessage([String? quickMessage]) async {
+    final l10n = AppLocalizations.of(context)!;
     final text = (quickMessage ?? _messageController.text).trim();
 
     if (text.isEmpty || _isLoading) return;
@@ -57,7 +87,7 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
       setState(() {
         _messages.add(
           _ChatMessage(
-            text: "User session not found. Please login again.",
+            text: l10n.userSessionNotFoundLoginAgain,
             isUser: false,
           ),
         );
@@ -91,7 +121,7 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
       setState(() {
         _messages.add(
           _ChatMessage(
-            text: "Sorry, something went wrong. Please try again.",
+            text: l10n.aiChatSomethingWentWrong,
             isUser: false,
           ),
         );
@@ -115,31 +145,36 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.6,
-        shadowColor: Colors.black.withOpacity(0.08),
-        surfaceTintColor: Colors.white,
-        titleSpacing: 8,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Colors.black87,
-            size: 20,
-          ),
-        ),
-        title: const Text(
-          "AI Assistant",
-          style: TextStyle(
-            color: Colors.black87,
-            fontSize: 17,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
+  backgroundColor: Colors.white,
+  elevation: 0.6,
+  shadowColor: Colors.black.withOpacity(0.08),
+  surfaceTintColor: Colors.white,
+  titleSpacing: 8,
+  leading: IconButton(
+    onPressed: () => Navigator.pop(context),
+    icon: const Icon(
+      Icons.arrow_back_ios_new_rounded,
+      color: Colors.black87,
+      size: 20,
+    ),
+  ),
+  title: Directionality(
+    textDirection: TextDirection.ltr,
+    child: Text(
+      l10n.aiAssistant,
+      style: const TextStyle(
+        color: Colors.black87,
+        fontSize: 17,
+        fontWeight: FontWeight.w900,
       ),
+    ),
+  ),
+),
       body: Column(
         children: [
           Expanded(
@@ -161,12 +196,14 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
   }
 
   Widget _buildQuickQuestions() {
+    final l10n = AppLocalizations.of(context)!;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Quick Questions",
-          style: TextStyle(
+        Text(
+          l10n.quickQuestions,
+          style: const TextStyle(
             fontSize: 13.5,
             fontWeight: FontWeight.w900,
           ),
@@ -175,49 +212,55 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: _quickQuestions
+          children: _quickQuestionKeys
               .map(
-                (question) => InkWell(
-                  onTap: _isLoading ? null : () => _sendMessage(question),
-                  borderRadius: BorderRadius.circular(999),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 13,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: Colors.black.withOpacity(0.05)),
-                      boxShadow: [
-                        BoxShadow(
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
-                          color: Colors.black.withOpacity(0.03),
+                (key) {
+                  final question = _quickQuestionText(l10n, key);
+
+                  return InkWell(
+                    onTap: _isLoading ? null : () => _sendMessage(question),
+                    borderRadius: BorderRadius.circular(999),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 13,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: Colors.black.withOpacity(0.05),
                         ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.bolt_rounded,
-                          size: 16,
-                          color: primary,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          question,
-                          style: const TextStyle(
-                            fontSize: 11.8,
-                            fontWeight: FontWeight.w700,
+                        boxShadow: [
+                          BoxShadow(
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
+                            color: Colors.black.withOpacity(0.03),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.bolt_rounded,
+                            size: 16,
                             color: primary,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Text(
+                            question,
+                            style: const TextStyle(
+                              fontSize: 11.8,
+                              fontWeight: FontWeight.w700,
+                              color: primary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               )
               .toList(),
         ),
@@ -226,6 +269,8 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
   }
 
   Widget _buildComposer() {
+    final l10n = AppLocalizations.of(context)!;
+
     return SafeArea(
       top: false,
       child: Container(
@@ -253,7 +298,8 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => _sendMessage(),
                   decoration: InputDecoration(
-                    hintText: _isLoading ? "Please wait..." : "Ask something...",
+                    hintText:
+                        _isLoading ? l10n.pleaseWait : l10n.askSomething,
                     hintStyle: TextStyle(
                       color: Colors.black.withOpacity(0.40),
                       fontWeight: FontWeight.w600,
@@ -316,12 +362,12 @@ class _ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const Color primary = Color(0xFF0D4C4A);
-    const Color softMint = Color(0xFFEAF4F2);
 
     final isUser = message.isUser;
 
     return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      alignment:
+          isUser ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: Container(
@@ -347,11 +393,13 @@ class _TypingBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Align(
-      alignment: Alignment.centerLeft,
+    final l10n = AppLocalizations.of(context)!;
+
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
       child: Padding(
-        padding: EdgeInsets.only(bottom: 10),
-        child: Text("Typing..."),
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Text(l10n.typing),
       ),
     );
   }

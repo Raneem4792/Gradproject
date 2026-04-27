@@ -5,6 +5,7 @@ class ReportController {
     async getProviderDashboard(req, res) {
         try {
             const { providerID } = req.params;
+            const language = req.query.lang || 'en';
 
             if (!providerID) {
                 return res.status(400).json({
@@ -12,7 +13,10 @@ class ReportController {
                 });
             }
 
-            const data = await reportService.getProviderDashboard(providerID);
+            const data = await reportService.getProviderDashboard(
+                providerID,
+                language
+            );
 
             return res.status(200).json(data);
         } catch (error) {
@@ -26,6 +30,7 @@ class ReportController {
     async generateProviderDashboardPdf(req, res) {
         try {
             const { providerID } = req.params;
+            const language = req.query.lang || 'en';
 
             if (!providerID) {
                 return res.status(400).json({
@@ -33,7 +38,10 @@ class ReportController {
                 });
             }
 
-            const data = await reportService.getProviderDashboard(providerID);
+            const data = await reportService.getProviderDashboard(
+                providerID,
+                language
+            );
 
             const doc = new PDFDocument({
                 margin: 40,
@@ -255,7 +263,6 @@ class ReportController {
                 });
             };
 
-            // Header
             doc
                 .roundedRect(contentLeft, 35, contentWidth, 95, 24)
                 .fill(colors.softMint);
@@ -284,7 +291,6 @@ class ReportController {
 
             doc.y = 150;
 
-            // Overview cards
             drawSectionTitle('Overview');
 
             const cardY = doc.y;
@@ -322,12 +328,10 @@ class ReportController {
 
             drawDivider();
 
-            // Chart
             drawSectionTitle('Order Trend (Last 7 Days)');
             drawBarChart(data.demandTrend || []);
             drawDivider();
 
-            // Health snapshot
             drawSectionTitle('Health Snapshot');
             drawInfoLine('Diabetes:', `${data.healthSnapshot?.diabetes ?? 0}%`);
             drawInfoLine('Allergies:', `${data.healthSnapshot?.allergies ?? 0}%`);
@@ -335,12 +339,10 @@ class ReportController {
             drawInfoLine('High Protein:', `${data.healthSnapshot?.highProtein ?? 0}%`);
             drawDivider();
 
-            // Top meals
             drawSectionTitle('Top Requested Meals');
             drawTopMeals(data.topMeals || []);
             drawDivider();
 
-            // Suggestions
             drawSectionTitle('Smart Suggestions');
             drawBulletList(data.aiSuggestions || [], 'No suggestions available.');
 

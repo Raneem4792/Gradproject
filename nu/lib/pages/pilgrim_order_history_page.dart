@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import '../models/meal_order.dart';
 import '../services/meal_service.dart';
 import 'pilgrim_rate_meal_page.dart';
@@ -22,11 +24,6 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
   int _navIndex = 2;
 
   static const Color bg = Color(0xFFF3F6F5);
-  static const Color primaryDark = Color(0xFF062C26);
-  static const Color primary = Color(0xFF0D4C4A);
-  static const Color primaryMid = Color(0xFF1A6B66);
-  static const Color mint = Color(0xFF9FE5C9);
-  static const Color gold = Color(0xFFF0E0C0);
 
   final MealService _mealService = MealService();
   late Future<List<MealOrder>> _ordersFuture;
@@ -52,15 +49,15 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
 
       String uiStatus;
       if (status == "pending") {
-        uiStatus = "Pending";
+        uiStatus = "pending";
       } else if (status == "completed") {
-        uiStatus = "Completed";
+        uiStatus = "completed";
       } else if (status == "rejected") {
-        uiStatus = "Rejected";
+        uiStatus = "rejected";
       } else if (status == "cancelled") {
-        uiStatus = "Cancelled";
+        uiStatus = "cancelled";
       } else if (status == "accepted") {
-        uiStatus = "Accepted";
+        uiStatus = "accepted";
       } else {
         uiStatus = order.status;
       }
@@ -77,7 +74,7 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
   }
 
   Future<void> _openRatePage(int index) async {
-    if (orders[index]["orderStatus"] != "Completed") return;
+    if (orders[index]["orderStatus"] != "completed") return;
     if (orders[index]["isReviewed"] == true) return;
 
     final result = await Navigator.push(
@@ -123,8 +120,27 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
     }
   }
 
+  String _localizedStatus(AppLocalizations l10n, String status) {
+    switch (status.toLowerCase().trim()) {
+      case "pending":
+        return l10n.pending;
+      case "completed":
+        return l10n.completed;
+      case "rejected":
+        return l10n.rejected;
+      case "cancelled":
+        return l10n.cancelled;
+      case "accepted":
+        return l10n.accepted;
+      default:
+        return status;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: bg,
       appBar: const _OrderHistoryAppBar(),
@@ -142,7 +158,7 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Text(
-                    'Error loading orders: ${snapshot.error}',
+                    '${l10n.errorLoadingOrders}: ${snapshot.error}',
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -158,7 +174,7 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
                 children: [
                   const _HistoryHeroCard(),
                   const SizedBox(height: 18),
-                  const _HistorySectionTitle(title: "Previous Orders"),
+                  _HistorySectionTitle(title: l10n.previousOrders),
                   const SizedBox(height: 10),
                   if (orders.isEmpty)
                     const _EmptyOrdersState()
@@ -172,6 +188,10 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
                           mealName: orders[index]["mealName"],
                           orderDate: orders[index]["orderDate"],
                           orderStatus: orders[index]["orderStatus"],
+                          orderStatusText: _localizedStatus(
+                            l10n,
+                            orders[index]["orderStatus"],
+                          ),
                           isReviewed: orders[index]["isReviewed"],
                           reviewRating: orders[index]["reviewRating"],
                           onRateTap: () => _openRatePage(index),
@@ -201,38 +221,43 @@ class _OrderHistoryAppBar extends StatelessWidget
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0.6,
-      shadowColor: Colors.black.withOpacity(0.08),
-      surfaceTintColor: Colors.white,
-      automaticallyImplyLeading: false,
-      titleSpacing: 8,
-      title: Row(
-        children: [
-          IconButton(
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const PilgrimHomeScreen()),
-              );
-            },
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.black87,
-              size: 20,
+    final l10n = AppLocalizations.of(context)!;
+
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.6,
+        shadowColor: Colors.black.withOpacity(0.08),
+        surfaceTintColor: Colors.white,
+        automaticallyImplyLeading: false,
+        titleSpacing: 8,
+        title: Row(
+          children: [
+            IconButton(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PilgrimHomeScreen()),
+                );
+              },
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.black87,
+                size: 20,
+              ),
             ),
-          ),
-          const SizedBox(width: 2),
-          const Text(
-            "Order History",
-            style: TextStyle(
-              color: Colors.black87,
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
+            const SizedBox(width: 2),
+            Text(
+              l10n.orderHistory,
+              style: const TextStyle(
+                color: Colors.black87,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -249,6 +274,8 @@ class _HistoryHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: Stack(
@@ -280,22 +307,22 @@ class _HistoryHeroCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 14),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Your Order History",
-                        style: TextStyle(
+                        l10n.yourOrderHistory,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                      SizedBox(height: 6),
+                      const SizedBox(height: 6),
                       Text(
-                        "Review your previous meal orders and rate completed meals.",
-                        style: TextStyle(
+                        l10n.reviewPreviousMealOrders,
+                        style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
@@ -357,6 +384,7 @@ class _OrderHistoryItemCard extends StatelessWidget {
   final String mealName;
   final String orderDate;
   final String orderStatus;
+  final String orderStatusText;
   final bool isReviewed;
   final int? reviewRating;
   final VoidCallback onRateTap;
@@ -366,6 +394,7 @@ class _OrderHistoryItemCard extends StatelessWidget {
     required this.mealName,
     required this.orderDate,
     required this.orderStatus,
+    required this.orderStatusText,
     required this.isReviewed,
     required this.reviewRating,
     required this.onRateTap,
@@ -376,7 +405,9 @@ class _OrderHistoryItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isCompleted = orderStatus == "Completed";
+    final l10n = AppLocalizations.of(context)!;
+
+    final bool isCompleted = orderStatus == "completed";
     final bool canRate = isCompleted && !isReviewed;
 
     final Color statusBg = isCompleted
@@ -434,7 +465,7 @@ class _OrderHistoryItemCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 7),
                 Text(
-                  "Order ID: $orderId",
+                  "${l10n.orderId}: $orderId",
                   style: TextStyle(
                     fontSize: 12.4,
                     color: Colors.black.withOpacity(0.60),
@@ -443,7 +474,7 @@ class _OrderHistoryItemCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "Date: $orderDate",
+                  "${l10n.date}: $orderDate",
                   style: TextStyle(
                     fontSize: 12.4,
                     color: Colors.black.withOpacity(0.60),
@@ -464,7 +495,7 @@ class _OrderHistoryItemCard extends StatelessWidget {
                         border: Border.all(color: statusBorder),
                       ),
                       child: Text(
-                        orderStatus,
+                        orderStatusText,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w900,
@@ -490,7 +521,7 @@ class _OrderHistoryItemCard extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              "Reviewed",
+                              l10n.reviewed,
                               style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w900,
@@ -533,9 +564,9 @@ class _OrderHistoryItemCard extends StatelessWidget {
                               vertical: 12,
                             ),
                           ),
-                          child: const Text(
-                            "Rate Meal",
-                            style: TextStyle(
+                          child: Text(
+                            l10n.rateMeal,
+                            style: const TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 12.5,
                             ),
@@ -560,6 +591,8 @@ class _EmptyOrdersState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
@@ -576,13 +609,13 @@ class _EmptyOrdersState extends StatelessWidget {
             color: primary.withOpacity(0.75),
           ),
           const SizedBox(height: 10),
-          const Text(
-            "No orders found",
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+          Text(
+            l10n.noOrdersFound,
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
           ),
           const SizedBox(height: 6),
           Text(
-            "Your submitted meal requests will appear here.",
+            l10n.submittedMealRequestsWillAppearHere,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,

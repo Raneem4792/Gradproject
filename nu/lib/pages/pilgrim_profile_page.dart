@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
+import '../main.dart';
 import 'pilgrim_home_screen.dart';
 import '../services/health_service.dart';
 import '../session/user_session.dart';
 import '../models/health_profile.dart';
 import '../models/pilgrim_profile.dart';
 import '../services/pilgrim_service.dart';
-import '../services/meal_service.dart';
 import 'login_page.dart';
 
 class PilgrimProfilePage extends StatefulWidget {
@@ -28,15 +30,15 @@ class PilgrimProfilePage extends StatefulWidget {
 class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
   final HealthService _healthService = HealthService();
   final PilgrimService _pilgrimService = PilgrimService();
+
   bool _isPersonalLoading = true;
+  bool _isHealthLoading = true;
 
   String pilgrimIdText = "";
   String campaignName = "";
 
   bool isEditingPersonal = false;
   bool isEditingHealth = false;
-  bool isChangingPassword = false;
-  bool _isHealthLoading = true;
 
   String fullName = "";
   String email = "";
@@ -54,15 +56,10 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
   List<String> tempSelectedAllergies = [];
 
   bool notificationsEnabled = true;
-  String language = "English";
 
   late final TextEditingController fullNameController;
   late final TextEditingController emailController;
   late final TextEditingController phoneController;
-
-  late final TextEditingController currentPasswordController;
-  late final TextEditingController newPasswordController;
-  late final TextEditingController confirmPasswordController;
 
   final List<String> ageOptions = List.generate(83, (index) => "${18 + index}");
 
@@ -112,10 +109,6 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
     emailController = TextEditingController(text: email);
     phoneController = TextEditingController(text: phone);
 
-    currentPasswordController = TextEditingController();
-    newPasswordController = TextEditingController();
-    confirmPasswordController = TextEditingController();
-
     _rebuildHealthTags();
     _loadPersonalProfile();
     _loadHealthProfile();
@@ -126,9 +119,6 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
     fullNameController.dispose();
     emailController.dispose();
     phoneController.dispose();
-    currentPasswordController.dispose();
-    newPasswordController.dispose();
-    confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -187,9 +177,7 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
         email = profile.email;
         phone = profile.phoneNumber;
         pilgrimIdText = profile.pilgrimID;
-        campaignName = profile.campaignName.isEmpty
-            ? "No Campaign"
-            : profile.campaignName;
+        campaignName = profile.campaignName;
 
         fullNameController.text = fullName;
         emailController.text = email;
@@ -224,13 +212,15 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
   }
 
   Future<void> _togglePersonalEdit() async {
+    final l10n = AppLocalizations.of(context)!;
+
     if (isEditingPersonal) {
       final pilgrimId = UserSession.userId;
 
       if (pilgrimId == null || pilgrimId.isEmpty) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text("User session not found")));
+        ).showSnackBar(SnackBar(content: Text(l10n.userSessionNotFound)));
         return;
       }
 
@@ -254,12 +244,12 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Personal details updated")),
+          SnackBar(content: Text(l10n.personalDetailsUpdated)),
         );
       } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Failed to update profile: $e")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("${l10n.failedToUpdateProfile}: $e")),
+        );
       }
     } else {
       fullNameController.text = fullName;
@@ -282,13 +272,15 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
   }
 
   Future<void> _toggleHealthEdit() async {
+    final l10n = AppLocalizations.of(context)!;
+
     if (isEditingHealth) {
       final pilgrimId = UserSession.userId;
 
       if (pilgrimId == null || pilgrimId.isEmpty) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text("User session not found")));
+        ).showSnackBar(SnackBar(content: Text(l10n.userSessionNotFound)));
         return;
       }
 
@@ -309,11 +301,11 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Health information updated")),
+          SnackBar(content: Text(l10n.healthInformationUpdated)),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to save health profile: $e")),
+          SnackBar(content: Text("${l10n.failedToSaveHealthProfile}: $e")),
         );
       }
     } else {
@@ -340,6 +332,8 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
   }
 
   Future<void> _changeLanguage() async {
+    final currentLocale = Localizations.localeOf(context).languageCode;
+
     final selected = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.white,
@@ -347,19 +341,21 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
+
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(18, 8, 18, 10),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
                   child: Align(
-                    alignment: Alignment.centerLeft,
+                    alignment: AlignmentDirectional.centerStart,
                     child: Text(
-                      "Choose Language",
-                      style: TextStyle(
+                      l10n.chooseLanguage,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
                       ),
@@ -367,24 +363,24 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
                   ),
                 ),
                 ListTile(
-                  title: const Text("العربية"),
-                  trailing: language == "العربية"
+                  title: Text(l10n.arabic),
+                  trailing: currentLocale == "ar"
                       ? const Icon(
                           Icons.check,
                           color: PilgrimProfilePage.primary,
                         )
                       : null,
-                  onTap: () => Navigator.pop(context, "العربية"),
+                  onTap: () => Navigator.pop(context, "ar"),
                 ),
                 ListTile(
-                  title: const Text("English"),
-                  trailing: language == "English"
+                  title: Text(l10n.english),
+                  trailing: currentLocale == "en"
                       ? const Icon(
                           Icons.check,
                           color: PilgrimProfilePage.primary,
                         )
                       : null,
-                  onTap: () => Navigator.pop(context, "English"),
+                  onTap: () => Navigator.pop(context, "en"),
                 ),
               ],
             ),
@@ -394,89 +390,38 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
     );
 
     if (selected != null) {
-      setState(() {
-        language = selected;
-      });
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Language changed to $selected")));
+      NusuqApp.of(context).setLocale(Locale(selected));
     }
-  }
-
-  void _changePassword() {
-    setState(() {
-      isChangingPassword = !isChangingPassword;
-      if (!isChangingPassword) {
-        currentPasswordController.clear();
-        newPasswordController.clear();
-        confirmPasswordController.clear();
-      }
-    });
-  }
-
-  void _savePassword() {
-    final current = currentPasswordController.text.trim();
-    final newPass = newPasswordController.text.trim();
-    final confirm = confirmPasswordController.text.trim();
-
-    if (current.isEmpty || newPass.isEmpty || confirm.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all password fields")),
-      );
-      return;
-    }
-
-    if (newPass.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("New password must be at least 8 characters"),
-        ),
-      );
-      return;
-    }
-
-    if (newPass != confirm) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("New password and confirm password do not match"),
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      isChangingPassword = false;
-      currentPasswordController.clear();
-      newPasswordController.clear();
-      confirmPasswordController.clear();
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Password changed successfully")),
-    );
   }
 
   Future<void> _logout() async {
+    final l10n = AppLocalizations.of(context)!;
+
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: const Text(
-          "Log Out",
-          style: TextStyle(fontWeight: FontWeight.w900, color: Colors.black87),
+        title: Text(
+          l10n.logOut,
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+            color: Colors.black87,
+          ),
         ),
-        content: const Text(
-          "Are you sure you want to log out?",
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
+        content: Text(
+          l10n.areYouSureLogout,
+          style: const TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              "Cancel",
-              style: TextStyle(
+            child: Text(
+              l10n.cancel,
+              style: const TextStyle(
                 color: PilgrimProfilePage.primary,
                 fontWeight: FontWeight.w800,
               ),
@@ -484,9 +429,9 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              "Log Out",
-              style: TextStyle(
+            child: Text(
+              l10n.logOut,
+              style: const TextStyle(
                 color: Colors.redAccent,
                 fontWeight: FontWeight.w800,
               ),
@@ -509,8 +454,119 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
     }
   }
 
+  String _currentLanguageName(AppLocalizations l10n) {
+    final code = Localizations.localeOf(context).languageCode;
+    return code == "ar" ? l10n.arabic : l10n.english;
+  }
+
+  String _localizedHealthCondition(AppLocalizations l10n, String value) {
+    switch (value) {
+      case "None":
+        return l10n.none;
+      case "Diabetes":
+        return l10n.diabetes;
+      case "Hypertension":
+        return l10n.hypertension;
+      case "Heart Disease":
+        return l10n.heartDisease;
+      case "Asthma":
+        return l10n.asthma;
+      case "Kidney Disease":
+        return l10n.kidneyDisease;
+      case "Liver Disease":
+        return l10n.liverDisease;
+      case "Thyroid Disorder":
+        return l10n.thyroidDisorder;
+      case "High Cholesterol":
+        return l10n.highCholesterol;
+      case "Arthritis":
+        return l10n.arthritis;
+      case "Epilepsy":
+        return l10n.epilepsy;
+      case "Mobility Issue":
+        return l10n.mobilityIssue;
+      case "Other":
+        return l10n.other;
+      default:
+        return value;
+    }
+  }
+
+  String _localizedDietaryPreference(AppLocalizations l10n, String value) {
+    switch (value) {
+      case "Regular":
+        return l10n.regular;
+      case "Low Sugar":
+        return l10n.lowSugar;
+      case "Low Salt":
+        return l10n.lowSalt;
+      case "Vegetarian":
+        return l10n.vegetarian;
+      case "High Protein":
+        return l10n.highProtein;
+      default:
+        return value;
+    }
+  }
+
+  String _localizedAllergy(AppLocalizations l10n, String value) {
+    switch (value) {
+      case "Nuts":
+        return l10n.nuts;
+      case "Seafood":
+        return l10n.seafood;
+      case "Dairy":
+        return l10n.dairy;
+      case "Eggs":
+        return l10n.eggs;
+      case "Gluten":
+        return l10n.gluten;
+      case "Soy":
+        return l10n.soy;
+      case "Sesame":
+        return l10n.sesame;
+      case "Shellfish":
+        return l10n.shellfish;
+      case "Wheat":
+        return l10n.wheat;
+      case "Medication":
+        return l10n.medication;
+      case "Other":
+        return l10n.other;
+      default:
+        return value;
+    }
+  }
+
+  List<String> _localizedTags(AppLocalizations l10n) {
+    final result = <String>[];
+
+    if (selectedHealthCondition == "Diabetes") {
+      result.add(l10n.diabetic);
+    } else if (selectedHealthCondition != "None") {
+      result.add(_localizedHealthCondition(l10n, selectedHealthCondition));
+    }
+
+    if (selectedDietaryPreference.isNotEmpty &&
+        selectedDietaryPreference != "Regular") {
+      result.add(_localizedDietaryPreference(l10n, selectedDietaryPreference));
+    }
+
+    for (final allergy in selectedAllergies) {
+      result.add(l10n.allergyTag(_localizedAllergy(l10n, allergy)));
+    }
+
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    final displayCampaignName = campaignName.isEmpty
+        ? l10n.noCampaign
+        : campaignName;
+
     return Scaffold(
       backgroundColor: PilgrimProfilePage.bg,
       appBar: const _PilgrimProfileAppBar(),
@@ -522,11 +578,11 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
             _ProfileHeaderCard(
               fullName: fullName,
               pilgrimId: pilgrimIdText,
-              campaignName: campaignName,
+              campaignName: displayCampaignName,
             ),
             const SizedBox(height: 16),
 
-            const _SectionTitle(title: "Personal Information"),
+            _SectionTitle(title: l10n.personalInformation),
             const SizedBox(height: 10),
             if (_isPersonalLoading)
               const Center(child: CircularProgressIndicator())
@@ -541,16 +597,10 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
                 phoneController: phoneController,
                 onEditTap: _togglePersonalEdit,
                 onCancelTap: _cancelPersonalEdit,
-                onChangePassword: _changePassword,
-                isChangingPassword: isChangingPassword,
-                currentPasswordController: currentPasswordController,
-                newPasswordController: newPasswordController,
-                confirmPasswordController: confirmPasswordController,
-                onSavePassword: _savePassword,
               ),
             const SizedBox(height: 16),
 
-            const _SectionTitle(title: "Health Profile"),
+            _SectionTitle(title: l10n.healthProfile),
             const SizedBox(height: 10),
             if (_isHealthLoading)
               const Center(child: CircularProgressIndicator())
@@ -561,11 +611,14 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
                 selectedHealthCondition: selectedHealthCondition,
                 selectedDietaryPreference: selectedDietaryPreference,
                 selectedAllergies: selectedAllergies,
-                tags: tags,
+                localizedTags: _localizedTags(l10n),
                 ageOptions: ageOptions,
                 healthConditionOptions: healthConditionOptions,
                 dietaryPreferenceOptions: dietaryPreferenceOptions,
                 allergyOptions: allergyOptions,
+                localizedHealthCondition: _localizedHealthCondition,
+                localizedDietaryPreference: _localizedDietaryPreference,
+                localizedAllergy: _localizedAllergy,
                 onAgeChanged: (value) {
                   setState(() {
                     selectedAge = value!;
@@ -597,11 +650,11 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
               ),
             const SizedBox(height: 16),
 
-            const _SectionTitle(title: "Settings"),
+            _SectionTitle(title: l10n.settings),
             const SizedBox(height: 10),
             _SettingsCard(
               notificationsEnabled: notificationsEnabled,
-              language: language,
+              language: _currentLanguageName(l10n),
               onNotificationsChanged: (value) {
                 setState(() {
                   notificationsEnabled = value;
@@ -628,38 +681,43 @@ class _PilgrimProfileAppBar extends StatelessWidget
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0.6,
-      shadowColor: Colors.black.withOpacity(0.08),
-      surfaceTintColor: Colors.white,
-      automaticallyImplyLeading: false,
-      titleSpacing: 8,
-      title: Row(
-        children: [
-          IconButton(
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const PilgrimHomeScreen()),
-              );
-            },
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.black87,
-              size: 20,
+    final l10n = AppLocalizations.of(context)!;
+
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.6,
+        shadowColor: Colors.black.withOpacity(0.08),
+        surfaceTintColor: Colors.white,
+        automaticallyImplyLeading: false,
+        titleSpacing: 8,
+        title: Row(
+          children: [
+            IconButton(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PilgrimHomeScreen()),
+                );
+              },
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.black87,
+                size: 20,
+              ),
             ),
-          ),
-          const SizedBox(width: 2),
-          const Text(
-            "Pilgrim Profile",
-            style: TextStyle(
-              color: Colors.black87,
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
+            const SizedBox(width: 2),
+            Text(
+              l10n.pilgrimProfile,
+              style: const TextStyle(
+                color: Colors.black87,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -692,6 +750,8 @@ class _ProfileHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: Stack(
@@ -741,7 +801,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        "Pilgrim ID: ${pilgrimId.isEmpty ? 'Not Available' : pilgrimId}",
+                        "${l10n.pilgrimId}: ${pilgrimId.isEmpty ? l10n.notAvailable : pilgrimId}",
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.82),
                           fontSize: 12.5,
@@ -750,7 +810,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        "Campaign: ${campaignName.isEmpty ? 'Not Available' : campaignName}",
+                        "${l10n.campaign}: ${campaignName.isEmpty ? l10n.notAvailable : campaignName}",
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.82),
                           fontSize: 12.5,
@@ -767,9 +827,9 @@ class _ProfileHeaderCard extends StatelessWidget {
                           color: PilgrimProfilePage.mint.withOpacity(0.95),
                           borderRadius: BorderRadius.circular(999),
                         ),
-                        child: const Text(
-                          "Active Account",
-                          style: TextStyle(
+                        child: Text(
+                          l10n.activeAccount,
+                          style: const TextStyle(
                             color: PilgrimProfilePage.primaryDark,
                             fontWeight: FontWeight.w900,
                             fontSize: 12,
@@ -822,12 +882,6 @@ class _PersonalInfoCard extends StatelessWidget {
   final TextEditingController phoneController;
   final VoidCallback onEditTap;
   final VoidCallback onCancelTap;
-  final VoidCallback onChangePassword;
-  final bool isChangingPassword;
-  final TextEditingController currentPasswordController;
-  final TextEditingController newPasswordController;
-  final TextEditingController confirmPasswordController;
-  final VoidCallback onSavePassword;
 
   const _PersonalInfoCard({
     required this.isEditing,
@@ -839,22 +893,18 @@ class _PersonalInfoCard extends StatelessWidget {
     required this.phoneController,
     required this.onEditTap,
     required this.onCancelTap,
-    required this.onChangePassword,
-    required this.isChangingPassword,
-    required this.currentPasswordController,
-    required this.newPasswordController,
-    required this.confirmPasswordController,
-    required this.onSavePassword,
   });
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return _WhiteCard(
       child: Column(
         children: [
           _CardHeader(
-            title: "Personal Details",
-            actionText: isEditing ? "Save" : "Edit",
+            title: l10n.personalDetails,
+            actionText: isEditing ? l10n.save : l10n.edit,
             onActionTap: onEditTap,
             showCancel: isEditing,
             onCancelTap: onCancelTap,
@@ -863,92 +913,34 @@ class _PersonalInfoCard extends StatelessWidget {
           if (isEditing) ...[
             _EditableField(
               icon: Icons.person_outline_rounded,
-              label: "Full Name",
+              label: l10n.fullName,
               controller: fullNameController,
             ),
             const SizedBox(height: 14),
             _EditableField(
               icon: Icons.email_outlined,
-              label: "Email",
+              label: l10n.email,
               controller: emailController,
             ),
             const SizedBox(height: 14),
             _EditableField(
               icon: Icons.phone_outlined,
-              label: "Phone Number",
+              label: l10n.phoneNumber,
               controller: phoneController,
-            ),
-            const SizedBox(height: 14),
-            _InfoRow(
-              icon: Icons.lock_outline_rounded,
-              title: "Password",
-              value: "Change Password",
-              valueColor: PilgrimProfilePage.primary,
-              onTap: onChangePassword,
             ),
           ] else ...[
             _InfoRow(
               icon: Icons.person_outline_rounded,
-              title: "Full Name",
+              title: l10n.fullName,
               value: fullName,
             ),
             const Divider(height: 22),
-            _InfoRow(icon: Icons.email_outlined, title: "Email", value: email),
+            _InfoRow(icon: Icons.email_outlined, title: l10n.email, value: email),
             const Divider(height: 22),
             _InfoRow(
               icon: Icons.phone_outlined,
-              title: "Phone Number",
+              title: l10n.phoneNumber,
               value: phone,
-            ),
-            const Divider(height: 22),
-            _InfoRow(
-              icon: Icons.lock_outline_rounded,
-              title: "Password",
-              value: "Change Password",
-              valueColor: PilgrimProfilePage.primary,
-              onTap: onChangePassword,
-            ),
-          ],
-          if (isChangingPassword) ...[
-            const SizedBox(height: 14),
-            _EditableField(
-              icon: Icons.lock_outline_rounded,
-              label: "Current Password",
-              controller: currentPasswordController,
-              obscureText: true,
-            ),
-            const SizedBox(height: 12),
-            _EditableField(
-              icon: Icons.lock_reset_rounded,
-              label: "New Password",
-              controller: newPasswordController,
-              obscureText: true,
-            ),
-            const SizedBox(height: 12),
-            _EditableField(
-              icon: Icons.lock_person_rounded,
-              label: "Confirm New Password",
-              controller: confirmPasswordController,
-              obscureText: true,
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: onSavePassword,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: PilgrimProfilePage.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: const Text(
-                  "Save New Password",
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ),
             ),
           ],
         ],
@@ -963,12 +955,18 @@ class _HealthProfileCard extends StatelessWidget {
   final String selectedHealthCondition;
   final String selectedDietaryPreference;
   final List<String> selectedAllergies;
-  final List<String> tags;
+  final List<String> localizedTags;
 
   final List<String> ageOptions;
   final List<String> healthConditionOptions;
   final List<String> dietaryPreferenceOptions;
   final List<String> allergyOptions;
+
+  final String Function(AppLocalizations l10n, String value)
+      localizedHealthCondition;
+  final String Function(AppLocalizations l10n, String value)
+      localizedDietaryPreference;
+  final String Function(AppLocalizations l10n, String value) localizedAllergy;
 
   final ValueChanged<String?> onAgeChanged;
   final ValueChanged<String?> onHealthConditionChanged;
@@ -984,11 +982,14 @@ class _HealthProfileCard extends StatelessWidget {
     required this.selectedHealthCondition,
     required this.selectedDietaryPreference,
     required this.selectedAllergies,
-    required this.tags,
+    required this.localizedTags,
     required this.ageOptions,
     required this.healthConditionOptions,
     required this.dietaryPreferenceOptions,
     required this.allergyOptions,
+    required this.localizedHealthCondition,
+    required this.localizedDietaryPreference,
+    required this.localizedAllergy,
     required this.onAgeChanged,
     required this.onHealthConditionChanged,
     required this.onDietaryPreferenceChanged,
@@ -999,13 +1000,15 @@ class _HealthProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return _WhiteCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _CardHeader(
-            title: "Health Information",
-            actionText: isEditing ? "Save" : "Edit",
+            title: l10n.healthInformation,
+            actionText: isEditing ? l10n.save : l10n.edit,
             onActionTap: onEditTap,
             showCancel: isEditing,
             onCancelTap: onCancelTap,
@@ -1021,55 +1024,63 @@ class _HealthProfileCard extends StatelessWidget {
             const SizedBox(height: 14),
             _DropdownField(
               icon: Icons.monitor_heart_outlined,
-              label: "Health Condition",
+              label: l10n.healthCondition,
               value: selectedHealthCondition,
               items: healthConditionOptions,
+              localizedValue: (item) => localizedHealthCondition(l10n, item),
               onChanged: onHealthConditionChanged,
             ),
             const SizedBox(height: 14),
             _DropdownField(
               icon: Icons.restaurant_menu_rounded,
-              label: "Dietary Preference",
+              label: l10n.dietaryPreference,
               value: selectedDietaryPreference,
               items: dietaryPreferenceOptions,
+              localizedValue: (item) => localizedDietaryPreference(l10n, item),
               onChanged: onDietaryPreferenceChanged,
             ),
             const SizedBox(height: 14),
             _MultiSelectAllergyField(
               icon: Icons.warning_amber_rounded,
-              label: "Allergies",
+              label: l10n.allergies,
               items: allergyOptions,
               selectedItems: selectedAllergies,
+              localizedValue: (item) => localizedAllergy(l10n, item),
               onToggle: onAllergyToggle,
             ),
           ] else ...[
             _InfoRow(
               icon: Icons.cake_outlined,
-              title: "Age",
+              title: l10n.age,
               value: selectedAge,
             ),
             const Divider(height: 22),
             _InfoRow(
               icon: Icons.monitor_heart_outlined,
-              title: "Health Condition",
-              value: selectedHealthCondition,
+              title: l10n.healthCondition,
+              value: localizedHealthCondition(l10n, selectedHealthCondition),
             ),
             const Divider(height: 22),
             _InfoRow(
               icon: Icons.restaurant_menu_rounded,
-              title: "Dietary Preference",
-              value: selectedDietaryPreference,
+              title: l10n.dietaryPreference,
+              value: localizedDietaryPreference(
+                l10n,
+                selectedDietaryPreference,
+              ),
             ),
             const Divider(height: 22),
             _InfoRow(
               icon: Icons.warning_amber_rounded,
-              title: "Allergies",
+              title: l10n.allergies,
               value: selectedAllergies.isEmpty
-                  ? "None"
-                  : selectedAllergies.join(", "),
+                  ? l10n.none
+                  : selectedAllergies
+                        .map((item) => localizedAllergy(l10n, item))
+                        .join(", "),
             ),
             const SizedBox(height: 14),
-            _TagsWrap(tags: tags),
+            _TagsWrap(tags: localizedTags),
           ],
         ],
       ),
@@ -1092,21 +1103,23 @@ class _SettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return _WhiteCard(
       child: Column(
         children: [
-          const _CardHeader(title: "Preferences"),
+          _CardHeader(title: l10n.preferences),
           const SizedBox(height: 10),
           _SwitchSettingRow(
             icon: Icons.notifications_none_rounded,
-            title: "Notifications",
+            title: l10n.notifications,
             value: notificationsEnabled,
             onChanged: onNotificationsChanged,
           ),
           const Divider(height: 22),
           _SettingRow(
             icon: Icons.language_rounded,
-            title: "Language",
+            title: l10n.language,
             value: language,
             onTap: onLanguageTap,
           ),
@@ -1123,6 +1136,8 @@ class _LogoutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
@@ -1136,9 +1151,9 @@ class _LogoutButton extends StatelessWidget {
           backgroundColor: Colors.white,
         ),
         icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-        label: const Text(
-          "Log Out",
-          style: TextStyle(
+        label: Text(
+          l10n.logOut,
+          style: const TextStyle(
             color: Colors.redAccent,
             fontSize: 14.5,
             fontWeight: FontWeight.w900,
@@ -1166,6 +1181,8 @@ class _CardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Row(
       children: [
         Text(
@@ -1176,9 +1193,12 @@ class _CardHeader extends StatelessWidget {
         if (showCancel)
           TextButton(
             onPressed: onCancelTap,
-            child: const Text(
-              "Cancel",
-              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w700),
+            child: Text(
+              l10n.cancel,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         if (actionText != null)
@@ -1288,6 +1308,7 @@ class _InlineAgeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final currentAge = int.tryParse(age) ?? 18;
 
     return Row(
@@ -1319,7 +1340,7 @@ class _InlineAgeSelector extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Age",
+                  l10n.age,
                   style: TextStyle(
                     fontSize: 12.5,
                     color: Colors.black.withOpacity(0.6),
@@ -1421,6 +1442,7 @@ class _DropdownField extends StatelessWidget {
   final String label;
   final String value;
   final List<String> items;
+  final String Function(String item) localizedValue;
   final ValueChanged<String?> onChanged;
 
   const _DropdownField({
@@ -1428,6 +1450,7 @@ class _DropdownField extends StatelessWidget {
     required this.label,
     required this.value,
     required this.items,
+    required this.localizedValue,
     required this.onChanged,
   });
 
@@ -1465,7 +1488,7 @@ class _DropdownField extends StatelessWidget {
                   (item) => DropdownMenuItem<String>(
                     value: item,
                     child: Text(
-                      item,
+                      localizedValue(item),
                       style: const TextStyle(
                         color: Colors.black87,
                         fontWeight: FontWeight.w700,
@@ -1520,6 +1543,7 @@ class _MultiSelectAllergyField extends StatelessWidget {
   final String label;
   final List<String> items;
   final List<String> selectedItems;
+  final String Function(String item) localizedValue;
   final void Function(String allergy, bool selected) onToggle;
 
   const _MultiSelectAllergyField({
@@ -1527,6 +1551,7 @@ class _MultiSelectAllergyField extends StatelessWidget {
     required this.label,
     required this.items,
     required this.selectedItems,
+    required this.localizedValue,
     required this.onToggle,
   });
 
@@ -1571,7 +1596,7 @@ class _MultiSelectAllergyField extends StatelessWidget {
                   children: items.map((item) {
                     final selected = selectedItems.contains(item);
                     return FilterChip(
-                      label: Text(item),
+                      label: Text(localizedValue(item)),
                       selected: selected,
                       onSelected: (value) => onToggle(item, value),
                       selectedColor: PilgrimProfilePage.mint.withOpacity(0.35),
@@ -1776,6 +1801,10 @@ class _TagsWrap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (tags.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Wrap(
       spacing: 8,
       runSpacing: 8,

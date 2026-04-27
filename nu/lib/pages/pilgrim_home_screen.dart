@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import 'pilgrim_meals_page.dart';
 import 'pilgrim_order_history_page.dart';
 import 'pilgrim_profile_page.dart';
@@ -30,9 +32,6 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
   }
 
   static const Color bg = Color(0xFFF3F6F5);
-  static const Color primaryDark = Color(0xFF062C26);
-  static const Color primary = Color(0xFF0D4C4A);
-  static const Color primaryMid = Color(0xFF1A6B66);
   static const Color mint = Color(0xFF9FE5C9);
   static const Color gold = Color(0xFFF0E0C0);
 
@@ -87,8 +86,27 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
     );
   }
 
+  String _localizedStatus(AppLocalizations l10n, String status) {
+    switch (status.toLowerCase().trim()) {
+      case 'pending':
+        return l10n.pending;
+      case 'accepted':
+        return l10n.accepted;
+      case 'completed':
+        return l10n.completed;
+      case 'cancelled':
+        return l10n.cancelled;
+      case 'rejected':
+        return l10n.rejected;
+      default:
+        return status;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: bg,
       appBar: _PilgrimMainAppBar(onTapNotifications: _openNotificationsPage),
@@ -106,7 +124,7 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Text(
-                    'Error loading home data: ${snapshot.error}',
+                    '${l10n.errorLoadingHomeData}: ${snapshot.error}',
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -114,7 +132,7 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
             }
 
             final data = snapshot.data ?? {};
-            final userName = data['fullName'] ?? 'Pilgrim';
+            final userName = data['fullName'] ?? l10n.pilgrim;
             final latestOrder = data['latestOrder'];
 
             return SingleChildScrollView(
@@ -128,15 +146,16 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
                   ),
                   const SizedBox(height: 18),
 
-                  const _SectionHeader(title: "Order Now"),
+                  _SectionHeader(title: l10n.orderNow),
                   const SizedBox(height: 10),
 
                   Row(
                     children: [
                       Expanded(
                         child: _OrderNowCard(
-                          title: "Meals",
-                          subtitle: "Browse daily meals",
+                          title: l10n.meals,
+                          subtitle: l10n.browseDailyMeals,
+                          chipText: l10n.recommended,
                           gradient: const LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -145,14 +164,15 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
                           onEnter: _openMealsPage,
                           icon: Icons.restaurant_menu_rounded,
                           chipColor: mint,
-                          buttonText: "Start Order",
+                          buttonText: l10n.startOrder,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _OrderNowCard(
-                          title: "Buffet",
-                          subtitle: "Explore buffet options",
+                          title: l10n.buffet,
+                          subtitle: l10n.exploreBuffetOptions,
+                          chipText: l10n.groupService,
                           gradient: const LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -161,7 +181,7 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
                           onEnter: _noop,
                           icon: Icons.local_dining_rounded,
                           chipColor: gold,
-                          buttonText: "View Options",
+                          buttonText: l10n.viewOptions,
                         ),
                       ),
                     ],
@@ -169,18 +189,18 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
 
                   const SizedBox(height: 18),
 
-                  const _SectionHeader(title: "Order History"),
+                  _SectionHeader(title: l10n.orderHistory),
                   const SizedBox(height: 10),
 
                   if (latestOrder == null)
                     const _EmptyOrderHistoryCard()
                   else
                     _OrderHistoryCard(
-                      title: latestOrder['mealName'] ?? 'Unknown Meal',
+                      title: latestOrder['mealName'] ?? l10n.unknownMeal,
                       metaLine:
-                          'Order #${latestOrder['orderID']} · ${latestOrder['status']}',
+                          '${l10n.orderNumber} ${latestOrder['orderID']} · ${_localizedStatus(l10n, latestOrder['status']?.toString() ?? '')}',
                       kcalLine: latestOrder['kcalLine'] ?? '',
-                      badgeText: "Tap to view previous orders",
+                      badgeText: l10n.tapToViewPreviousOrders,
                       onTap: _openOrderHistoryPage,
                     ),
 
@@ -212,49 +232,45 @@ class _PilgrimMainAppBar extends StatelessWidget
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0.6,
-      shadowColor: Colors.black.withOpacity(0.08),
-      surfaceTintColor: Colors.white,
-      automaticallyImplyLeading: false,
-      titleSpacing: 8,
-      title: Row(
-        children: [
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.6,
+        shadowColor: Colors.black.withOpacity(0.08),
+        surfaceTintColor: Colors.white,
+        automaticallyImplyLeading: false,
+        titleSpacing: 8,
+title: const Row(
+  children: [
+    SizedBox(width: 4),
+    Text(
+      "NUSUQ",
+      style: TextStyle(
+        color: Colors.black87,
+        fontSize: 17,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 0.4,
+      ),
+    ),
+  ],
+),
+        actions: [
           IconButton(
-            onPressed: () {
-              // TODO: open menu / drawer
-            },
-            icon: const Icon(Icons.menu_rounded, color: Colors.black87),
-          ),
-          const SizedBox(width: 4),
-          const Text(
-            "NUSUQ",
-            style: TextStyle(
+            onPressed: onTapNotifications,
+            icon: const Icon(
+              Icons.notifications,
               color: Colors.black87,
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.4,
+              size: 20,
             ),
           ),
+          const SizedBox(width: 6),
         ],
       ),
-      actions: [
-        IconButton(
-          onPressed: onTapNotifications,
-          icon: const Icon(
-            Icons.notifications,
-            color: Colors.black87,
-            size: 20,
-          ),
-        ),
-        const SizedBox(width: 6),
-      ],
     );
   }
 }
 
-/// TOP BLOCK
 class _TopCombinedBlock extends StatelessWidget {
   final String userName;
   final VoidCallback onTapAskAI;
@@ -269,6 +285,8 @@ class _TopCombinedBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -321,7 +339,7 @@ class _TopCombinedBlock extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Assalamu Alaikum ,",
+                              l10n.assalamuAlaikum,
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.86),
                                 fontSize: 12.5,
@@ -391,9 +409,9 @@ class _TopCombinedBlock extends StatelessWidget {
                       color: primary.withOpacity(0.90),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      "Today’s Meals",
-                      style: TextStyle(
+                    Text(
+                      l10n.todaysMeals,
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w900,
                       ),
@@ -410,14 +428,14 @@ class _TopCombinedBlock extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 10),
-                _mealLine("Breakfast", "7:30 AM"),
+                _mealLine(l10n.breakfast, "7:30 AM"),
                 const SizedBox(height: 8),
-                _mealLine("Lunch", "1:00 PM"),
+                _mealLine(l10n.lunch, "1:00 PM"),
                 const SizedBox(height: 8),
-                _mealLine("Dinner", "8:00 PM"),
+                _mealLine(l10n.dinner, "8:00 PM"),
                 const SizedBox(height: 10),
                 Text(
-                  "*Meal times are scheduled by your campaign*",
+                  l10n.mealTimesScheduledByCampaign,
                   style: TextStyle(
                     fontSize: 11.5,
                     color: Colors.black.withOpacity(0.45),
@@ -468,10 +486,10 @@ class _TopCombinedBlock extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      "Ask Your AI Assistance",
-                      style: TextStyle(
+                      l10n.askYourAiAssistant,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
                       ),
@@ -498,7 +516,6 @@ class _TopCombinedBlock extends StatelessWidget {
   }
 }
 
-/// SECTION HEADER
 class _SectionHeader extends StatelessWidget {
   final String title;
 
@@ -513,10 +530,10 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-/// ORDER NOW CARD
 class _OrderNowCard extends StatelessWidget {
   final String title;
   final String subtitle;
+  final String chipText;
   final Gradient gradient;
   final VoidCallback onEnter;
   final IconData icon;
@@ -526,6 +543,7 @@ class _OrderNowCard extends StatelessWidget {
   const _OrderNowCard({
     required this.title,
     required this.subtitle,
+    required this.chipText,
     required this.gradient,
     required this.onEnter,
     required this.icon,
@@ -608,7 +626,7 @@ class _OrderNowCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
-                        title == "Meals" ? "Recommended" : "Group Service",
+                        chipText,
                         style: TextStyle(
                           fontSize: 11.2,
                           fontWeight: FontWeight.w800,
@@ -682,7 +700,6 @@ class _OrderNowCard extends StatelessWidget {
   }
 }
 
-/// ORDER HISTORY CARD
 class _OrderHistoryCard extends StatelessWidget {
   final String title;
   final String metaLine;
@@ -804,6 +821,8 @@ class _EmptyOrderHistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -819,9 +838,9 @@ class _EmptyOrderHistoryCard extends StatelessWidget {
           ),
         ],
       ),
-      child: const Text(
-        'No previous orders yet',
-        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+      child: Text(
+        l10n.noPreviousOrdersYet,
+        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
       ),
     );
   }

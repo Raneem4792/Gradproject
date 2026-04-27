@@ -9,9 +9,12 @@ class ReportService {
 
   Future<ProviderDashboardReport> getProviderDashboard(
     String providerId,
+    String language,
   ) async {
     final response = await http.get(
-      Uri.parse('$baseUrl/api/reports/provider-dashboard/$providerId'),
+      Uri.parse(
+        '$baseUrl/api/reports/provider-dashboard/$providerId?lang=$language',
+      ),
     );
 
     if (response.statusCode == 200) {
@@ -21,7 +24,7 @@ class ReportService {
     }
   }
 
-  String getProviderDashboardPdfUrl(String providerId) {
-    return '$baseUrl/api/reports/provider-dashboard/$providerId/pdf';
+  String getProviderDashboardPdfUrl(String providerId, String language) {
+    return '$baseUrl/api/reports/provider-dashboard/$providerId/pdf?lang=$language';
   }
 }

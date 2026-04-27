@@ -1,9 +1,12 @@
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../l10n/app_localizations.dart';
 import '../widgets/provider_bottom_nav.dart';
 import '../models/meal.dart';
 import '../services/meal_service.dart';
@@ -11,6 +14,31 @@ import 'provider_home_screen.dart';
 import '../session/user_session.dart';
 
 enum _FormMode { add, edit }
+
+String _localizedMealType(BuildContext context, String type) {
+  final l10n = AppLocalizations.of(context)!;
+
+  switch (type) {
+    case 'Healthy':
+      return l10n.healthy;
+    case 'Breakfast':
+      return l10n.breakfast;
+    case 'Lunch':
+      return l10n.lunch;
+    case 'Dinner':
+      return l10n.dinner;
+    case 'Vegetarian':
+      return l10n.vegetarian;
+    case 'High Protein':
+      return l10n.highProtein;
+    case 'Low Carb':
+      return l10n.lowCarb;
+    case 'Fast Food':
+      return l10n.fastFood;
+    default:
+      return type;
+  }
+}
 
 class ProviderMealManagementScreen extends StatefulWidget {
   const ProviderMealManagementScreen({super.key});
@@ -52,13 +80,17 @@ class _ProviderMealManagementScreenState
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
+
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ).showSnackBar(SnackBar(content: Text('${l10n.error}: $e')));
     }
   }
 
   void _showMealDetails(Meal meal) {
+    final l10n = AppLocalizations.of(context)!;
+
     showDialog(
       context: context,
       builder: (_) => Dialog(
@@ -82,9 +114,9 @@ class _ProviderMealManagementScreenState
                     ),
                   ),
                   const SizedBox(height: 18),
-                  const Text(
-                    'Meal Details',
-                    style: TextStyle(
+                  Text(
+                    l10n.mealDetails,
+                    style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
                       color: Colors.black54,
@@ -104,21 +136,32 @@ class _ProviderMealManagementScreenState
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _detailChip(meal.mealType, filled: true),
-                      _detailChip('${meal.calories} kcal'),
-                      _detailChip('${meal.protein} g protein'),
-                      _detailChip('${meal.carbohydrates} g carbs'),
-                      _detailChip('${meal.fat} g fat'),
+                      _detailChip(
+                        _localizedMealType(context, meal.mealType),
+                        filled: true,
+                      ),
+                      _detailChip('${meal.calories} ${l10n.kcal}'),
+                      _detailChip('${meal.protein} ${l10n.gramsProtein}'),
+                      _detailChip(
+                        '${meal.carbohydrates} ${l10n.gramsCarbs}',
+                      ),
+                      _detailChip('${meal.fat} ${l10n.gramsFat}'),
                     ],
                   ),
                   const SizedBox(height: 18),
-                  _detailRow('Meal Name', meal.mealName),
-                  _detailRow('Meal Type', meal.mealType),
-                  _detailRow('Description', meal.description),
-                  _detailRow('Calories', '${meal.calories} kcal'),
-                  _detailRow('Protein', '${meal.protein} g'),
-                  _detailRow('Carbohydrates', '${meal.carbohydrates} g'),
-                  _detailRow('Fat', '${meal.fat} g'),
+                  _detailRow(l10n.mealName, meal.mealName),
+                  _detailRow(
+                    l10n.mealType,
+                    _localizedMealType(context, meal.mealType),
+                  ),
+                  _detailRow(l10n.description, meal.description),
+                  _detailRow(l10n.calories, '${meal.calories} ${l10n.kcal}'),
+                  _detailRow(l10n.protein, '${meal.protein} g'),
+                  _detailRow(
+                    l10n.carbohydrates,
+                    '${meal.carbohydrates} g',
+                  ),
+                  _detailRow(l10n.fat, '${meal.fat} g'),
                   const SizedBox(height: 18),
                   Row(
                     children: [
@@ -133,9 +176,11 @@ class _ProviderMealManagementScreenState
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 13),
                           ),
-                          child: const Text(
-                            'Close',
-                            style: TextStyle(fontWeight: FontWeight.w900),
+                          child: Text(
+                            l10n.close,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                         ),
                       ),
@@ -155,9 +200,11 @@ class _ProviderMealManagementScreenState
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 13),
                           ),
-                          child: const Text(
-                            'Edit',
-                            style: TextStyle(fontWeight: FontWeight.w900),
+                          child: Text(
+                            l10n.edit,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                         ),
                       ),
@@ -240,17 +287,19 @@ class _ProviderMealManagementScreenState
   }
 
   Future<void> _deleteMeal(Meal meal) async {
+    final l10n = AppLocalizations.of(context)!;
+
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text(
-          'Delete meal?',
-          style: TextStyle(fontWeight: FontWeight.w900),
+        title: Text(
+          l10n.deleteMealQuestion,
+          style: const TextStyle(fontWeight: FontWeight.w900),
         ),
         content: Text(
-          'Are you sure you want to delete "${meal.mealName}"?',
+          l10n.areYouSureDeleteMeal(meal.mealName),
           style: const TextStyle(
             color: Colors.black54,
             fontWeight: FontWeight.w600,
@@ -260,7 +309,7 @@ class _ProviderMealManagementScreenState
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(
-              'Cancel',
+              l10n.cancel,
               style: TextStyle(
                 color: primary.withOpacity(0.85),
                 fontWeight: FontWeight.w900,
@@ -276,9 +325,9 @@ class _ProviderMealManagementScreenState
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
-              'Delete',
-              style: TextStyle(fontWeight: FontWeight.w900),
+            child: Text(
+              l10n.delete,
+              style: const TextStyle(fontWeight: FontWeight.w900),
             ),
           ),
         ],
@@ -293,6 +342,8 @@ class _ProviderMealManagementScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
@@ -355,12 +406,12 @@ class _ProviderMealManagementScreenState
                       ),
                     ),
                     if (_meals.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 28),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 28),
                         child: Center(
                           child: Text(
-                            'No meals added yet',
-                            style: TextStyle(
+                            l10n.noMealsAddedYet,
+                            style: const TextStyle(
                               color: Colors.black45,
                               fontWeight: FontWeight.w700,
                             ),
@@ -376,6 +427,8 @@ class _ProviderMealManagementScreenState
   }
 
   Widget _buildHeaderCard() {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -410,10 +463,10 @@ class _ProviderMealManagementScreenState
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Manage Meals',
-              style: TextStyle(
+              l10n.manageMeals,
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
                 fontSize: 16,
@@ -428,7 +481,7 @@ class _ProviderMealManagementScreenState
               border: Border.all(color: mint.withOpacity(0.45)),
             ),
             child: Text(
-              '${_meals.length} meals',
+              '${_meals.length} ${l10n.meals}',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
@@ -442,6 +495,8 @@ class _ProviderMealManagementScreenState
   }
 
   Widget _buildAddButton() {
+    final l10n = AppLocalizations.of(context)!;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -466,7 +521,7 @@ class _ProviderMealManagementScreenState
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Add Meal',
+                l10n.addMeal,
                 style: TextStyle(
                   color: primary.withOpacity(0.92),
                   fontWeight: FontWeight.w900,
@@ -517,6 +572,8 @@ class _MealCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -590,9 +647,14 @@ class _MealCard extends StatelessWidget {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _MealPill(text: meal.mealType, filled: true),
-                        _MealPill(text: '${meal.calories} kcal'),
-                        _MealPill(text: '${meal.protein}g protein'),
+                        _MealPill(
+                          text: _localizedMealType(context, meal.mealType),
+                          filled: true,
+                        ),
+                        _MealPill(text: '${meal.calories} ${l10n.kcal}'),
+                        _MealPill(
+                          text: '${meal.protein}${l10n.gramsProtein}',
+                        ),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -603,7 +665,8 @@ class _MealCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     _InfoRow(
                       icon: Icons.bar_chart_rounded,
-                      text: '${meal.carbohydrates}g carbs • ${meal.fat}g fat',
+                      text:
+                          '${meal.carbohydrates}${l10n.gramsCarbs} • ${meal.fat}${l10n.gramsFat}',
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -623,9 +686,11 @@ class _MealCard extends StatelessWidget {
                               ),
                             ),
                             icon: const Icon(Icons.edit_rounded, size: 18),
-                            label: const Text(
-                              'Edit',
-                              style: TextStyle(fontWeight: FontWeight.w900),
+                            label: Text(
+                              l10n.edit,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
                           ),
                         ),
@@ -646,9 +711,11 @@ class _MealCard extends StatelessWidget {
                               Icons.delete_outline_rounded,
                               size: 18,
                             ),
-                            label: const Text(
-                              'Delete',
-                              style: TextStyle(fontWeight: FontWeight.w900),
+                            label: Text(
+                              l10n.delete,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
                           ),
                         ),
@@ -885,14 +952,18 @@ class _MealFormSheetState extends State<_MealFormSheet> {
   }
 
   String? _requiredText(String? value, String fieldName) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (value == null || value.trim().isEmpty) {
-      return '$fieldName is required';
+      return l10n.fieldIsRequired(fieldName);
     }
     return null;
   }
 
   String? _mealNameValidator(String? value) {
-    final basic = _requiredText(value, 'Meal Name');
+    final l10n = AppLocalizations.of(context)!;
+
+    final basic = _requiredText(value, l10n.mealName);
     if (basic != null) return basic;
 
     final trimmed = value!.trim();
@@ -902,40 +973,44 @@ class _MealFormSheetState extends State<_MealFormSheet> {
     final hasSymbols = RegExp(r'[^A-Za-z\u0600-\u06FF\s]').hasMatch(trimmed);
 
     if (hasDigits) {
-      return 'Meal Name must not contain numbers';
+      return l10n.mealNameMustNotContainNumbers;
     }
 
     if (hasSymbols) {
-      return 'Meal Name must not contain symbols';
+      return l10n.mealNameMustNotContainSymbols;
     }
 
     if (hasArabic && hasEnglish) {
-      return 'Meal Name must be either Arabic or English only';
+      return l10n.mealNameMustBeArabicOrEnglishOnly;
     }
 
     return null;
   }
 
   String? _descriptionValidator(String? value) {
-    final basic = _requiredText(value, 'Description');
+    final l10n = AppLocalizations.of(context)!;
+
+    final basic = _requiredText(value, l10n.description);
     if (basic != null) return basic;
 
     final trimmed = value!.trim();
     final hasSymbols = RegExp(r'[^A-Za-z\u0600-\u06FF0-9\s]').hasMatch(trimmed);
 
     if (hasSymbols) {
-      return 'Description must not contain symbols';
+      return l10n.descriptionMustNotContainSymbols;
     }
 
     return null;
   }
 
   String? _requiredNumber(String? value, String fieldName) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (value == null || value.trim().isEmpty) {
-      return '$fieldName is required';
+      return l10n.fieldIsRequired(fieldName);
     }
     if (num.tryParse(value.trim()) == null) {
-      return '$fieldName must be a valid number';
+      return l10n.fieldMustBeValidNumber(fieldName);
     }
     return null;
   }
@@ -1004,6 +1079,8 @@ class _MealFormSheetState extends State<_MealFormSheet> {
   }
 
   Widget _imagePreview() {
+    final l10n = AppLocalizations.of(context)!;
+
     if (_selectedImage != null) {
       if (kIsWeb) {
         return FutureBuilder<List<int>>(
@@ -1055,14 +1132,17 @@ class _MealFormSheetState extends State<_MealFormSheet> {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: mint.withOpacity(0.55)),
       ),
-      child: const Column(
+      child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.image_outlined, size: 42, color: primary),
-          SizedBox(height: 8),
+          const Icon(Icons.image_outlined, size: 42, color: primary),
+          const SizedBox(height: 8),
           Text(
-            'No image selected',
-            style: TextStyle(color: primaryDark, fontWeight: FontWeight.w600),
+            l10n.noImageSelected,
+            style: const TextStyle(
+              color: primaryDark,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -1070,13 +1150,15 @@ class _MealFormSheetState extends State<_MealFormSheet> {
   }
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context)!;
+
     if (!_formKey.currentState!.validate()) return;
 
     final currentProviderId = UserSession.userId;
     final currentProviderName = UserSession.fullName;
 
     if (currentProviderId == null || currentProviderId.isEmpty) {
-      _showSnack('Provider session not found', const Color(0xFFB3261E));
+      _showSnack(l10n.providerSessionNotFound, const Color(0xFFB3261E));
       return;
     }
 
@@ -1099,15 +1181,15 @@ class _MealFormSheetState extends State<_MealFormSheet> {
     try {
       if (widget.mode == _FormMode.add) {
         await _service.addMeal(meal, imageFile: _selectedImage);
-        _showSnack('Meal added successfully!', primary);
+        _showSnack(l10n.mealAddedSuccessfully, primary);
       } else {
         await _service.updateMeal(meal.mealID, meal, imageFile: _selectedImage);
-        _showSnack('Meal updated successfully!', primary);
+        _showSnack(l10n.mealUpdatedSuccessfully, primary);
       }
 
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      _showSnack('Operation failed: $e', const Color(0xFFB3261E));
+      _showSnack('${l10n.operationFailed}: $e', const Color(0xFFB3261E));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -1121,6 +1203,7 @@ class _MealFormSheetState extends State<_MealFormSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Padding(
@@ -1144,7 +1227,7 @@ class _MealFormSheetState extends State<_MealFormSheet> {
               ),
               const SizedBox(height: 18),
               Text(
-                _isEdit ? 'Edit Meal' : 'Add New Meal',
+                _isEdit ? l10n.editMeal : l10n.addNewMeal,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
@@ -1154,8 +1237,8 @@ class _MealFormSheetState extends State<_MealFormSheet> {
               const SizedBox(height: 6),
               Text(
                 _isEdit
-                    ? 'Update meal details below.'
-                    : 'Enter meal information below.',
+                    ? l10n.updateMealDetailsBelow
+                    : l10n.enterMealInformationBelow,
                 style: TextStyle(
                   fontSize: 13.3,
                   height: 1.35,
@@ -1181,23 +1264,23 @@ class _MealFormSheetState extends State<_MealFormSheet> {
                     ),
                   ),
                   icon: const Icon(Icons.upload_file_rounded),
-                  label: const Text(
-                    'Choose Image From Device',
-                    style: TextStyle(fontWeight: FontWeight.w800),
+                  label: Text(
+                    l10n.chooseImageFromDevice,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
               ),
               const SizedBox(height: 18),
-              _sectionLabel('Meal Name'),
+              _sectionLabel(l10n.mealName),
               const SizedBox(height: 8),
               _styledInput(
                 _name,
-                'Enter meal name',
+                l10n.enterMealName,
                 validator: _mealNameValidator,
                 prefixIcon: Icons.restaurant_menu_rounded,
               ),
               const SizedBox(height: 14),
-              _sectionLabel('Meal Type'),
+              _sectionLabel(l10n.mealType),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: _selectedMealType,
@@ -1207,7 +1290,7 @@ class _MealFormSheetState extends State<_MealFormSheet> {
                       (type) => DropdownMenuItem<String>(
                         value: type,
                         child: Text(
-                          type,
+                          _localizedMealType(context, type),
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ),
@@ -1218,7 +1301,7 @@ class _MealFormSheetState extends State<_MealFormSheet> {
                   setState(() => _selectedMealType = value);
                 },
                 decoration: InputDecoration(
-                  hintText: 'Select meal type',
+                  hintText: l10n.selectMealType,
                   prefixIcon: Icon(
                     Icons.category_outlined,
                     color: primary.withOpacity(0.78),
@@ -1243,29 +1326,29 @@ class _MealFormSheetState extends State<_MealFormSheet> {
                 borderRadius: BorderRadius.circular(18),
               ),
               const SizedBox(height: 14),
-              _sectionLabel('Description'),
+              _sectionLabel(l10n.description),
               const SizedBox(height: 8),
               _styledInput(
                 _desc,
-                'Write meal description',
+                l10n.writeMealDescription,
                 maxLines: 4,
                 validator: _descriptionValidator,
                 prefixIcon: Icons.description_outlined,
               ),
               const SizedBox(height: 14),
-              _sectionLabel('Nutrition Information'),
+              _sectionLabel(l10n.nutritionInformation),
               const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
                     child: _styledInput(
                       _cal,
-                      'Calories',
+                      l10n.calories,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: false,
                       ),
                       formatters: [FilteringTextInputFormatter.digitsOnly],
-                      validator: (v) => _requiredNumber(v, 'Calories'),
+                      validator: (v) => _requiredNumber(v, l10n.calories),
                       prefixIcon: Icons.local_fire_department_outlined,
                     ),
                   ),
@@ -1273,7 +1356,7 @@ class _MealFormSheetState extends State<_MealFormSheet> {
                   Expanded(
                     child: _styledInput(
                       _pro,
-                      'Protein',
+                      l10n.protein,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
@@ -1282,7 +1365,7 @@ class _MealFormSheetState extends State<_MealFormSheet> {
                           RegExp(r'^\d*\.?\d*$'),
                         ),
                       ],
-                      validator: (v) => _requiredNumber(v, 'Protein'),
+                      validator: (v) => _requiredNumber(v, l10n.protein),
                       prefixIcon: Icons.fitness_center_rounded,
                     ),
                   ),
@@ -1294,7 +1377,7 @@ class _MealFormSheetState extends State<_MealFormSheet> {
                   Expanded(
                     child: _styledInput(
                       _carb,
-                      'Carbohydrates',
+                      l10n.carbohydrates,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
@@ -1303,7 +1386,7 @@ class _MealFormSheetState extends State<_MealFormSheet> {
                           RegExp(r'^\d*\.?\d*$'),
                         ),
                       ],
-                      validator: (v) => _requiredNumber(v, 'Carbohydrates'),
+                      validator: (v) => _requiredNumber(v, l10n.carbohydrates),
                       prefixIcon: Icons.grain_rounded,
                     ),
                   ),
@@ -1311,7 +1394,7 @@ class _MealFormSheetState extends State<_MealFormSheet> {
                   Expanded(
                     child: _styledInput(
                       _fat,
-                      'Fat',
+                      l10n.fat,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
@@ -1320,7 +1403,7 @@ class _MealFormSheetState extends State<_MealFormSheet> {
                           RegExp(r'^\d*\.?\d*$'),
                         ),
                       ],
-                      validator: (v) => _requiredNumber(v, 'Fat'),
+                      validator: (v) => _requiredNumber(v, l10n.fat),
                       prefixIcon: Icons.opacity_rounded,
                     ),
                   ),
@@ -1342,9 +1425,9 @@ class _MealFormSheetState extends State<_MealFormSheet> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(fontWeight: FontWeight.w900),
+                      child: Text(
+                        l10n.cancel,
+                        style: const TextStyle(fontWeight: FontWeight.w900),
                       ),
                     ),
                   ),
@@ -1371,7 +1454,7 @@ class _MealFormSheetState extends State<_MealFormSheet> {
                               ),
                             )
                           : Text(
-                              _isEdit ? 'Save Changes' : 'Add Meal',
+                              _isEdit ? l10n.saveChanges : l10n.addMeal,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w900,
                               ),

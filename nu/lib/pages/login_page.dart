@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import '../l10n/app_localizations.dart';
+import '../main.dart';
 import 'signup_page.dart';
 import 'provider_home_screen.dart';
 import 'pilgrim_home_screen.dart';
@@ -48,55 +51,116 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   String? _validateId(String? value) {
+    final l10n = AppLocalizations.of(context)!;
     final text = (value ?? '').trim();
 
-    if (text.isEmpty) return 'Please enter your ID';
-    if (text.contains(' ')) return 'ID must not contain spaces';
+    if (text.isEmpty) return l10n.pleaseEnterYourId;
+    if (text.contains(' ')) return l10n.idMustNotContainSpaces;
     if (!RegExp(r'^[0-9]+$').hasMatch(text)) {
-      return 'ID must contain numbers only';
+      return l10n.idNumbersOnly;
     }
-    if (text.length < 6) return 'ID number is too short';
-    if (text.length > 20) return 'ID number is too long';
+    if (text.length < 6) return l10n.idTooShort;
+    if (text.length > 20) return l10n.idTooLong;
 
     return null;
   }
 
   String? _validatePassword(String? value) {
+    final l10n = AppLocalizations.of(context)!;
     final text = value ?? '';
 
-    if (text.isEmpty) return 'Please enter your password';
-    if (text.contains(' ')) return 'Password must not contain spaces';
-    if (text.length < 8) return 'Password must be at least 8 characters';
-    if (text.length > 20) return 'Password must not exceed 20 characters';
+    if (text.isEmpty) return l10n.pleaseEnterPassword;
+    if (text.contains(' ')) return l10n.passwordNoSpaces;
+    if (text.length < 8) return l10n.passwordTooShort;
+    if (text.length > 20) return l10n.passwordTooLong;
 
     return null;
   }
 
-  String _friendlyErrorMessage(String error) {
+  String _friendlyErrorMessage(String error, AppLocalizations l10n) {
     final message = error.toLowerCase();
 
     if (message.contains('invalid credentials')) {
-      return 'Incorrect ID or password.';
+      return l10n.incorrectIdOrPassword;
     }
 
     if (message.contains('id and password are required')) {
-      return 'Please enter both ID and password.';
+      return l10n.enterBothIdAndPassword;
     }
 
     if (message.contains('network') ||
         message.contains('socketexception') ||
         message.contains('failed host lookup')) {
-      return 'Unable to connect to the server. Please make sure the backend is running.';
+      return l10n.unableToConnectToServer;
     }
 
     if (message.contains('server error')) {
-      return 'Something went wrong during login. Please try again.';
+      return l10n.somethingWentWrongDuringLogin;
     }
 
     return error;
   }
 
+  Future<void> _changeLanguage() async {
+    final currentLocale = Localizations.localeOf(context).languageCode;
+
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      l10n.chooseLanguage,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+                ListTile(
+                  title: Text(l10n.arabic),
+                  trailing: currentLocale == "ar"
+                      ? const Icon(Icons.check, color: primary)
+                      : null,
+                  onTap: () => Navigator.pop(context, "ar"),
+                ),
+                ListTile(
+                  title: Text(l10n.english),
+                  trailing: currentLocale == "en"
+                      ? const Icon(Icons.check, color: primary)
+                      : null,
+                  onTap: () => Navigator.pop(context, "en"),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selected != null) {
+      NusuqApp.of(context).setLocale(Locale(selected));
+    }
+  }
+
   Future<void> _login() async {
+    final l10n = AppLocalizations.of(context)!;
+
     setState(() {
       _submittedOnce = true;
       _generalError = null;
@@ -123,11 +187,14 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: primary,
           content: Text(
-            'Login successful',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+            l10n.loginSuccessful,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       );
@@ -142,6 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final errorMessage = _friendlyErrorMessage(
         e.toString().replaceFirst('Exception: ', ''),
+        l10n,
       );
 
       setState(() {
@@ -169,6 +237,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     final autoValidateMode = _submittedOnce
         ? AutovalidateMode.onUserInteraction
         : AutovalidateMode.disabled;
@@ -178,6 +248,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Stack(
         children: [
           const Positioned.fill(child: _SoftPatternBackground()),
+
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -201,7 +272,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Smart platform for serving pilgrims',
+                            l10n.smartPlatformForServingPilgrims,
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.78),
                               fontSize: 12.5,
@@ -230,9 +301,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           autovalidateMode: autoValidateMode,
                           child: Column(
                             children: [
-                              const Text(
-                                'Log In',
-                                style: TextStyle(
+                              Text(
+                                l10n.logIn,
+                                style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w900,
                                   color: Color(0xFF1F2937),
@@ -240,7 +311,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                'Enter your ID and password to access your account',
+                                l10n.enterIdAndPassword,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 12.5,
@@ -286,12 +357,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ],
                               const SizedBox(height: 16),
-                              _FieldLabel('ID Number'),
+                              _FieldLabel(l10n.idNumber),
                               const SizedBox(height: 6),
                               _AppField(
                                 controller: _idController,
-                                hintText: 'Enter your ID number',
-                                helperText: 'Numbers only, 6 to 20 digits',
+                                hintText: l10n.enterYourIdNumber,
+                                helperText: l10n.idNumberHelper,
                                 icon: Icons.badge_outlined,
                                 keyboardType: TextInputType.number,
                                 textInputAction: TextInputAction.next,
@@ -307,12 +378,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 },
                               ),
                               const SizedBox(height: 12),
-                              _FieldLabel('Password'),
+                              _FieldLabel(l10n.password),
                               const SizedBox(height: 6),
                               _AppField(
                                 controller: _passwordController,
-                                hintText: 'Enter your password',
-                                helperText: '8 to 20 characters, no spaces',
+                                hintText: l10n.enterYourPassword,
+                                helperText: l10n.loginPasswordHelper,
                                 icon: Icons.lock_outline,
                                 obscureText: _obscurePassword,
                                 textInputAction: TextInputAction.done,
@@ -341,7 +412,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               const SizedBox(height: 8),
 
                               Align(
-                                alignment: Alignment.centerRight,
+                                alignment: AlignmentDirectional.centerEnd,
                                 child: GestureDetector(
                                   onTap: () {
                                     Navigator.pushNamed(
@@ -349,9 +420,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ForgotPasswordPage.routeName,
                                     );
                                   },
-                                  child: const Text(
-                                    'Forgot Password?',
-                                    style: TextStyle(
+                                  child: Text(
+                                    l10n.forgotPassword,
+                                    style: const TextStyle(
                                       color: primary,
                                       fontWeight: FontWeight.w900,
                                       fontSize: 13,
@@ -384,19 +455,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                             color: Colors.white,
                                           ),
                                         )
-                                      : const Row(
+                                      : Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.center,
                                           children: [
-                                            Icon(
+                                            const Icon(
                                               Icons.arrow_forward,
                                               color: Colors.white,
                                               size: 20,
                                             ),
-                                            SizedBox(width: 8),
+                                            const SizedBox(width: 8),
                                             Text(
-                                              'Log In',
-                                              style: TextStyle(
+                                              l10n.logIn,
+                                              style: const TextStyle(
                                                 fontWeight: FontWeight.w900,
                                                 fontSize: 15,
                                                 color: Colors.white,
@@ -411,7 +482,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    "Don’t have an account? ",
+                                    l10n.dontHaveAccount,
                                     style: TextStyle(
                                       color: Colors.black.withOpacity(0.6),
                                       fontWeight: FontWeight.w600,
@@ -424,9 +495,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                         SignUpScreen.routeName,
                                       );
                                     },
-                                    child: const Text(
-                                      'Create account',
-                                      style: TextStyle(
+                                    child: Text(
+                                      l10n.createAccount,
+                                      style: const TextStyle(
                                         color: primary,
                                         fontWeight: FontWeight.w900,
                                       ),
@@ -440,7 +511,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 18),
                       Text(
-                        '© NUSUQ 2026 - All rights reserved',
+                        l10n.nusuqCopyright,
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.82),
                           fontWeight: FontWeight.w700,
@@ -449,7 +520,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'Integrated system for serving pilgrims',
+                        l10n.integratedSystemForServingPilgrims,
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.55),
                           fontWeight: FontWeight.w600,
@@ -458,6 +529,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
+                ),
+              ),
+            ),
+          ),
+
+          Positioned(
+            top: 14,
+            right: 14,
+            child: SafeArea(
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: IconButton(
+                  onPressed: _changeLanguage,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.white.withOpacity(0.14),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: BorderSide(color: Colors.white.withOpacity(0.18)),
+                    ),
+                  ),
+                  icon: const Icon(Icons.language_rounded),
                 ),
               ),
             ),
@@ -476,7 +569,7 @@ class _FieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: AlignmentDirectional.centerStart,
       child: Text(
         text,
         style: const TextStyle(

@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import '../l10n/app_localizations.dart';
+import '../main.dart';
 import 'login_page.dart';
 import '../services/auth_service.dart';
 
@@ -144,39 +147,39 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return null;
   }
 
-  String _friendlyErrorMessage(String error) {
+  String _friendlyErrorMessage(String error, AppLocalizations l10n) {
     final message = error.toLowerCase();
 
     if (message.contains('campaign id does not exist') ||
         message.contains('foreign key constraint fails') ||
         message.contains('er_no_referenced_row_2')) {
-      return 'The campaign ID does not exist. Please enter a valid campaign ID.';
+      return l10n.campaignIdDoesNotExist;
     }
 
     if (message.contains('email') && message.contains('registered')) {
-      return 'This email is already registered.';
+      return l10n.emailAlreadyRegistered;
     }
 
     if (message.contains('phone') && message.contains('registered')) {
-      return 'This phone number is already registered.';
+      return l10n.phoneAlreadyRegistered;
     }
 
     if (message.contains('pilgrim id') && message.contains('registered')) {
-      return 'This pilgrim ID is already registered.';
+      return l10n.pilgrimIdAlreadyRegistered;
     }
 
     if (message.contains('provider id') && message.contains('registered')) {
-      return 'This provider ID is already registered.';
+      return l10n.providerIdAlreadyRegistered;
     }
 
     if (message.contains('network') ||
         message.contains('socketexception') ||
         message.contains('failed host lookup')) {
-      return 'Unable to connect to the server. Please make sure the backend is running.';
+      return l10n.unableToConnectToServer;
     }
 
     if (message.contains('server error')) {
-      return 'Something went wrong while creating the account. Please review your data and try again.';
+      return l10n.somethingWentWrongCreatingAccount;
     }
 
     return error;
@@ -212,178 +215,184 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   String? _validateFullName(String? value) {
+    final l10n = AppLocalizations.of(context)!;
     final text = _normalizeSpaces(value ?? '');
 
     if (text.isEmpty) {
-      return 'Please enter your full name';
+      return l10n.pleaseEnterFullName;
     }
 
     if (text.length < 3) {
-      return 'Full name must be at least 3 characters';
+      return l10n.fullNameTooShort;
     }
 
     if (text.length > 50) {
-      return 'Full name must not exceed 50 characters';
+      return l10n.fullNameTooLong;
     }
 
     if (RegExp(r'[0-9]').hasMatch(text)) {
-      return 'Full name must not contain numbers';
+      return l10n.fullNameNoNumbers;
     }
 
     final isArabicOnly = RegExp(r'^[\u0600-\u06FF ]+$').hasMatch(text);
     final isEnglishOnly = RegExp(r'^[A-Za-z ]+$').hasMatch(text);
 
     if (!isArabicOnly && !isEnglishOnly) {
-      return 'Full name must be Arabic only or English only';
+      return l10n.fullNameArabicOrEnglishOnly;
     }
 
     return _fullNameServerError;
   }
 
   String? _validateId(String? value) {
+    final l10n = AppLocalizations.of(context)!;
     final text = (value ?? '').trim();
 
     if (text.isEmpty) {
       return _selectedType == AccountType.pilgrim
-          ? 'Please enter your pilgrim ID'
-          : 'Please enter your provider ID';
+          ? l10n.pleaseEnterPilgrimId
+          : l10n.pleaseEnterProviderId;
     }
 
     if (text.contains(' ')) {
-      return 'ID must not contain spaces';
+      return l10n.idMustNotContainSpaces;
     }
 
     if (!RegExp(r'^[0-9]+$').hasMatch(text)) {
-      return 'ID must contain numbers only';
+      return l10n.idNumbersOnly;
     }
 
     if (text.length < 6) {
-      return 'ID number is too short';
+      return l10n.idTooShort;
     }
 
     if (text.length > 20) {
-      return 'ID number is too long';
+      return l10n.idTooLong;
     }
 
     return _idServerError;
   }
 
   String? _validatePassword(String? value) {
+    final l10n = AppLocalizations.of(context)!;
     final text = value ?? '';
 
     if (text.isEmpty) {
-      return 'Please enter your password';
+      return l10n.pleaseEnterPassword;
     }
 
     if (text.contains(' ')) {
-      return 'Password must not contain spaces';
+      return l10n.passwordNoSpaces;
     }
 
     if (text.length < 8) {
-      return 'Password must be at least 8 characters';
+      return l10n.passwordTooShort;
     }
 
     if (text.length > 20) {
-      return 'Password must not exceed 20 characters';
+      return l10n.passwordTooLong;
     }
 
     if (!RegExp(r'[A-Z]').hasMatch(text)) {
-      return 'Password must contain at least one uppercase letter';
+      return l10n.passwordNeedsUppercase;
     }
 
     if (!RegExp(r'[a-z]').hasMatch(text)) {
-      return 'Password must contain at least one lowercase letter';
+      return l10n.passwordNeedsLowercase;
     }
 
     if (!RegExp(r'[0-9]').hasMatch(text)) {
-      return 'Password must contain at least one number';
+      return l10n.passwordNeedsNumber;
     }
 
     if (!RegExp(r'[!@#$%^&*(),.?":{}|<>_\-+=/\\[\]~`]').hasMatch(text)) {
-      return 'Password must contain at least one special character';
+      return l10n.passwordNeedsSpecial;
     }
 
     if (!RegExp(
       r'^[A-Za-z0-9!@#$%^&*(),.?":{}|<>_\-+=/\\[\]~`]+$',
     ).hasMatch(text)) {
-      return 'Password must use English letters, numbers, and symbols only';
+      return l10n.passwordEnglishOnly;
     }
 
     return _passwordServerError;
   }
 
   String? _validateCampaignId(String? value) {
+    final l10n = AppLocalizations.of(context)!;
     final text = (value ?? '').trim();
 
     if (_selectedType != AccountType.pilgrim) return null;
 
     if (text.isEmpty) {
-      return 'Please enter your campaign ID';
+      return l10n.pleaseEnterCampaignId;
     }
 
     if (text.contains(' ')) {
-      return 'Campaign ID must not contain spaces';
+      return l10n.campaignIdNoSpaces;
     }
 
     if (!RegExp(r'^[0-9]+$').hasMatch(text)) {
-      return 'Campaign ID must contain numbers only';
+      return l10n.campaignIdNumbersOnly;
     }
 
     if (text.length > 12) {
-      return 'Campaign ID is too long';
+      return l10n.campaignIdTooLong;
     }
 
     final parsed = int.tryParse(text);
     if (parsed == null || parsed <= 0) {
-      return 'Campaign ID must be greater than 0';
+      return l10n.campaignIdGreaterThanZero;
     }
 
     return _campaignServerError;
   }
 
   String? _validatePhone(String? value) {
+    final l10n = AppLocalizations.of(context)!;
     final text = (value ?? '').trim();
 
     if (text.isEmpty) {
-      return 'Please enter your phone number';
+      return l10n.pleaseEnterPhoneNumber;
     }
 
     if (text.contains(' ')) {
-      return 'Phone number must not contain spaces';
+      return l10n.phoneNoSpaces;
     }
 
     if (!RegExp(r'^[0-9]+$').hasMatch(text)) {
-      return 'Phone number must contain digits only';
+      return l10n.phoneDigitsOnly;
     }
 
     if (text.startsWith('00')) {
-      return 'Enter the local number only';
+      return l10n.enterLocalNumberOnly;
     }
 
     if (text.length < 8) {
-      return 'Phone number is too short';
+      return l10n.phoneTooShort;
     }
 
     if (text.length > 10) {
-      return 'Phone number is too long';
+      return l10n.phoneTooLong;
     }
 
     return _phoneServerError;
   }
 
   String? _validateEmail(String? value) {
+    final l10n = AppLocalizations.of(context)!;
     final text = (value ?? '').trim();
 
     if (text.isEmpty) {
-      return 'Please enter your email';
+      return l10n.pleaseEnterEmail;
     }
 
     if (text.contains(' ')) {
-      return 'Email must not contain spaces';
+      return l10n.emailNoSpaces;
     }
 
     if (text.length > 100) {
-      return 'Email is too long';
+      return l10n.emailTooLong;
     }
 
     final emailRegex = RegExp(
@@ -391,13 +400,72 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
 
     if (!emailRegex.hasMatch(text)) {
-      return 'Please enter a valid email address';
+      return l10n.pleaseEnterValidEmail;
     }
 
     return _emailServerError;
   }
 
+  Future<void> _changeLanguage() async {
+    final currentLocale = Localizations.localeOf(context).languageCode;
+
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      l10n.chooseLanguage,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+                ListTile(
+                  title: Text(l10n.arabic),
+                  trailing: currentLocale == "ar"
+                      ? const Icon(Icons.check, color: primary)
+                      : null,
+                  onTap: () => Navigator.pop(context, "ar"),
+                ),
+                ListTile(
+                  title: Text(l10n.english),
+                  trailing: currentLocale == "en"
+                      ? const Icon(Icons.check, color: primary)
+                      : null,
+                  onTap: () => Navigator.pop(context, "en"),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selected != null) {
+      NusuqApp.of(context).setLocale(Locale(selected));
+    }
+  }
+
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
+
     setState(() {
       _submittedOnce = true;
       _clearServerErrors();
@@ -463,7 +531,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           );
         } else {
           final rawError = _extractRawErrorMessage(e);
-          _generalError = _friendlyErrorMessage(rawError);
+          _generalError = _friendlyErrorMessage(rawError, l10n);
         }
       });
 
@@ -471,7 +539,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       final snackMessage = errorJson != null && errorJson['message'] != null
           ? errorJson['message'].toString()
-          : _generalError ?? 'Something went wrong';
+          : _generalError ?? l10n.somethingWentWrong;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -494,6 +562,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     final autoValidateMode = _submittedOnce
         ? AutovalidateMode.onUserInteraction
         : AutovalidateMode.disabled;
@@ -503,6 +573,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       body: Stack(
         children: [
           const Positioned.fill(child: _SoftPatternBackground()),
+
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
@@ -522,8 +593,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Smart platform for serving pilgrims',
-                        style: TextStyle(
+                        l10n.smartPlatformForServingPilgrims,
+                        style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
@@ -551,9 +622,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       autovalidateMode: autoValidateMode,
                       child: Column(
                         children: [
-                          const Text(
-                            'Create Account',
-                            style: TextStyle(
+                          Text(
+                            l10n.createAccount,
+                            style: const TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w900,
                               color: Color(0xFF1F2937),
@@ -561,9 +632,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Choose your account type and fill in your details',
+                            l10n.chooseAccountTypeAndFillDetails,
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 12.5,
                               color: Colors.black54,
                               fontWeight: FontWeight.w600,
@@ -617,13 +688,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ],
                           const SizedBox(height: 14),
 
-                          _FieldLabel('Full Name'),
+                          _FieldLabel(l10n.fullName),
                           const SizedBox(height: 6),
                           _AppField(
                             controller: _fullNameController,
-                            hintText: 'Enter your full name',
-                            helperText:
-                                'Arabic or English letters only, 3 to 50 characters',
+                            hintText: l10n.enterYourFullName,
+                            helperText: l10n.fullNameHelper,
                             icon: Icons.person_outline,
                             textInputAction: TextInputAction.next,
                             validator: _validateFullName,
@@ -635,14 +705,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
 
                           const SizedBox(height: 12),
-                          _FieldLabel('ID Number'),
+                          _FieldLabel(l10n.idNumber),
                           const SizedBox(height: 6),
                           _AppField(
                             controller: _idController,
                             hintText: _selectedType == AccountType.pilgrim
-                                ? 'Enter your pilgrim ID'
-                                : 'Enter your provider ID',
-                            helperText: 'Numbers only, 6 to 20 digits',
+                                ? l10n.enterYourPilgrimId
+                                : l10n.enterYourProviderId,
+                            helperText: l10n.idNumberHelper,
                             icon: Icons.badge_outlined,
                             keyboardType: TextInputType.number,
                             textInputAction: TextInputAction.next,
@@ -659,13 +729,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
 
                           const SizedBox(height: 12),
-                          _FieldLabel('Password'),
+                          _FieldLabel(l10n.password),
                           const SizedBox(height: 6),
                           _AppField(
                             controller: _passwordController,
-                            hintText: 'Enter your password',
-                            helperText:
-                                '8-20 chars, uppercase, lowercase, number, special char, English only',
+                            hintText: l10n.enterYourPassword,
+                            helperText: l10n.passwordHelper,
                             icon: Icons.lock_outline,
                             obscureText: _obscurePassword,
                             textInputAction: TextInputAction.next,
@@ -693,12 +762,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                           if (_selectedType == AccountType.pilgrim) ...[
                             const SizedBox(height: 12),
-                            _FieldLabel('Campaign ID'),
+                            _FieldLabel(l10n.campaignId),
                             const SizedBox(height: 6),
                             _AppField(
                               controller: _campaignController,
-                              hintText: 'Enter your campaign ID',
-                              helperText: 'Numbers only',
+                              hintText: l10n.enterYourCampaignId,
+                              helperText: l10n.numbersOnly,
                               icon: Icons.confirmation_number_outlined,
                               keyboardType: TextInputType.number,
                               textInputAction: TextInputAction.next,
@@ -716,7 +785,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ],
 
                           const SizedBox(height: 12),
-                          _FieldLabel('Phone Number'),
+                          _FieldLabel(l10n.phoneNumber),
                           const SizedBox(height: 6),
                           _PhoneField(
                             controller: _phoneController,
@@ -739,12 +808,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
 
                           const SizedBox(height: 12),
-                          _FieldLabel('Email'),
+                          _FieldLabel(l10n.email),
                           const SizedBox(height: 6),
                           _AppField(
                             controller: _emailController,
-                            hintText: 'Enter your email',
-                            helperText: 'Example: name@example.com',
+                            hintText: l10n.enterYourEmail,
+                            helperText: l10n.emailExample,
                             icon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.done,
@@ -779,19 +848,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         color: Colors.white,
                                       ),
                                     )
-                                  : const Row(
+                                  : Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
-                                        Icon(
+                                        const Icon(
                                           Icons.arrow_forward,
                                           color: Colors.white,
                                           size: 20,
                                         ),
-                                        SizedBox(width: 8),
+                                        const SizedBox(width: 8),
                                         Text(
-                                          'Create Account',
-                                          style: TextStyle(
+                                          l10n.createAccount,
+                                          style: const TextStyle(
                                             fontWeight: FontWeight.w900,
                                             fontSize: 15,
                                             color: Colors.white,
@@ -807,7 +876,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'Already have an account? ',
+                                l10n.alreadyHaveAccount,
                                 style: TextStyle(
                                   color: Colors.black.withOpacity(0.6),
                                   fontWeight: FontWeight.w600,
@@ -820,9 +889,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     LoginScreen.routeName,
                                   );
                                 },
-                                child: const Text(
-                                  'Log in',
-                                  style: TextStyle(
+                                child: Text(
+                                  l10n.logIn,
+                                  style: const TextStyle(
                                     color: primary,
                                     fontWeight: FontWeight.w900,
                                   ),
@@ -836,7 +905,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    '© NUSUQ 2026 - All rights reserved',
+                    l10n.nusuqCopyright,
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.82),
                       fontWeight: FontWeight.w700,
@@ -845,7 +914,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    'Integrated system for serving pilgrims',
+                    l10n.integratedSystemForServingPilgrims,
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.55),
                       fontWeight: FontWeight.w600,
@@ -853,6 +922,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+
+          Positioned(
+            top: 14,
+            right: 14,
+            child: SafeArea(
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: IconButton(
+                  onPressed: _changeLanguage,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.white.withOpacity(0.14),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: BorderSide(color: Colors.white.withOpacity(0.18)),
+                    ),
+                  ),
+                  icon: const Icon(Icons.language_rounded),
+                ),
               ),
             ),
           ),
@@ -873,11 +964,13 @@ class _AccountTypeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Row(
       children: [
         Expanded(
           child: _TypeButton(
-            label: 'Pilgrim',
+            label: l10n.pilgrim,
             selected: selectedType == AccountType.pilgrim,
             onTap: () => onChanged(AccountType.pilgrim),
           ),
@@ -885,7 +978,7 @@ class _AccountTypeSelector extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _TypeButton(
-            label: 'Provider',
+            label: l10n.provider,
             selected: selectedType == AccountType.provider,
             onTap: () => onChanged(AccountType.provider),
           ),
@@ -944,7 +1037,7 @@ class _FieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: AlignmentDirectional.centerStart,
       child: Text(
         text,
         style: const TextStyle(
@@ -1075,6 +1168,8 @@ class _PhoneField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return TextFormField(
       controller: controller,
       keyboardType: TextInputType.phone,
@@ -1087,8 +1182,8 @@ class _PhoneField extends StatelessWidget {
       ],
       style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
       decoration: InputDecoration(
-        hintText: 'Enter your phone number',
-        helperText: 'Choose country code, then enter the local number only',
+        hintText: l10n.enterYourPhoneNumber,
+        helperText: l10n.phoneHelper,
         helperMaxLines: 2,
         errorMaxLines: 2,
         prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),

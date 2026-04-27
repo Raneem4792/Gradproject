@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import '../models/meal.dart';
 import '../services/meal_service.dart';
 import 'pilgrim_submit_meal_request_page.dart';
@@ -55,6 +57,32 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
     }
   }
 
+  String _localizedMealType(BuildContext context, String mealType) {
+    final l10n = AppLocalizations.of(context)!;
+    final type = mealType.toLowerCase().trim();
+
+    switch (type) {
+      case 'healthy':
+        return l10n.healthy;
+      case 'breakfast':
+        return l10n.breakfast;
+      case 'lunch':
+        return l10n.lunch;
+      case 'dinner':
+        return l10n.dinner;
+      case 'vegetarian':
+        return l10n.vegetarian;
+      case 'high protein':
+        return l10n.highProtein;
+      case 'low carb':
+        return l10n.lowCarb;
+      case 'fast food':
+        return l10n.fastFood;
+      default:
+        return mealType;
+    }
+  }
+
   void _openSubmitMealRequestPage({
     required int mealID,
     required String title,
@@ -105,6 +133,8 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: bg,
       appBar: const _PilgrimMealsAppBar(),
@@ -122,7 +152,7 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Text(
-                    'Error loading meals: ${snapshot.error}',
+                    '${l10n.errorLoadingMeals}: ${snapshot.error}',
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -141,7 +171,7 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
                 children: [
                   const _MealsHeroCard(),
                   const SizedBox(height: 18),
-                  const _MealsSectionTitle(title: "Smart Filters"),
+                  _MealsSectionTitle(title: l10n.smartFilters),
                   const SizedBox(height: 10),
 
                   _MealFilterBar(
@@ -158,8 +188,8 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
 
                   _MealsSectionTitle(
                     title: showRecommendedOnly
-                        ? "AI Recommended Meals"
-                        : "All Available Meals",
+                        ? l10n.aiRecommendedMeals
+                        : l10n.allAvailableMeals,
                   ),
                   const SizedBox(height: 10),
 
@@ -172,7 +202,7 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
                         child: _MealRequestCard(
                           title: meal.mealName,
                           providerName: meal.providerName,
-                          mealType: meal.mealType,
+                          mealType: _localizedMealType(context, meal.mealType),
                           description: meal.description,
                           nutritionLine: meal.nutritionLine,
                           isHealthMatched: meal.isHealthMatched,
@@ -213,38 +243,43 @@ class _PilgrimMealsAppBar extends StatelessWidget
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0.6,
-      shadowColor: Colors.black.withOpacity(0.08),
-      surfaceTintColor: Colors.white,
-      automaticallyImplyLeading: false,
-      titleSpacing: 8,
-      title: Row(
-        children: [
-          IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.black87,
-              size: 20,
+    final l10n = AppLocalizations.of(context)!;
+
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.6,
+        shadowColor: Colors.black.withOpacity(0.08),
+        surfaceTintColor: Colors.white,
+        automaticallyImplyLeading: false,
+        titleSpacing: 8,
+        title: Row(
+          children: [
+            IconButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.black87,
+                size: 20,
+              ),
             ),
-          ),
-          const SizedBox(width: 2),
-          const Text(
-            "Meals",
-            style: TextStyle(
-              color: Colors.black87,
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.2,
+            const SizedBox(width: 2),
+            Text(
+              l10n.meals,
+              style: const TextStyle(
+                color: Colors.black87,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.2,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
+        actions: const [SizedBox(width: 6)],
       ),
-      actions: const [SizedBox(width: 6)],
     );
   }
 }
@@ -260,6 +295,8 @@ class _MealsHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: Stack(
@@ -291,22 +328,22 @@ class _MealsHeroCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 14),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Select Your Meal",
-                        style: TextStyle(
+                        l10n.selectYourMeal,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                      SizedBox(height: 6),
+                      const SizedBox(height: 6),
                       Text(
-                        "Browse meals, review nutrition and choose what fits your health needs.",
-                        style: TextStyle(
+                        l10n.browseMealsReviewNutrition,
+                        style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
@@ -376,11 +413,13 @@ class _MealFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Row(
       children: [
         Expanded(
           child: _FilterChipButton(
-            label: "AI Recommended",
+            label: l10n.aiRecommended,
             icon: Icons.auto_awesome_rounded,
             isSelected: showRecommendedOnly,
             onTap: onSelectRecommended,
@@ -389,7 +428,7 @@ class _MealFilterBar extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _FilterChipButton(
-            label: "All Meals",
+            label: l10n.allMeals,
             icon: Icons.grid_view_rounded,
             isSelected: !showRecommendedOnly,
             onTap: onSelectAll,
@@ -488,6 +527,8 @@ class _MealRequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -618,7 +659,7 @@ class _MealRequestCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  "Provided by $providerName",
+                  '${l10n.providedBy} $providerName',
                   style: TextStyle(
                     fontSize: 12.2,
                     color: Colors.black.withOpacity(0.58),
@@ -681,9 +722,9 @@ class _MealRequestCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: const Text(
-                      "Select Meal",
-                      style: TextStyle(
+                    child: Text(
+                      l10n.selectMeal,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 12.8,
                       ),
@@ -706,6 +747,8 @@ class _EmptyMealsState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
@@ -722,13 +765,13 @@ class _EmptyMealsState extends StatelessWidget {
             color: primary.withOpacity(0.75),
           ),
           const SizedBox(height: 10),
-          const Text(
-            "No recommended meals found",
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+          Text(
+            l10n.noRecommendedMealsFound,
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
           ),
           const SizedBox(height: 6),
           Text(
-            "Try viewing all meals instead.",
+            l10n.tryViewingAllMealsInstead,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,

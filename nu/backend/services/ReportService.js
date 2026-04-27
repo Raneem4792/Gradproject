@@ -1,7 +1,60 @@
 const db = require('../config/db');
 
 class ReportService {
-    async getProviderDashboard(providerID) {
+    async getProviderDashboard(providerID, language = 'en') {
+        const isArabic = language === 'ar';
+
+        const text = {
+            noWrittenReview: isArabic
+                ? 'لا يوجد تقييم مكتوب'
+                : 'No written review',
+
+            noReviewsYet: isArabic
+                ? 'لا توجد تقييمات بعد'
+                : 'No reviews yet',
+
+            acceptedRequests: isArabic
+                ? 'الطلبات المقبولة'
+                : 'Accepted requests',
+
+            totalCampaigns: isArabic
+                ? 'إجمالي الحملات'
+                : 'Total campaigns',
+
+            reviewRejectedOrders: isArabic
+                ? 'راجع الطلبات المرفوضة والملغاة لتحسين معدل القبول.'
+                : 'Review rejected and cancelled orders to improve acceptance.',
+
+            increaseDiabeticMeals: isArabic
+                ? 'زد خيارات الوجبات المناسبة لمرضى السكري للطلبات القادمة.'
+                : 'Increase diabetic-friendly meal options for upcoming requests.',
+
+            addLowSodiumMeals: isArabic
+                ? 'أضف المزيد من الوجبات قليلة الصوديوم لتناسب تفضيلات الحجاج الغذائية.'
+                : 'Add more low-sodium meals to match pilgrim dietary preferences.',
+
+            highProteinDemand: isArabic
+                ? 'يوجد اهتمام بخيارات عالية البروتين، وفّر وجبات مناسبة لهذا الاحتياج.'
+                : 'There is demand for high-protein options. Provide meals that match this need.',
+
+            allergyAwareMeals: isArabic
+                ? 'يوجد حجاج لديهم حساسية غذائية، راجع مكونات الوجبات بوضوح.'
+                : 'Some pilgrims have food allergies. Make meal ingredients clearly visible.',
+
+            orderStable: isArabic
+                ? 'نشاط الطلبات مستقر اليوم.'
+                : 'Order activity looks stable today.',
+
+            keepMonitoring: isArabic
+                ? 'استمر في متابعة طلبات الوجبات ومراجعة التقييمات بانتظام.'
+                : 'Keep monitoring meal demand and review feedback regularly.',
+
+            trendingMeal: (mealName) =>
+                isArabic
+                    ? `${mealName} عليها طلب مرتفع اليوم. جهّز كميات إضافية.`
+                    : `${mealName} is trending today. Prepare extra portions.`,
+        };
+
         const [orders] = await db.query(
             `
       SELECT
@@ -89,8 +142,10 @@ class ReportService {
             totalReviews > 0
                 ? Number(
                     (
-                        ratings.reduce((sum, item) => sum + Number(item.stars || 0), 0) /
-                        totalReviews
+                        ratings.reduce(
+                            (sum, item) => sum + Number(item.stars || 0),
+                            0
+                        ) / totalReviews
                     ).toFixed(1)
                 )
                 : 0;
@@ -108,14 +163,15 @@ class ReportService {
 
         const latestReview =
             sortedRatings.length > 0
-                ? String(sortedRatings[0].comment || '').trim() || 'No written review'
-                : 'No reviews yet';
+                ? String(sortedRatings[0].comment || '').trim() || text.noWrittenReview
+                : text.noReviewsYet;
 
         const starsFilled = Math.max(0, Math.min(5, Math.round(averageScore)));
 
         const mealMap = {};
         for (const order of todayOrders) {
             const key = order.mealID;
+
             if (!mealMap[key]) {
                 mealMap[key] = {
                     mealID: order.mealID,
@@ -123,6 +179,7 @@ class ReportService {
                     orders: 0,
                 };
             }
+
             mealMap[key].orders += 1;
         }
 
@@ -149,9 +206,9 @@ class ReportService {
             });
         }
 
-        const containsWord = (text, words) => {
-            const value = String(text || '').toLowerCase();
-            return words.some((word) => value.includes(word));
+        const containsWord = (value, words) => {
+            const textValue = String(value || '').toLowerCase();
+            return words.some((word) => textValue.includes(word));
         };
 
         const diabetesCount = healthRows.filter((h) =>
@@ -163,7 +220,12 @@ class ReportService {
         ).length;
 
         const lowSodiumCount = healthRows.filter((h) =>
-            containsWord(h.dietaryPreferences, ['low sodium', 'low-sodium'])
+            containsWord(h.dietaryPreferences, [
+                'low sodium',
+                'low-sodium',
+                'low salt',
+                'low-salt',
+            ])
         ).length;
 
         const highProteinCount = healthRows.filter((h) =>
@@ -174,45 +236,57 @@ class ReportService {
 
         const healthSnapshot = {
             diabetes:
-                totalProfiles > 0 ? Math.round((diabetesCount / totalProfiles) * 100) : 0,
+                totalProfiles > 0
+                    ? Math.round((diabetesCount / totalProfiles) * 100)
+                    : 0,
+
             allergies:
-                totalProfiles > 0 ? Math.round((allergiesCount / totalProfiles) * 100) : 0,
+                totalProfiles > 0
+                    ? Math.round((allergiesCount / totalProfiles) * 100)
+                    : 0,
+
             lowSodium:
-                totalProfiles > 0 ? Math.round((lowSodiumCount / totalProfiles) * 100) : 0,
+                totalProfiles > 0
+                    ? Math.round((lowSodiumCount / totalProfiles) * 100)
+                    : 0,
+
             highProtein:
-                totalProfiles > 0 ? Math.round((highProteinCount / totalProfiles) * 100) : 0,
+                totalProfiles > 0
+                    ? Math.round((highProteinCount / totalProfiles) * 100)
+                    : 0,
         };
 
         const aiSuggestions = [];
 
         if (mealAcceptance < 70) {
-            aiSuggestions.push(
-                'Review rejected and cancelled orders to improve acceptance.'
-            );
+            aiSuggestions.push(text.reviewRejectedOrders);
         }
 
         if (healthSnapshot.diabetes >= 15) {
-            aiSuggestions.push(
-                'Increase diabetic-friendly meal options for upcoming requests.'
-            );
+            aiSuggestions.push(text.increaseDiabeticMeals);
         }
 
         if (healthSnapshot.lowSodium >= 10) {
-            aiSuggestions.push(
-                'Add more low-sodium meals to match pilgrim dietary preferences.'
-            );
+            aiSuggestions.push(text.addLowSodiumMeals);
+        }
+
+        if (healthSnapshot.highProtein >= 10) {
+            aiSuggestions.push(text.highProteinDemand);
+        }
+
+        if (healthSnapshot.allergies >= 10) {
+            aiSuggestions.push(text.allergyAwareMeals);
         }
 
         if (topMeals.length > 0) {
-            aiSuggestions.push(
-                `${topMeals[0].name} is trending today. Prepare extra portions.`
-            );
+            aiSuggestions.push(text.trendingMeal(topMeals[0].name));
         }
 
         if (aiSuggestions.length === 0) {
-            aiSuggestions.push('Order activity looks stable today.');
-            aiSuggestions.push('Keep monitoring meal demand and review feedback regularly.');
+            aiSuggestions.push(text.orderStable);
+            aiSuggestions.push(text.keepMonitoring);
         }
+
         console.log('FEEDBACK DEBUG =', {
             averageScore,
             starsFilled,
@@ -223,19 +297,22 @@ class ReportService {
 
         return {
             updatedAt: new Date().toISOString(),
+
             overview: {
                 todayOrders: todayOrders.length,
             },
+
             kpis: {
                 mealAcceptance: {
                     value: mealAcceptance,
-                    subtitle: 'Accepted requests',
+                    subtitle: text.acceptedRequests,
                 },
                 campaigns: {
                     value: campaigns.length,
-                    subtitle: 'Total campaigns',
+                    subtitle: text.totalCampaigns,
                 },
             },
+
             feedback: {
                 averageScore,
                 starsFilled,
@@ -243,9 +320,13 @@ class ReportService {
                 highestScore,
                 latestReview,
             },
+
             demandTrend,
+
             aiSuggestions: aiSuggestions.slice(0, 3),
+
             healthSnapshot,
+
             topMeals,
         };
     }

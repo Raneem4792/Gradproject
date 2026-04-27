@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import '../widgets/provider_bottom_nav.dart';
 import 'provider_home_screen.dart';
 import 'provider_dashboard_page.dart';
@@ -18,7 +20,7 @@ class IncomingMealRequestsPage extends StatefulWidget {
 
 class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
   int _navIndex = 1;
-  int _selectedTabIndex = 0; // 0 = incoming, 1 = accepted
+  int _selectedTabIndex = 0;
 
   final MealService _mealService = MealService();
   late Future<List<MealOrder>> _requestsFuture;
@@ -72,6 +74,8 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
   }
 
   Future<void> _acceptRequest(int orderID) async {
+    final l10n = AppLocalizations.of(context)!;
+
     try {
       final message = await _mealService.updateOrderStatus(
         orderID: orderID,
@@ -85,19 +89,21 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
       ).showSnackBar(SnackBar(content: Text(message)));
 
       setState(() {
-        _selectedTabIndex = 1; // يروح تلقائي لتبويب Accepted
+        _selectedTabIndex = 1;
         _loadRequests();
       });
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to accept request: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${l10n.failedToAcceptRequest}: $e')),
+      );
     }
   }
 
   Future<void> _rejectRequest(int orderID) async {
+    final l10n = AppLocalizations.of(context)!;
+
     try {
       final message = await _mealService.updateOrderStatus(
         orderID: orderID,
@@ -116,13 +122,15 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to cancel request: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${l10n.failedToCancelRequest}: $e')),
+      );
     }
   }
 
   Future<void> _updateAcceptedOrderStatus(int orderID, String newStatus) async {
+    final l10n = AppLocalizations.of(context)!;
+
     try {
       final message = await _mealService.updateOrderStatus(
         orderID: orderID,
@@ -142,12 +150,14 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update request: $e')),
+        SnackBar(content: Text('${l10n.failedToUpdateRequest}: $e')),
       );
     }
   }
 
   Future<void> _showAcceptedStatusMenu(int orderID) async {
+    final l10n = AppLocalizations.of(context)!;
+
     final selectedStatus = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.white,
@@ -155,6 +165,8 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
+        final sheetL10n = AppLocalizations.of(context)!;
+
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -170,9 +182,9 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
                   ),
                 ),
                 const SizedBox(height: 18),
-                const Text(
-                  'Change Order Status',
-                  style: TextStyle(
+                Text(
+                  sheetL10n.changeOrderStatus,
+                  style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w900,
                     color: primaryDark,
@@ -181,17 +193,17 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
                 const SizedBox(height: 16),
                 ListTile(
                   leading: const Icon(Icons.check_circle_outline_rounded),
-                  title: const Text(
-                    'completed',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                  title: Text(
+                    sheetL10n.completed,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   onTap: () => Navigator.pop(context, 'completed'),
                 ),
                 ListTile(
                   leading: const Icon(Icons.cancel_outlined),
-                  title: const Text(
-                    'cancelled',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                  title: Text(
+                    sheetL10n.cancelled,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   onTap: () => Navigator.pop(context, 'cancelled'),
                 ),
@@ -209,6 +221,8 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: bg,
       appBar: _RequestsMainAppBar(onBack: _handleBack),
@@ -226,7 +240,7 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Text(
-                    'Error loading requests: ${snapshot.error}',
+                    '${l10n.errorLoadingRequests}: ${snapshot.error}',
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -254,17 +268,16 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
                 children: [
                   _RequestsHeaderCard(
                     title: isIncomingTab
-                        ? "Incoming Requests"
-                        : "Accepted Orders",
+                        ? l10n.incomingRequests
+                        : l10n.acceptedOrders,
                     badgeText: isIncomingTab
-                        ? "${pendingRequests.length} New"
-                        : "${acceptedRequests.length} Accepted",
+                        ? '${pendingRequests.length} ${l10n.newText}'
+                        : '${acceptedRequests.length} ${l10n.accepted}',
                     icon: isIncomingTab
                         ? Icons.inbox_rounded
                         : Icons.check_circle_outline_rounded,
                   ),
                   const SizedBox(height: 16),
-
                   _RequestsTabSwitcher(
                     selectedIndex: _selectedTabIndex,
                     incomingCount: pendingRequests.length,
@@ -275,14 +288,12 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
                       });
                     },
                   ),
-
                   const SizedBox(height: 18),
-
                   if (currentRequests.isEmpty)
                     _EmptyRequestsCard(
                       message: isIncomingTab
-                          ? 'No incoming requests yet'
-                          : 'No accepted orders yet',
+                          ? l10n.noIncomingRequestsYet
+                          : l10n.noAcceptedOrdersYet,
                     )
                   else
                     ...currentRequests.map(
@@ -467,12 +478,12 @@ class _RequestsTabSwitcher extends StatelessWidget {
     required this.onChanged,
   });
 
-  static const Color primaryDark = Color(0xFF052720);
   static const Color primary = Color(0xFF0B4A40);
-  static const Color softMint = Color(0xFFE6F6F0);
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
@@ -491,7 +502,7 @@ class _RequestsTabSwitcher extends StatelessWidget {
         children: [
           Expanded(
             child: _TabOption(
-              title: 'Incoming',
+              title: l10n.incoming,
               count: incomingCount,
               isSelected: selectedIndex == 0,
               onTap: () => onChanged(0),
@@ -500,7 +511,7 @@ class _RequestsTabSwitcher extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: _TabOption(
-              title: 'Accepted',
+              title: l10n.accepted,
               count: acceptedCount,
               isSelected: selectedIndex == 1,
               onTap: () => onChanged(1),
@@ -637,6 +648,8 @@ class _IncomingRequestCardGreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -724,14 +737,14 @@ class _IncomingRequestCardGreen extends StatelessWidget {
           Column(
             children: [
               _ActionButton(
-                label: "Accept",
+                label: l10n.accept,
                 icon: Icons.check_rounded,
                 isPrimary: true,
                 onTap: onAccept,
               ),
               const SizedBox(height: 10),
               _ActionButton(
-                label: "Cancel",
+                label: l10n.cancel,
                 icon: Icons.close_rounded,
                 isPrimary: false,
                 onTap: onReject,
@@ -767,6 +780,8 @@ class _AcceptedRequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -855,7 +870,7 @@ class _AcceptedRequestCard extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           _ActionButton(
-            label: "Accepted",
+            label: l10n.accepted,
             icon: Icons.keyboard_arrow_down_rounded,
             isPrimary: true,
             onTap: onTapStatus,

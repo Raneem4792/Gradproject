@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import '../l10n/app_localizations.dart';
 import 'incoming_meal_requests_page.dart';
 import 'provider_dashboard_page.dart';
 import 'provider_history_screen.dart';
@@ -21,6 +23,7 @@ class ProviderHomeScreen extends StatefulWidget {
 
 class _SectionLabel extends StatelessWidget {
   final String title;
+
   const _SectionLabel({required this.title});
 
   @override
@@ -94,6 +97,8 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: bg,
       appBar: _ProviderMainAppBar(onTapNotifications: _openNotificationsPage),
@@ -111,7 +116,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Text(
-                    'Error loading home data: ${snapshot.error}',
+                    '${l10n.errorLoadingHomeData}: ${snapshot.error}',
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -119,15 +124,15 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
             }
 
             final data = snapshot.data ?? {};
-            final providerName = data['fullName'] ?? 'Provider';
+            final providerName = data['fullName'] ?? l10n.provider;
             final latestOrder = data['latestOrder'];
             final newRequestsCount = data['newRequestsCount'] ?? 0;
 
             final String orderText;
             if (newRequestsCount == 0 || latestOrder == null) {
-              orderText = "No new requests";
+              orderText = l10n.noNewRequests;
             } else {
-              orderText = "Order #${latestOrder['orderID']}";
+              orderText = "${l10n.orderNumber} ${latestOrder['orderID']}";
             }
 
             return SingleChildScrollView(
@@ -146,7 +151,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
                   ),
                   const SizedBox(height: 18),
 
-                  const _SectionLabel(title: "Services"),
+                  _SectionLabel(title: l10n.services),
                   const SizedBox(height: 12),
 
                   const ProviderServicesList(),
@@ -176,18 +181,20 @@ class _ProviderMainAppBar extends StatelessWidget
   Size get preferredSize => const Size.fromHeight(58);
 
   @override
-  Widget build(BuildContext context) {
-    return AppBar(
+Widget build(BuildContext context) {
+  return Directionality(
+    textDirection: TextDirection.ltr,
+    child: AppBar(
       backgroundColor: Colors.white,
       elevation: 0.6,
       shadowColor: Colors.black.withOpacity(0.08),
       surfaceTintColor: Colors.white,
       automaticallyImplyLeading: false,
       titleSpacing: 8,
-      title: Row(
+      title: const Row(
         children: [
-          const SizedBox(width: 4),
-          const Text(
+          SizedBox(width: 4),
+          Text(
             "NUSUQ",
             style: TextStyle(
               color: Colors.black87,
@@ -209,8 +216,9 @@ class _ProviderMainAppBar extends StatelessWidget
         ),
         const SizedBox(width: 6),
       ],
-    );
-  }
+    ),
+  );
+}
 }
 
 class _ProviderTopBlock extends StatelessWidget {
@@ -226,6 +234,8 @@ class _ProviderTopBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: Container(
@@ -277,7 +287,7 @@ class _ProviderTopBlock extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "Welcome back",
+                          l10n.welcomeBack,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.86),
                             fontSize: 13,
@@ -339,6 +349,8 @@ class _RequestsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return InkWell(
       onTap: onTapCard,
       borderRadius: BorderRadius.circular(20),
@@ -357,7 +369,7 @@ class _RequestsCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(Icons.inbox_rounded, color: primary, size: 28),
+            const Icon(Icons.inbox_rounded, color: primary, size: 28),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -365,9 +377,9 @@ class _RequestsCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Text(
-                        "Requests list",
-                        style: TextStyle(
+                      Text(
+                        l10n.requestsList,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w900,
                         ),
@@ -383,8 +395,8 @@ class _RequestsCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
-                          "$newRequestsCount new",
-                          style: TextStyle(
+                          "$newRequestsCount ${l10n.newText}",
+                          style: const TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w900,
                             color: primary,
@@ -395,7 +407,7 @@ class _RequestsCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "$newRequestsCount new requests",
+                    "$newRequestsCount ${l10n.newRequests}",
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.black.withOpacity(0.6),
@@ -418,7 +430,7 @@ class _RequestsCard extends StatelessWidget {
                 textStyle: const TextStyle(fontWeight: FontWeight.w900),
               ),
               onPressed: onTapViewAll,
-              child: const Text("View All"),
+              child: Text(l10n.viewAll),
             ),
           ],
         ),
@@ -432,11 +444,13 @@ class ProviderServicesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Column(
       children: [
         _ServiceListCard(
-          title: "Order History",
-          subtitle: "Review previous orders",
+          title: l10n.orderHistory,
+          subtitle: l10n.reviewPreviousOrders,
           icon: Icons.history,
           onTap: () {
             Navigator.push(
@@ -447,8 +461,8 @@ class ProviderServicesList extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         _ServiceListCard(
-          title: "Performance & Reports",
-          subtitle: "Track stats and insights",
+          title: l10n.performanceAndReports,
+          subtitle: l10n.trackStatsAndInsights,
           icon: Icons.bar_chart_rounded,
           onTap: () {
             Navigator.push(
@@ -459,8 +473,8 @@ class ProviderServicesList extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         _ServiceListCard(
-          title: "Manage Meal",
-          subtitle: "Add / edit your meals",
+          title: l10n.manageMeal,
+          subtitle: l10n.addEditYourMeals,
           icon: Icons.restaurant_menu,
           onTap: () {
             Navigator.push(
@@ -473,8 +487,8 @@ class ProviderServicesList extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         _ServiceListCard(
-          title: "Manage Campaign",
-          subtitle: "Update campaign settings",
+          title: l10n.manageCampaign,
+          subtitle: l10n.updateCampaignSettings,
           icon: Icons.campaign,
           onTap: () {
             Navigator.push(

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import '../l10n/app_localizations.dart';
+import '../main.dart';
 import 'provider_home_screen.dart';
 import '../services/provider_service.dart';
 import '../session/user_session.dart';
@@ -30,9 +33,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
   Map<String, dynamic>? _profileSummary;
 
   bool isEditingBasicInfo = false;
-  bool isChangingPassword = false;
   bool notificationsEnabled = true;
-  String language = "English";
 
   String providerName = "";
   String providerId = "";
@@ -45,10 +46,6 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
   late final TextEditingController emailController;
   late final TextEditingController phoneController;
 
-  late final TextEditingController currentPasswordController;
-  late final TextEditingController newPasswordController;
-  late final TextEditingController confirmPasswordController;
-
   @override
   void initState() {
     super.initState();
@@ -56,10 +53,6 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     nameController = TextEditingController(text: providerName);
     emailController = TextEditingController(text: email);
     phoneController = TextEditingController(text: phone);
-
-    currentPasswordController = TextEditingController();
-    newPasswordController = TextEditingController();
-    confirmPasswordController = TextEditingController();
 
     _loadProviderProfile();
   }
@@ -69,9 +62,6 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     nameController.dispose();
     emailController.dispose();
     phoneController.dispose();
-    currentPasswordController.dispose();
-    newPasswordController.dispose();
-    confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -119,13 +109,15 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
   }
 
   Future<void> _toggleBasicInfoEdit() async {
+    final l10n = AppLocalizations.of(context)!;
+
     if (isEditingBasicInfo) {
       final providerId = UserSession.userId;
 
       if (providerId == null || providerId.isEmpty) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text("User session not found")));
+        ).showSnackBar(SnackBar(content: Text(l10n.userSessionNotFound)));
         return;
       }
 
@@ -147,12 +139,12 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Basic information updated")),
+          SnackBar(content: Text(l10n.basicInformationUpdated)),
         );
       } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Failed to update profile: $e")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("${l10n.failedToUpdateProfile}: $e")),
+        );
       }
     } else {
       nameController.text = providerName;
@@ -174,60 +166,9 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     });
   }
 
-  void _changePassword() {
-    setState(() {
-      isChangingPassword = !isChangingPassword;
-      if (!isChangingPassword) {
-        currentPasswordController.clear();
-        newPasswordController.clear();
-        confirmPasswordController.clear();
-      }
-    });
-  }
-
-  void _savePassword() {
-    final current = currentPasswordController.text.trim();
-    final newPass = newPasswordController.text.trim();
-    final confirm = confirmPasswordController.text.trim();
-
-    if (current.isEmpty || newPass.isEmpty || confirm.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all password fields")),
-      );
-      return;
-    }
-
-    if (newPass.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("New password must be at least 8 characters"),
-        ),
-      );
-      return;
-    }
-
-    if (newPass != confirm) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("New password and confirm password do not match"),
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      isChangingPassword = false;
-      currentPasswordController.clear();
-      newPasswordController.clear();
-      confirmPasswordController.clear();
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Password changed successfully")),
-    );
-  }
-
   Future<void> _changeLanguage() async {
+    final currentLocale = Localizations.localeOf(context).languageCode;
+
     final selected = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.white,
@@ -235,19 +176,21 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       builder: (context) {
+        final sheetL10n = AppLocalizations.of(context)!;
+
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(18, 8, 18, 10),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
                   child: Align(
-                    alignment: Alignment.centerLeft,
+                    alignment: AlignmentDirectional.centerStart,
                     child: Text(
-                      "Choose Language",
-                      style: TextStyle(
+                      sheetL10n.chooseLanguage,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
                       ),
@@ -255,24 +198,24 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
                   ),
                 ),
                 ListTile(
-                  title: const Text("العربية"),
-                  trailing: language == "العربية"
+                  title: Text(sheetL10n.arabic),
+                  trailing: currentLocale == "ar"
                       ? const Icon(
                           Icons.check,
                           color: ProviderProfilePage.primary,
                         )
                       : null,
-                  onTap: () => Navigator.pop(context, "العربية"),
+                  onTap: () => Navigator.pop(context, "ar"),
                 ),
                 ListTile(
-                  title: const Text("English"),
-                  trailing: language == "English"
+                  title: Text(sheetL10n.english),
+                  trailing: currentLocale == "en"
                       ? const Icon(
                           Icons.check,
                           color: ProviderProfilePage.primary,
                         )
                       : null,
-                  onTap: () => Navigator.pop(context, "English"),
+                  onTap: () => Navigator.pop(context, "en"),
                 ),
               ],
             ),
@@ -282,36 +225,38 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     );
 
     if (selected != null) {
-      setState(() {
-        language = selected;
-      });
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Language changed to $selected")));
+      NusuqApp.of(context).setLocale(Locale(selected));
     }
   }
 
   Future<void> _logout() async {
+    final l10n = AppLocalizations.of(context)!;
+
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: const Text(
-          "Log Out",
-          style: TextStyle(fontWeight: FontWeight.w900, color: Colors.black87),
+        title: Text(
+          l10n.logOut,
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+            color: Colors.black87,
+          ),
         ),
-        content: const Text(
-          "Are you sure you want to log out?",
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
+        content: Text(
+          l10n.areYouSureLogout,
+          style: const TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              "Cancel",
-              style: TextStyle(
+            child: Text(
+              l10n.cancel,
+              style: const TextStyle(
                 color: ProviderProfilePage.primary,
                 fontWeight: FontWeight.w800,
               ),
@@ -319,9 +264,9 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              "Log Out",
-              style: TextStyle(
+            child: Text(
+              l10n.logOut,
+              style: const TextStyle(
                 color: Colors.redAccent,
                 fontWeight: FontWeight.w800,
               ),
@@ -344,8 +289,28 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     }
   }
 
+  String _localizedLocation(AppLocalizations l10n) {
+    if (location == "Makkah") return l10n.makkah;
+    return location;
+  }
+
+  String _localizedServiceType(AppLocalizations l10n) {
+    if (serviceType == "Meal Provider") return l10n.mealProvider;
+    return serviceType;
+  }
+
+  String _currentLanguageName(AppLocalizations l10n) {
+    final code = Localizations.localeOf(context).languageCode;
+    return code == "ar" ? l10n.arabic : l10n.english;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    final displayLocation = _localizedLocation(l10n);
+    final displayServiceType = _localizedServiceType(l10n);
+
     return Scaffold(
       backgroundColor: ProviderProfilePage.bg,
       appBar: AppBar(
@@ -354,9 +319,9 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
         shadowColor: Colors.black.withOpacity(0.08),
         surfaceTintColor: Colors.white,
         centerTitle: true,
-        title: const Text(
-          'Provider Profile',
-          style: TextStyle(
+        title: Text(
+          l10n.providerProfile,
+          style: const TextStyle(
             color: Colors.black87,
             fontSize: 18,
             fontWeight: FontWeight.w900,
@@ -384,11 +349,11 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
             _ProfileHeaderCard(
               providerName: providerName,
               providerId: providerId,
-              serviceType: serviceType,
+              serviceType: displayServiceType,
             ),
             const SizedBox(height: 16),
 
-            const _SectionTitle(title: "Basic Information"),
+            _SectionTitle(title: l10n.basicInformation),
             const SizedBox(height: 10),
             if (_isProfileLoading)
               const Center(child: CircularProgressIndicator())
@@ -399,30 +364,24 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
                 providerId: providerId,
                 email: email,
                 phone: phone,
-                location: location,
-                serviceType: serviceType,
+                location: displayLocation,
+                serviceType: displayServiceType,
                 nameController: nameController,
                 emailController: emailController,
                 phoneController: phoneController,
                 onEditTap: _toggleBasicInfoEdit,
                 onCancelTap: _cancelBasicInfoEdit,
-                onChangePassword: _changePassword,
-                isChangingPassword: isChangingPassword,
-                currentPasswordController: currentPasswordController,
-                newPasswordController: newPasswordController,
-                confirmPasswordController: confirmPasswordController,
-                onSavePassword: _savePassword,
               ),
             const SizedBox(height: 16),
 
-            const _SectionTitle(title: "Orders Summary"),
+            _SectionTitle(title: l10n.ordersSummary),
             const SizedBox(height: 10),
             _isSummaryLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _StatsGrid(summary: _profileSummary),
             const SizedBox(height: 16),
 
-            const _SectionTitle(title: "Linked Campaigns"),
+            _SectionTitle(title: l10n.linkedCampaigns),
             const SizedBox(height: 10),
             _CampaignsCard(
               campaigns: List<Map<String, dynamic>>.from(
@@ -431,11 +390,11 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
             ),
             const SizedBox(height: 16),
 
-            const _SectionTitle(title: "Settings"),
+            _SectionTitle(title: l10n.settings),
             const SizedBox(height: 10),
             _SettingsCard(
               notificationsEnabled: notificationsEnabled,
-              language: language,
+              language: _currentLanguageName(l10n),
               onNotificationsChanged: (value) {
                 setState(() {
                   notificationsEnabled = value;
@@ -455,6 +414,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
 
 class _SectionTitle extends StatelessWidget {
   final String title;
+
   const _SectionTitle({required this.title});
 
   @override
@@ -483,6 +443,8 @@ class _ProfileHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: Stack(
@@ -532,7 +494,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        "Provider ID: ${providerId.isEmpty ? 'Not Available' : providerId}",
+                        "${l10n.providerId}: ${providerId.isEmpty ? l10n.notAvailable : providerId}",
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.82),
                           fontSize: 12.5,
@@ -541,7 +503,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        "Service: ${serviceType.isEmpty ? 'Not Available' : serviceType}",
+                        "${l10n.service}: ${serviceType.isEmpty ? l10n.notAvailable : serviceType}",
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.82),
                           fontSize: 12.5,
@@ -558,9 +520,9 @@ class _ProfileHeaderCard extends StatelessWidget {
                           color: ProviderProfilePage.mint.withOpacity(0.95),
                           borderRadius: BorderRadius.circular(999),
                         ),
-                        child: const Text(
-                          "Verified Account",
-                          style: TextStyle(
+                        child: Text(
+                          l10n.verifiedAccount,
+                          style: const TextStyle(
                             color: ProviderProfilePage.primaryDark,
                             fontWeight: FontWeight.w900,
                             fontSize: 12,
@@ -618,12 +580,6 @@ class _InfoCard extends StatelessWidget {
 
   final VoidCallback onEditTap;
   final VoidCallback onCancelTap;
-  final VoidCallback onChangePassword;
-  final bool isChangingPassword;
-  final TextEditingController currentPasswordController;
-  final TextEditingController newPasswordController;
-  final TextEditingController confirmPasswordController;
-  final VoidCallback onSavePassword;
 
   const _InfoCard({
     required this.isEditing,
@@ -638,22 +594,18 @@ class _InfoCard extends StatelessWidget {
     required this.phoneController,
     required this.onEditTap,
     required this.onCancelTap,
-    required this.onChangePassword,
-    required this.isChangingPassword,
-    required this.currentPasswordController,
-    required this.newPasswordController,
-    required this.confirmPasswordController,
-    required this.onSavePassword,
   });
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return _WhiteCard(
       child: Column(
         children: [
           _CardHeader(
-            title: "Provider Details",
-            actionText: isEditing ? "Save" : "Edit",
+            title: l10n.providerDetails,
+            actionText: isEditing ? l10n.save : l10n.edit,
             onActionTap: onEditTap,
             showCancel: isEditing,
             onCancelTap: onCancelTap,
@@ -662,106 +614,48 @@ class _InfoCard extends StatelessWidget {
           if (isEditing) ...[
             _EditableField(
               icon: Icons.storefront_outlined,
-              label: "Provider Name",
+              label: l10n.providerName,
               controller: nameController,
             ),
             const SizedBox(height: 14),
             _EditableField(
               icon: Icons.email_outlined,
-              label: "Email",
+              label: l10n.email,
               controller: emailController,
             ),
             const SizedBox(height: 14),
             _EditableField(
               icon: Icons.phone_outlined,
-              label: "Phone",
+              label: l10n.phone,
               controller: phoneController,
-            ),
-            const SizedBox(height: 14),
-            _InfoRow(
-              icon: Icons.lock_outline_rounded,
-              title: "Password",
-              value: "Change Password",
-              valueColor: ProviderProfilePage.primary,
-              onTap: onChangePassword,
             ),
           ] else ...[
             _InfoRow(
               icon: Icons.storefront_outlined,
-              title: "Provider Name",
+              title: l10n.providerName,
               value: providerName,
             ),
             const Divider(height: 22),
             _InfoRow(
               icon: Icons.badge_outlined,
-              title: "Provider ID",
+              title: l10n.providerId,
               value: providerId,
             ),
             const Divider(height: 22),
-            _InfoRow(icon: Icons.email_outlined, title: "Email", value: email),
+            _InfoRow(icon: Icons.email_outlined, title: l10n.email, value: email),
             const Divider(height: 22),
-            _InfoRow(icon: Icons.phone_outlined, title: "Phone", value: phone),
+            _InfoRow(icon: Icons.phone_outlined, title: l10n.phone, value: phone),
             const Divider(height: 22),
             _InfoRow(
               icon: Icons.location_on_outlined,
-              title: "Location",
+              title: l10n.location,
               value: location,
             ),
             const Divider(height: 22),
             _InfoRow(
               icon: Icons.room_service_outlined,
-              title: "Service Type",
+              title: l10n.serviceType,
               value: serviceType,
-            ),
-            const Divider(height: 22),
-            _InfoRow(
-              icon: Icons.lock_outline_rounded,
-              title: "Password",
-              value: "Change Password",
-              valueColor: ProviderProfilePage.primary,
-              onTap: onChangePassword,
-            ),
-          ],
-          if (isChangingPassword) ...[
-            const SizedBox(height: 14),
-            _EditableField(
-              icon: Icons.lock_outline_rounded,
-              label: "Current Password",
-              controller: currentPasswordController,
-              obscureText: true,
-            ),
-            const SizedBox(height: 12),
-            _EditableField(
-              icon: Icons.lock_reset_rounded,
-              label: "New Password",
-              controller: newPasswordController,
-              obscureText: true,
-            ),
-            const SizedBox(height: 12),
-            _EditableField(
-              icon: Icons.lock_person_rounded,
-              label: "Confirm New Password",
-              controller: confirmPasswordController,
-              obscureText: true,
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: onSavePassword,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ProviderProfilePage.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: const Text(
-                  "Save New Password",
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ),
             ),
           ],
         ],
@@ -923,6 +817,8 @@ class _CardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Row(
       children: [
         Text(
@@ -933,9 +829,12 @@ class _CardHeader extends StatelessWidget {
         if (showCancel)
           TextButton(
             onPressed: onCancelTap,
-            child: const Text(
-              "Cancel",
-              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w700),
+            child: Text(
+              l10n.cancel,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         if (actionText != null)
@@ -970,13 +869,15 @@ class _StatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Column(
       children: [
         Row(
           children: [
             Expanded(
               child: _StatCard(
-                title: "Total Orders",
+                title: l10n.totalOrders,
                 value: "${summary?['totalOrders'] ?? 0}",
                 icon: Icons.receipt_long_rounded,
               ),
@@ -984,7 +885,7 @@ class _StatsGrid extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _StatCard(
-                title: "Accepted",
+                title: l10n.accepted,
                 value: "${summary?['acceptedOrders'] ?? 0}",
                 icon: Icons.check_circle_outline_rounded,
               ),
@@ -996,7 +897,7 @@ class _StatsGrid extends StatelessWidget {
           children: [
             Expanded(
               child: _StatCard(
-                title: "Rejected",
+                title: l10n.rejected,
                 value: "${summary?['rejectedOrders'] ?? 0}",
                 icon: Icons.cancel_outlined,
               ),
@@ -1004,7 +905,7 @@ class _StatsGrid extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _StatCard(
-                title: "Campaigns",
+                title: l10n.campaigns,
                 value: "${summary?['campaignsCount'] ?? 0}",
                 icon: Icons.campaign_rounded,
               ),
@@ -1073,13 +974,15 @@ class _CampaignsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (campaigns.isEmpty) {
       return _WhiteCard(
         child: Padding(
           padding: const EdgeInsets.all(8),
           child: Center(
             child: Text(
-              "No linked campaigns",
+              l10n.noLinkedCampaigns,
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 color: Colors.black.withOpacity(0.55),
@@ -1102,7 +1005,7 @@ class _CampaignsCard extends StatelessWidget {
             child: _CampaignTile(
               title: c['campaignName'] ?? '',
               campaignId: c['campaignNumber'] ?? '',
-              pilgrimsCount: "${c['numberOfPilgrims'] ?? 0} pilgrims",
+              pilgrimsCount: "${c['numberOfPilgrims'] ?? 0} ${l10n.pilgrims}",
               arrivalDetails: c['arrivalDetails'] ?? '',
             ),
           );
@@ -1135,8 +1038,8 @@ class _CampaignTile extends StatelessWidget {
     return '';
   }
 
-  String _formatArrivalDate(String raw) {
-    if (raw.isEmpty) return 'Not available';
+  String _formatArrivalDate(String raw, AppLocalizations l10n) {
+    if (raw.isEmpty) return l10n.notAvailable;
 
     final parsed = DateTime.tryParse(raw);
     if (parsed == null) return raw;
@@ -1145,8 +1048,8 @@ class _CampaignTile extends StatelessWidget {
     return '${parsed.year}-${two(parsed.month)}-${two(parsed.day)}';
   }
 
-  String _formatArrivalTime(String raw) {
-    if (raw.isEmpty) return 'Not available';
+  String _formatArrivalTime(String raw, AppLocalizations l10n) {
+    if (raw.isEmpty) return l10n.notAvailable;
 
     final parsed = DateTime.tryParse(raw);
     if (parsed == null) return raw;
@@ -1162,11 +1065,13 @@ class _CampaignTile extends StatelessWidget {
   }
 
   void _showCampaignDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     final fromText = _extractLine(arrivalDetails, 'From:');
     final rawArrivalTime = _extractLine(arrivalDetails, 'Arrival Time:');
 
-    final formattedDate = _formatArrivalDate(rawArrivalTime);
-    final formattedTime = _formatArrivalTime(rawArrivalTime);
+    final formattedDate = _formatArrivalDate(rawArrivalTime, l10n);
+    final formattedTime = _formatArrivalTime(rawArrivalTime, l10n);
 
     showDialog(
       context: context,
@@ -1241,18 +1146,18 @@ class _CampaignTile extends StatelessWidget {
                                 const SizedBox(height: 14),
                                 _DialogDetailRow(
                                   icon: Icons.calendar_today_outlined,
-                                  text: "Arrival Date: $formattedDate",
+                                  text: "${l10n.arrivalDate}: $formattedDate",
                                 ),
                                 const SizedBox(height: 10),
                                 _DialogDetailRow(
                                   icon: Icons.access_time_rounded,
-                                  text: "Arrival Time: $formattedTime",
+                                  text: "${l10n.arrivalTime}: $formattedTime",
                                 ),
                                 const SizedBox(height: 10),
                                 _DialogDetailRow(
                                   icon: Icons.place_outlined,
                                   text:
-                                      "From: ${fromText.isEmpty ? 'Not available' : fromText}",
+                                      "${l10n.from}: ${fromText.isEmpty ? l10n.notAvailable : fromText}",
                                 ),
                               ],
                             ),
@@ -1263,9 +1168,9 @@ class _CampaignTile extends StatelessWidget {
                       Center(
                         child: TextButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text(
-                            "Close",
-                            style: TextStyle(
+                          child: Text(
+                            l10n.close,
+                            style: const TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: 15,
                               color: ProviderProfilePage.primary,
@@ -1397,19 +1302,21 @@ class _SettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return _WhiteCard(
       child: Column(
         children: [
           _SwitchSettingRow(
             icon: Icons.notifications_none_rounded,
-            title: "Notification",
+            title: l10n.notification,
             value: notificationsEnabled,
             onChanged: onNotificationsChanged,
           ),
           const Divider(height: 22),
           _SettingRow(
             icon: Icons.language_rounded,
-            title: "Language",
+            title: l10n.language,
             value: language,
             onTap: onLanguageTap,
           ),
@@ -1531,6 +1438,8 @@ class _LogoutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
@@ -1544,9 +1453,9 @@ class _LogoutButton extends StatelessWidget {
           backgroundColor: Colors.white,
         ),
         icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-        label: const Text(
-          "Log Out",
-          style: TextStyle(
+        label: Text(
+          l10n.logOut,
+          style: const TextStyle(
             color: Colors.redAccent,
             fontSize: 14.5,
             fontWeight: FontWeight.w900,

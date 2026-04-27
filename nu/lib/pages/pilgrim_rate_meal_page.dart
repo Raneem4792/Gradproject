@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import '../services/rate_service.dart';
 
 class PilgrimRateMealPage extends StatefulWidget {
@@ -25,14 +27,31 @@ class _PilgrimRateMealPageState extends State<PilgrimRateMealPage> {
   static const Color primary = Color(0xFF0D4C4A);
 
   final List<_RatingCriterion> criteria = [
-    _RatingCriterion(label: "Taste"),
-    _RatingCriterion(label: "Presentation"),
-    _RatingCriterion(label: "Portion Size"),
-    _RatingCriterion(label: "Temperature"),
-    _RatingCriterion(label: "Overall Satisfaction"),
+    _RatingCriterion(key: "taste"),
+    _RatingCriterion(key: "presentation"),
+    _RatingCriterion(key: "portionSize"),
+    _RatingCriterion(key: "temperature"),
+    _RatingCriterion(key: "overallSatisfaction"),
   ];
 
   bool get _hasAtLeastOneRating => criteria.any((c) => c.rating > 0);
+
+  String _criterionLabel(AppLocalizations l10n, String key) {
+    switch (key) {
+      case "taste":
+        return l10n.taste;
+      case "presentation":
+        return l10n.presentation;
+      case "portionSize":
+        return l10n.portionSize;
+      case "temperature":
+        return l10n.temperature;
+      case "overallSatisfaction":
+        return l10n.overallSatisfaction;
+      default:
+        return key;
+    }
+  }
 
   @override
   void dispose() {
@@ -41,9 +60,11 @@ class _PilgrimRateMealPageState extends State<PilgrimRateMealPage> {
   }
 
   Future<void> _submitReview() async {
+    final l10n = AppLocalizations.of(context)!;
+
     if (!_hasAtLeastOneRating) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select at least one rating.")),
+        SnackBar(content: Text(l10n.pleaseSelectAtLeastOneRating)),
       );
       return;
     }
@@ -72,7 +93,7 @@ class _PilgrimRateMealPageState extends State<PilgrimRateMealPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Review submitted successfully")),
+        SnackBar(content: Text(l10n.reviewSubmittedSuccessfully)),
       );
 
       Navigator.pop(context, true);
@@ -80,7 +101,7 @@ class _PilgrimRateMealPageState extends State<PilgrimRateMealPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed: $e")),
+        SnackBar(content: Text("${l10n.failed}: $e")),
       );
     } finally {
       if (mounted) {
@@ -91,10 +112,12 @@ class _PilgrimRateMealPageState extends State<PilgrimRateMealPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
-        title: const Text("Rate Meal"),
+        title: Text(l10n.rateMeal),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
       ),
@@ -115,7 +138,7 @@ class _PilgrimRateMealPageState extends State<PilgrimRateMealPage> {
               (c) => Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(c.label),
+                  Expanded(child: Text(_criterionLabel(l10n, c.key))),
                   Row(
                     children: List.generate(5, (i) {
                       final value = i + 1;
@@ -126,9 +149,7 @@ class _PilgrimRateMealPageState extends State<PilgrimRateMealPage> {
                           });
                         },
                         icon: Icon(
-                          value <= c.rating
-                              ? Icons.star
-                              : Icons.star_border,
+                          value <= c.rating ? Icons.star : Icons.star_border,
                           color: Colors.amber,
                         ),
                       );
@@ -142,9 +163,9 @@ class _PilgrimRateMealPageState extends State<PilgrimRateMealPage> {
 
             TextField(
               controller: _commentController,
-              decoration: const InputDecoration(
-                hintText: "Write comment...",
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: l10n.writeComment,
+                border: const OutlineInputBorder(),
               ),
               maxLines: 3,
             ),
@@ -160,7 +181,7 @@ class _PilgrimRateMealPageState extends State<PilgrimRateMealPage> {
                 ),
                 child: _isSubmitting
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("Submit"),
+                    : Text(l10n.submit),
               ),
             ),
           ],
@@ -171,11 +192,11 @@ class _PilgrimRateMealPageState extends State<PilgrimRateMealPage> {
 }
 
 class _RatingCriterion {
-  final String label;
+  final String key;
   int rating;
 
   _RatingCriterion({
-    required this.label,
+    required this.key,
     this.rating = 0,
   });
 }

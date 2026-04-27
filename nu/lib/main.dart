@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+import 'l10n/app_localizations.dart';
 
 import 'pages/pilgrim_home_screen.dart';
 import 'pages/provider_home_screen.dart';
@@ -16,8 +19,25 @@ void main() {
   runApp(const NusuqApp());
 }
 
-class NusuqApp extends StatelessWidget {
+class NusuqApp extends StatefulWidget {
   const NusuqApp({super.key});
+
+  static _NusuqAppState of(BuildContext context) {
+    return context.findAncestorStateOfType<_NusuqAppState>()!;
+  }
+
+  @override
+  State<NusuqApp> createState() => _NusuqAppState();
+}
+
+class _NusuqAppState extends State<NusuqApp> {
+  Locale _locale = const Locale('en');
+
+  void setLocale(Locale locale) {
+    setState(() {
+      _locale = locale;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +45,20 @@ class NusuqApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'NUSUQ',
 
-      // الصفحة اللي يبدأ منها التطبيق
+      locale: _locale,
+
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+
+      supportedLocales: const [
+        Locale('en'),
+        Locale('ar'),
+      ],
+
       initialRoute: SignUpScreen.routeName,
 
       routes: {
@@ -44,12 +77,12 @@ class NusuqApp extends StatelessWidget {
         ProviderCampaignManagementScreen.routeName: (context) =>
             const ProviderCampaignManagementScreen(),
 
-       
         '/pilgrimProfile': (context) => const PilgrimProfilePage(),
         '/providerProfile': (context) => const ProviderProfilePage(),
+
         PilgrimMealsPage.routeName: (_) => const PilgrimMealsPage(),
 
-  ForgotPasswordPage.routeName: (context) => const ForgotPasswordPage(),
+        ForgotPasswordPage.routeName: (context) => const ForgotPasswordPage(),
       },
     );
   }

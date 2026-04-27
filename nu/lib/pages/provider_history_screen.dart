@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import '../models/meal_order.dart';
 import '../models/rate.dart';
 import '../services/meal_service.dart';
@@ -40,11 +42,6 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
   String? selectedCampaignLabel;
   String? selectedMealTypeValue;
   String? selectedStatusValue;
-
-  String selectedDate = 'Date';
-  String selectedCampaign = 'Campaign';
-  String selectedMealType = 'Meal';
-  String selectedStatus = 'Status';
 
   int _navIndex = 2;
 
@@ -126,27 +123,33 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
     }
   }
 
-  String _mealTypeLabel(String value) {
+  String _mealTypeLabel(BuildContext context, String value) {
+    final l10n = AppLocalizations.of(context)!;
     final v = value.toLowerCase().trim();
 
-    if (v == 'breakfast') return 'Breakfast';
-    if (v == 'lunch') return 'Lunch';
-    if (v == 'dinner') return 'Dinner';
-    if (v == 'healthy') return 'Healthy';
+    if (v == 'breakfast') return l10n.breakfast;
+    if (v == 'lunch') return l10n.lunch;
+    if (v == 'dinner') return l10n.dinner;
+    if (v == 'healthy') return l10n.healthy;
+    if (v == 'vegetarian') return l10n.vegetarian;
+    if (v == 'high protein') return l10n.highProtein;
+    if (v == 'low carb') return l10n.lowCarb;
+    if (v == 'fast food') return l10n.fastFood;
 
-    return value.isEmpty ? 'Meal' : value;
+    return value.isEmpty ? l10n.meal : value;
   }
 
-  String _statusLabel(String value) {
+  String _statusLabel(BuildContext context, String value) {
+    final l10n = AppLocalizations.of(context)!;
     final v = value.toLowerCase().trim();
 
-    if (v == 'completed') return 'Completed';
-    if (v == 'rejected') return 'Rejected';
-    if (v == 'cancelled') return 'Cancelled';
-    if (v == 'pending') return 'Pending';
-    if (v == 'accepted') return 'Accepted';
+    if (v == 'completed') return l10n.completed;
+    if (v == 'rejected') return l10n.rejected;
+    if (v == 'cancelled') return l10n.cancelled;
+    if (v == 'pending') return l10n.pending;
+    if (v == 'accepted') return l10n.accepted;
 
-    return value.isEmpty ? 'Status' : value;
+    return value.isEmpty ? l10n.status : value;
   }
 
   String _formatDate(DateTime d) {
@@ -188,11 +191,6 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
       selectedCampaignLabel = null;
       selectedMealTypeValue = null;
       selectedStatusValue = null;
-
-      selectedDate = 'Date';
-      selectedCampaign = 'Campaign';
-      selectedMealType = 'Meal';
-      selectedStatus = 'Status';
     });
 
     await _loadData();
@@ -212,13 +210,14 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
 
     setState(() {
       selectedDateValue = clean;
-      selectedDate = _formatDate(clean);
     });
 
     _applyLocalFilters();
   }
 
   Future<void> pickCampaignFilter() async {
+    final l10n = AppLocalizations.of(context)!;
+
     final picked = await showModalBottomSheet<Map<String, dynamic>?>(
       context: context,
       backgroundColor: Colors.white,
@@ -229,20 +228,23 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
         child: ListView(
           shrinkWrap: true,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Text(
-                "Select Campaign",
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                l10n.selectCampaign,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
               ),
             ),
             ListTile(
-              title: const Text("All Campaigns"),
+              title: Text(l10n.allCampaigns),
               onTap: () => Navigator.pop(ctx, null),
             ),
             ..._campaigns.map(
               (c) => ListTile(
-                title: Text(c['campaignName']?.toString() ?? 'Campaign'),
+                title: Text(c['campaignName']?.toString() ?? l10n.campaign),
                 subtitle: Text(c['campaignNumber']?.toString() ?? ''),
                 onTap: () => Navigator.pop(ctx, c),
               ),
@@ -256,20 +258,18 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
       setState(() {
         selectedCampaignId = null;
         selectedCampaignLabel = null;
-        selectedCampaign = 'Campaign';
       });
       await _loadData();
       return;
     }
 
     final campaignID = picked['campaignID']?.toString();
-    final campaignName = picked['campaignName']?.toString() ?? 'Campaign';
+    final campaignName = picked['campaignName']?.toString() ?? l10n.campaign;
     final campaignNumber = picked['campaignNumber']?.toString() ?? '';
 
     setState(() {
       selectedCampaignId = campaignID;
-      selectedCampaignLabel = campaignName;
-      selectedCampaign = campaignNumber.isEmpty
+      selectedCampaignLabel = campaignNumber.isEmpty
           ? campaignName
           : '$campaignName • $campaignNumber';
     });
@@ -278,6 +278,8 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
   }
 
   Future<void> pickMealTypeFilter() async {
+    final l10n = AppLocalizations.of(context)!;
+
     final mealTypes = _allOrders
         .map((e) => e.mealType.trim())
         .where((e) => e.isNotEmpty)
@@ -295,20 +297,23 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
         child: ListView(
           shrinkWrap: true,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Text(
-                "Select Meal Type",
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                l10n.selectMealType,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
               ),
             ),
             ListTile(
-              title: const Text("All"),
+              title: Text(l10n.all),
               onTap: () => Navigator.pop(ctx, null),
             ),
             ...mealTypes.map(
               (type) => ListTile(
-                title: Text(_mealTypeLabel(type)),
+                title: Text(_mealTypeLabel(context, type)),
                 onTap: () => Navigator.pop(ctx, type),
               ),
             ),
@@ -319,13 +324,14 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
 
     setState(() {
       selectedMealTypeValue = picked;
-      selectedMealType = picked == null ? 'Meal' : _mealTypeLabel(picked);
     });
 
     _applyLocalFilters();
   }
 
   Future<void> pickStatusFilter() async {
+    final l10n = AppLocalizations.of(context)!;
+
     final statuses = _allOrders
         .map((e) => e.status.trim())
         .where((e) => e.isNotEmpty)
@@ -343,20 +349,23 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
         child: ListView(
           shrinkWrap: true,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Text(
-                "Select Status",
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                l10n.selectStatus,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
               ),
             ),
             ListTile(
-              title: const Text("All"),
+              title: Text(l10n.all),
               onTap: () => Navigator.pop(ctx, null),
             ),
             ...statuses.map(
               (status) => ListTile(
-                title: Text(_statusLabel(status)),
+                title: Text(_statusLabel(context, status)),
                 onTap: () => Navigator.pop(ctx, status),
               ),
             ),
@@ -367,7 +376,6 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
 
     setState(() {
       selectedStatusValue = picked;
-      selectedStatus = picked == null ? 'Status' : _statusLabel(picked);
     });
 
     _applyLocalFilters();
@@ -387,6 +395,8 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
   Future<void> _openReviewBottomSheet(MealOrder order) async {
     if (!order.isReviewed || order.reviewRating == null) return;
 
+    final l10n = AppLocalizations.of(context)!;
+
     try {
       final rate = await _rateService.getRateByOrder(order.orderID);
 
@@ -399,22 +409,35 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
         ),
-        builder: (_) => _ReviewViewSheet(
-          order: order,
-          rate: rate,
-        ),
+        builder: (_) => _ReviewViewSheet(order: order, rate: rate),
       );
     } catch (e) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load review details: $e')),
+        SnackBar(content: Text('${l10n.failedToLoadReviewDetails}: $e')),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    final selectedDateLabel = selectedDateValue == null
+        ? l10n.date
+        : _formatDate(selectedDateValue!);
+
+    final selectedCampaignLabelText = selectedCampaignLabel ?? l10n.campaign;
+
+    final selectedMealTypeLabel = selectedMealTypeValue == null
+        ? l10n.meal
+        : _mealTypeLabel(context, selectedMealTypeValue!);
+
+    final selectedStatusLabel = selectedStatusValue == null
+        ? l10n.status
+        : _statusLabel(context, selectedStatusValue!);
+
     return Scaffold(
       backgroundColor: bg,
       appBar: _HistoryMainAppBar(
@@ -426,107 +449,107 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        _error!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black54,
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    _error!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ),
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _HistoryHeaderCard(
+                      title: l10n.orderHistory,
+                      badgeText: '${_filteredOrders.length} ${l10n.orders}',
+                      onAllReviews: _openAllReviews,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _DropdownChip(
+                            label: selectedDateLabel,
+                            onTap: pickDateFilter,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _DropdownChip(
+                            label: selectedCampaignLabelText,
+                            onTap: pickCampaignFilter,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _DropdownChip(
+                            label: selectedMealTypeLabel,
+                            onTap: pickMealTypeFilter,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _DropdownChip(
+                            label: selectedStatusLabel,
+                            onTap: pickStatusFilter,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: TextButton(
+                        onPressed: clearFilters,
+                        child: Text(
+                          l10n.clear,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: primary,
+                          ),
                         ),
                       ),
                     ),
-                  )
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _HistoryHeaderCard(
-                          title: "Order History",
-                          badgeText: "${_filteredOrders.length} orders",
-                          onAllReviews: _openAllReviews,
+                    const SizedBox(height: 8),
+                    ..._filteredOrders.map((e) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _HistoryCard(
+                          order: e,
+                          onViewReview: e.isReviewed
+                              ? () => _openReviewBottomSheet(e)
+                              : null,
                         ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _DropdownChip(
-                                label: selectedDate,
-                                onTap: pickDateFilter,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _DropdownChip(
-                                label: selectedCampaign,
-                                onTap: pickCampaignFilter,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _DropdownChip(
-                                label: selectedMealType,
-                                onTap: pickMealTypeFilter,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _DropdownChip(
-                                label: selectedStatus,
-                                onTap: pickStatusFilter,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: clearFilters,
-                            child: const Text(
-                              "Clear",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                color: primary,
-                              ),
+                      );
+                    }),
+                    if (_filteredOrders.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 24),
+                        child: Center(
+                          child: Text(
+                            l10n.noOrdersFound,
+                            style: const TextStyle(
+                              color: Colors.black45,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        ..._filteredOrders.map((e) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _HistoryCard(
-                              order: e,
-                              onViewReview: e.isReviewed
-                                  ? () => _openReviewBottomSheet(e)
-                                  : null,
-                            ),
-                          );
-                        }),
-                        if (_filteredOrders.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 24),
-                            child: Center(
-                              child: Text(
-                                "No orders found",
-                                style: TextStyle(
-                                  color: Colors.black45,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
+                      ),
+                  ],
+                ),
+              ),
       ),
       bottomNavigationBar: ProviderBottomNav(
         currentIndex: _navIndex,
@@ -603,6 +626,8 @@ class _HistoryHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -688,18 +713,18 @@ class _HistoryHeaderCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.white.withOpacity(0.16)),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.star_border_rounded,
                         size: 18,
                         color: Colors.white,
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
-                        "All Reviews",
-                        style: TextStyle(
+                        l10n.allReviews,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w900,
                         ),
@@ -718,6 +743,7 @@ class _HistoryHeaderCard extends StatelessWidget {
 
 class _DropdownChip extends StatelessWidget {
   const _DropdownChip({required this.label, required this.onTap});
+
   final String label;
   final VoidCallback onTap;
 
@@ -795,9 +821,26 @@ class _HistoryCard extends StatelessWidget {
   static const Color mint = Color(0xFFA8E7CF);
   static const Color softMint = Color(0xFFE6F6F0);
 
+  String _localizedMealType(BuildContext context, String value) {
+    final l10n = AppLocalizations.of(context)!;
+    final v = value.toLowerCase().trim();
+
+    if (v == 'breakfast') return l10n.breakfast;
+    if (v == 'lunch') return l10n.lunch;
+    if (v == 'dinner') return l10n.dinner;
+    if (v == 'healthy') return l10n.healthy;
+    if (v == 'vegetarian') return l10n.vegetarian;
+    if (v == 'high protein') return l10n.highProtein;
+    if (v == 'low carb') return l10n.lowCarb;
+    if (v == 'fast food') return l10n.fastFood;
+
+    return value;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final pill = _StatusPill.from(order.status);
+    final l10n = AppLocalizations.of(context)!;
+    final pill = _StatusPill.from(context, order.status);
 
     return Container(
       decoration: BoxDecoration(
@@ -920,7 +963,7 @@ class _HistoryCard extends StatelessWidget {
                                 ),
                               ),
                               child: Text(
-                                order.mealType,
+                                _localizedMealType(context, order.mealType),
                                 style: TextStyle(
                                   fontSize: 11.8,
                                   color: primary.withOpacity(0.85),
@@ -972,9 +1015,9 @@ class _HistoryCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: primary, width: 1.3),
                               ),
-                              child: const Text(
-                                "View Review",
-                                style: TextStyle(
+                              child: Text(
+                                l10n.viewReview,
+                                style: const TextStyle(
                                   color: primary,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 12,
@@ -1008,49 +1051,51 @@ class _StatusPill {
     required this.border,
   });
 
-  static _StatusPill from(String status) {
+  static _StatusPill from(BuildContext context, String status) {
+    final l10n = AppLocalizations.of(context)!;
+
     switch (status.toLowerCase()) {
       case 'completed':
-        return const _StatusPill(
-          text: "Completed",
-          bg: Color(0xFFE7F6ED),
-          fg: Color(0xFF1E7A3A),
-          border: Color(0xFFCBEBD6),
+        return _StatusPill(
+          text: l10n.completed,
+          bg: const Color(0xFFE7F6ED),
+          fg: const Color(0xFF1E7A3A),
+          border: const Color(0xFFCBEBD6),
         );
       case 'rejected':
-        return const _StatusPill(
-          text: "Rejected",
-          bg: Color(0xFFFFE9E9),
-          fg: Color(0xFFB3261E),
-          border: Color(0xFFFFC7C7),
+        return _StatusPill(
+          text: l10n.rejected,
+          bg: const Color(0xFFFFE9E9),
+          fg: const Color(0xFFB3261E),
+          border: const Color(0xFFFFC7C7),
         );
       case 'cancelled':
-        return const _StatusPill(
-          text: "Cancelled",
-          bg: Color(0xFFF3F3F3),
-          fg: Color(0xFF666666),
-          border: Color(0xFFE0E0E0),
+        return _StatusPill(
+          text: l10n.cancelled,
+          bg: const Color(0xFFF3F3F3),
+          fg: const Color(0xFF666666),
+          border: const Color(0xFFE0E0E0),
         );
       case 'pending':
-        return const _StatusPill(
-          text: "Pending",
-          bg: Color(0xFFFFF6E5),
-          fg: Color(0xFF9A6700),
-          border: Color(0xFFFFE2A8),
+        return _StatusPill(
+          text: l10n.pending,
+          bg: const Color(0xFFFFF6E5),
+          fg: const Color(0xFF9A6700),
+          border: const Color(0xFFFFE2A8),
         );
       case 'accepted':
-        return const _StatusPill(
-          text: "Accepted",
-          bg: Color(0xFFE8F1FF),
-          fg: Color(0xFF2457C5),
-          border: Color(0xFFCFE0FF),
+        return _StatusPill(
+          text: l10n.accepted,
+          bg: const Color(0xFFE8F1FF),
+          fg: const Color(0xFF2457C5),
+          border: const Color(0xFFCFE0FF),
         );
       default:
-        return const _StatusPill(
-          text: "Unknown",
-          bg: Color(0xFFF1F1F1),
-          fg: Color(0xFF666666),
-          border: Color(0xFFE0E0E0),
+        return _StatusPill(
+          text: l10n.unknown,
+          bg: const Color(0xFFF1F1F1),
+          fg: const Color(0xFF666666),
+          border: const Color(0xFFE0E0E0),
         );
     }
   }
@@ -1058,6 +1103,7 @@ class _StatusPill {
 
 class _Stars extends StatelessWidget {
   const _Stars({required this.rating});
+
   final int rating;
 
   @override
@@ -1090,8 +1136,8 @@ class _ReviewViewSheet extends StatelessWidget {
   static const Color mint = Color(0xFFA8E7CF);
   static const Color softMint = Color(0xFFE6F6F0);
 
-  String _formatDateTime(String value) {
-    if (value.trim().isEmpty) return 'Not available';
+  String _formatDateTime(String value, AppLocalizations l10n) {
+    if (value.trim().isEmpty) return l10n.notAvailable;
 
     try {
       final dt = DateTime.parse(value).toLocal();
@@ -1109,6 +1155,7 @@ class _ReviewViewSheet extends StatelessWidget {
   Widget _infoBox({
     required String title,
     required String value,
+    required String emptyText,
     bool highlighted = false,
   }) {
     return Container(
@@ -1136,7 +1183,7 @@ class _ReviewViewSheet extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            value.trim().isEmpty ? 'No text provided' : value,
+            value.trim().isEmpty ? emptyText : value,
             style: const TextStyle(
               fontSize: 13.5,
               fontWeight: FontWeight.w700,
@@ -1151,6 +1198,7 @@ class _ReviewViewSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final hasReply = rate.providerReply.trim().isNotEmpty;
 
     return SafeArea(
@@ -1173,7 +1221,7 @@ class _ReviewViewSheet extends StatelessWidget {
                 ),
               ),
               Text(
-                "Review Details • #${order.orderID}",
+                "${l10n.reviewDetails} • #${order.orderID}",
                 style: const TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 17,
@@ -1230,33 +1278,37 @@ class _ReviewViewSheet extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               _infoBox(
-                title: "Pilgrim Comment",
+                title: l10n.pilgrimComment,
                 value: rate.comment,
+                emptyText: l10n.noTextProvided,
                 highlighted: true,
               ),
               const SizedBox(height: 12),
               _infoBox(
-                title: "Review Date",
-                value: _formatDateTime(rate.reviewDateTime),
+                title: l10n.reviewDate,
+                value: _formatDateTime(rate.reviewDateTime, l10n),
+                emptyText: l10n.notAvailable,
               ),
               const SizedBox(height: 12),
               _infoBox(
-                title: "Provider Reply",
-                value: hasReply ? rate.providerReply : 'No reply yet',
+                title: l10n.providerReply,
+                value: hasReply ? rate.providerReply : l10n.noReplyYet,
+                emptyText: l10n.noReplyYet,
               ),
               const SizedBox(height: 12),
               _infoBox(
-                title: "Reply Date",
+                title: l10n.replyDate,
                 value: hasReply
-                    ? _formatDateTime(rate.replyDateTime)
-                    : 'Not available',
+                    ? _formatDateTime(rate.replyDateTime, l10n)
+                    : l10n.notAvailable,
+                emptyText: l10n.notAvailable,
               ),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text("Close"),
+                  child: Text(l10n.close),
                 ),
               ),
             ],
@@ -1281,6 +1333,8 @@ class ProviderAllReviewsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     final reviewedOrders = List<MealOrder>.from(orders)
       ..sort((a, b) => b.requestDate.compareTo(a.requestDate));
 
@@ -1304,9 +1358,9 @@ class ProviderAllReviewsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 2),
-            const Text(
-              "All Reviews",
-              style: TextStyle(
+            Text(
+              l10n.allReviews,
+              style: const TextStyle(
                 color: Colors.black87,
                 fontSize: 17,
                 fontWeight: FontWeight.w900,
@@ -1317,10 +1371,10 @@ class ProviderAllReviewsScreen extends StatelessWidget {
         ),
       ),
       body: reviewedOrders.isEmpty
-          ? const Center(
+          ? Center(
               child: Text(
-                "No reviews yet",
-                style: TextStyle(
+                l10n.noReviewsYet,
+                style: const TextStyle(
                   fontWeight: FontWeight.w700,
                   color: Colors.black45,
                 ),

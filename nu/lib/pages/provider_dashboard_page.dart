@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart';
+
+import '../l10n/app_localizations.dart';
 import '../widgets/provider_bottom_nav.dart';
 import 'provider_home_screen.dart';
 import 'incoming_meal_requests_page.dart';
@@ -8,8 +12,6 @@ import '../models/provider_dashboard_report.dart';
 import '../services/report_service.dart';
 import '../services/ai_dashboard_service.dart';
 import '../session/user_session.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/foundation.dart';
 
 class ProviderDashboardPage extends StatefulWidget {
   static const String routeName = '/provider-dashboard';
@@ -23,11 +25,6 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
   static const Color bg = Color(0xFFF1F7F4);
   static const Color primaryDark = Color(0xFF052720);
   static const Color primary = Color(0xFF0B4A40);
-  static const Color primaryMid = Color(0xFF167062);
-  static const Color green2 = Color(0xFF1E8A72);
-  static const Color mint = Color(0xFFA8E7CF);
-  static const Color softMint = Color(0xFFE8F7F1);
-  static const Color gold = Color(0xFFF0E0C0);
 
   int _navIndex = 2;
 
@@ -75,35 +72,44 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
   }
 
   Future<void> _loadDashboard() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _error = null;
-      });
+  try {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
-      if (_providerId == null || _providerId!.isEmpty) {
-        throw Exception('Provider ID is missing');
-      }
+    final providerId = _providerId;
 
-      final data = await _reportService.getProviderDashboard(_providerId!);
-
-      if (!mounted) return;
-      setState(() {
-        _report = data;
-        _isLoading = false;
-      });
-
-      await _loadAiAnalysis();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+    if (providerId == null || providerId.isEmpty) {
+      throw Exception('Provider ID is missing');
     }
+
+    final language = Localizations.localeOf(context).languageCode;
+
+    final data = await _reportService.getProviderDashboard(
+      providerId,
+      language,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _report = data;
+      _isLoading = false;
+    });
+
+    await _loadAiAnalysis();
+  } catch (e) {
+    if (!mounted) return;
+    setState(() {
+      _error = e.toString();
+      _isLoading = false;
+    });
   }
+}
 
   Future<void> _loadAiAnalysis() async {
+    final l10n = AppLocalizations.of(context)!;
+
     try {
       if (_providerId == null || _providerId!.isEmpty) return;
 
@@ -112,7 +118,9 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
         _aiAnalysis = null;
       });
 
-      final result = await _aiDashboardService.getProviderAnalysis(_providerId!);
+      final result = await _aiDashboardService.getProviderAnalysis(
+        _providerId!,
+      );
 
       if (!mounted) return;
       setState(() {
@@ -122,32 +130,41 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _aiAnalysis = 'AI analysis is currently unavailable.';
+        _aiAnalysis = l10n.aiAnalysisUnavailable;
         _isAiLoading = false;
       });
     }
   }
 
   Future<void> _openPdfReport() async {
-    if (_providerId == null || _providerId!.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Provider ID is missing')));
-      return;
-    }
+  final l10n = AppLocalizations.of(context)!;
 
-    final pdfUrl = _reportService.getProviderDashboardPdfUrl(_providerId!);
-    final uri = Uri.parse(pdfUrl);
+  final providerId = _providerId;
 
-    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-
-    if (!opened && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open PDF report')),
-      );
-    }
+  if (providerId == null || providerId.isEmpty) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.providerIdIsMissing)));
+    return;
   }
 
+  final language = Localizations.localeOf(context).languageCode;
+
+  final pdfUrl = _reportService.getProviderDashboardPdfUrl(
+    providerId,
+    language,
+  );
+
+  final uri = Uri.parse(pdfUrl);
+
+  final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+  if (!opened && mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.couldNotOpenPdfReport)),
+    );
+  }
+}
   void _openNotificationsPage() {
     Navigator.push(
       context,
@@ -184,6 +201,7 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
   }
 
   Widget _buildContent() {
+    final l10n = AppLocalizations.of(context)!;
     final report = _report!;
 
     return RefreshIndicator(
@@ -196,30 +214,25 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
           children: [
             _DashboardPageHeader(updatedAt: report.updatedAt),
             const SizedBox(height: 14),
-
             _HeroSummaryCard(
               totalOrders: report.todayOrders,
               campaignsCount: report.campaigns,
               acceptancePercent: report.mealAcceptance.toDouble(),
             ),
-
             const SizedBox(height: 14),
-
             _AiDashboardSection(
               analysis: _aiAnalysis,
               isLoading: _isAiLoading,
               onRefresh: _loadAiAnalysis,
             ),
-
             const SizedBox(height: 14),
-
             Row(
               children: [
                 Expanded(
                   child: _KpiCard(
-                    title: "Meal Acceptance",
+                    title: l10n.mealAcceptance,
                     value: "${report.mealAcceptance}%",
-                    sub: "Accepted requests",
+                    sub: l10n.acceptedRequests,
                     icon: Icons.check_circle_outline_rounded,
                     tone: KpiTone.green,
                   ),
@@ -227,26 +240,22 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _KpiCard(
-                    title: "Feedback Average",
+                    title: l10n.feedbackAverage,
                     value: report.averageScore.toStringAsFixed(1),
-                    sub: "Average rating",
+                    sub: l10n.averageRating,
                     icon: Icons.star_border_rounded,
                     tone: KpiTone.mint,
                   ),
                 ),
               ],
             ),
-
             const SizedBox(height: 14),
-
             _AnalyticsCard(
-              title: "Order Trend",
-              subtitle: "Daily orders over the last 7 days",
+              title: l10n.orderTrend,
+              subtitle: l10n.dailyOrdersLast7Days,
               child: _OrderTrendChart(data: report.orderTrend),
             ),
-
             const SizedBox(height: 14),
-
             IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,19 +272,17 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _AISuggestionsCard(
-                      headline: "Smart Suggestions",
+                      headline: l10n.smartSuggestions,
                       suggestions: report.aiSuggestions,
                     ),
                   ),
                 ],
               ),
             ),
-
             const SizedBox(height: 14),
-
             _AnalyticsCard(
-              title: "Pilgrim Health Snapshot",
-              subtitle: "Common dietary and health indicators",
+              title: l10n.pilgrimHealthSnapshot,
+              subtitle: l10n.commonDietaryHealthIndicators,
               child: _HealthInsightsGrid(
                 diabetes: report.healthSnapshot['diabetes'] ?? 0,
                 allergies: report.healthSnapshot['allergies'] ?? 0,
@@ -283,17 +290,13 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
                 highProtein: report.healthSnapshot['highProtein'] ?? 0,
               ),
             ),
-
             const SizedBox(height: 14),
-
             _AnalyticsCard(
-              title: "Top Requested Meals",
-              subtitle: "Most ordered meals today",
+              title: l10n.topRequestedMeals,
+              subtitle: l10n.mostOrderedMealsToday,
               child: _TopMealsList(items: report.topMeals),
             ),
-
             const SizedBox(height: 18),
-
             _GenerateReportButton(
               onTap: () async {
                 HapticFeedback.selectionClick();
@@ -309,6 +312,8 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: bg,
       appBar: _DashboardMainAppBar(
@@ -320,29 +325,31 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-            ? Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline_rounded, size: 40),
-                      const SizedBox(height: 12),
-                      Text(
-                        _error!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error_outline_rounded, size: 40),
+                          const SizedBox(height: 12),
+                          Text(
+                            _error!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          ElevatedButton(
+                            onPressed: _loadDashboard,
+                            child: Text(l10n.retry),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 14),
-                      ElevatedButton(
-                        onPressed: _loadDashboard,
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            : _buildContent(),
+                    ),
+                  )
+                : _buildContent(),
       ),
       bottomNavigationBar: ProviderBottomNav(
         currentIndex: _navIndex,
@@ -352,9 +359,6 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
   }
 }
 
-/// =======================
-/// APP BAR
-/// =======================
 class _DashboardMainAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final VoidCallback onBack;
@@ -414,35 +418,34 @@ class _DashboardMainAppBar extends StatelessWidget
   }
 }
 
-/// =======================
-/// PAGE HEADER
-/// =======================
 class _DashboardPageHeader extends StatelessWidget {
   final String updatedAt;
   const _DashboardPageHeader({required this.updatedAt});
 
-  String _formatUpdatedAt(String value) {
-    if (value.isEmpty) return "Updated recently";
+  String _formatUpdatedAt(String value, AppLocalizations l10n) {
+    if (value.isEmpty) return l10n.updatedRecently;
     try {
       final dt = DateTime.parse(value).toLocal();
-      return "Updated ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+      return "${l10n.updated} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
     } catch (_) {
-      return "Updated recently";
+      return l10n.updatedRecently;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Row(
       children: [
-        const Expanded(
+        Expanded(
           child: Text(
-            "Performance & Reports",
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+            l10n.performanceAndReports,
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
           ),
         ),
         Text(
-          _formatUpdatedAt(updatedAt),
+          _formatUpdatedAt(updatedAt, l10n),
           style: TextStyle(
             fontSize: 11.8,
             fontWeight: FontWeight.w800,
@@ -454,9 +457,6 @@ class _DashboardPageHeader extends StatelessWidget {
   }
 }
 
-/// =======================
-/// Hero summary
-/// =======================
 class _HeroSummaryCard extends StatelessWidget {
   final int totalOrders;
   final int campaignsCount;
@@ -476,6 +476,8 @@ class _HeroSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -524,9 +526,9 @@ class _HeroSummaryCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Text(
-                    "Dashboard Overview",
-                    style: TextStyle(
+                  Text(
+                    l10n.dashboardOverview,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
@@ -544,7 +546,7 @@ class _HeroSummaryCard extends StatelessWidget {
                       border: Border.all(color: Colors.white.withOpacity(0.12)),
                     ),
                     child: Text(
-                      "Live Data",
+                      l10n.liveData,
                       style: TextStyle(
                         color: gold.withOpacity(0.95),
                         fontSize: 11.5,
@@ -559,7 +561,7 @@ class _HeroSummaryCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _HeroMetric(
-                      title: "Today's Orders",
+                      title: l10n.todaysOrders,
                       value: "$totalOrders",
                       dotColor: mint,
                     ),
@@ -567,7 +569,7 @@ class _HeroSummaryCard extends StatelessWidget {
                   const SizedBox(width: 14),
                   Expanded(
                     child: _HeroMetric(
-                      title: "Campaigns",
+                      title: l10n.campaigns,
                       value: "$campaignsCount",
                       dotColor: gold,
                     ),
@@ -576,7 +578,7 @@ class _HeroSummaryCard extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               _HeroProgressPill(
-                label: "Acceptance Rate",
+                label: l10n.acceptanceRate,
                 percent: acceptancePercent,
               ),
             ],
@@ -714,9 +716,6 @@ class _HeroProgressPill extends StatelessWidget {
   }
 }
 
-/// =======================
-/// KPI cards
-/// =======================
 enum KpiTone { green, mint }
 
 class _KpiCard extends StatelessWidget {
@@ -808,9 +807,6 @@ class _KpiCard extends StatelessWidget {
   }
 }
 
-/// =======================
-/// Analytics wrapper
-/// =======================
 class _AnalyticsCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -861,12 +857,39 @@ class _AnalyticsCard extends StatelessWidget {
   }
 }
 
-/// =======================
-/// Order trend chart
-/// =======================
 class _OrderTrendChart extends StatelessWidget {
   final List<Map<String, dynamic>> data;
   const _OrderTrendChart({required this.data});
+
+  String _localizedDay(BuildContext context, String label) {
+    final l10n = AppLocalizations.of(context)!;
+
+    switch (label.toLowerCase().trim()) {
+      case 'mon':
+      case 'monday':
+        return l10n.mondayShort;
+      case 'tue':
+      case 'tuesday':
+        return l10n.tuesdayShort;
+      case 'wed':
+      case 'wednesday':
+        return l10n.wednesdayShort;
+      case 'thu':
+      case 'thursday':
+        return l10n.thursdayShort;
+      case 'fri':
+      case 'friday':
+        return l10n.fridayShort;
+      case 'sat':
+      case 'saturday':
+        return l10n.saturdayShort;
+      case 'sun':
+      case 'sunday':
+        return l10n.sundayShort;
+      default:
+        return label;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -911,7 +934,7 @@ class _OrderTrendChart extends StatelessWidget {
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      labels[i],
+                      _localizedDay(context, labels[i]),
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
@@ -929,9 +952,6 @@ class _OrderTrendChart extends StatelessWidget {
   }
 }
 
-/// =======================
-/// Feedback card
-/// =======================
 class _FeedbackCard extends StatelessWidget {
   final double rating;
   final int starsFilled;
@@ -952,6 +972,8 @@ class _FeedbackCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       height: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -970,7 +992,7 @@ class _FeedbackCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Feedback", style: TextStyle(fontWeight: FontWeight.w900)),
+          Text(l10n.feedback, style: const TextStyle(fontWeight: FontWeight.w900)),
           const SizedBox(height: 10),
           Container(
             width: 44,
@@ -992,14 +1014,14 @@ class _FeedbackCard extends StatelessWidget {
             }),
           ),
           const SizedBox(height: 12),
-          _FeedbackInfoRow(label: "Reviews", value: "$totalReviews"),
+          _FeedbackInfoRow(label: l10n.reviews, value: "$totalReviews"),
           const SizedBox(height: 6),
-          _FeedbackInfoRow(label: "Average", value: rating.toStringAsFixed(1)),
+          _FeedbackInfoRow(label: l10n.average, value: rating.toStringAsFixed(1)),
           const SizedBox(height: 6),
-          _FeedbackInfoRow(label: "Highest", value: "$highestScore/5"),
+          _FeedbackInfoRow(label: l10n.highest, value: "$highestScore/5"),
           const SizedBox(height: 10),
           Text(
-            "Latest review",
+            l10n.latestReview,
             style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w800,
@@ -1040,7 +1062,7 @@ class _FeedbackCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                "Average score",
+                l10n.averageScore,
                 style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
@@ -1091,9 +1113,6 @@ class _FeedbackInfoRow extends StatelessWidget {
   }
 }
 
-/// =======================
-/// suggestions card
-/// =======================
 class _AISuggestionsCard extends StatelessWidget {
   final String headline;
   final List<String> suggestions;
@@ -1106,8 +1125,10 @@ class _AISuggestionsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     final visibleSuggestions = suggestions.isEmpty
-        ? ["No suggestions available yet."]
+        ? [l10n.noSuggestionsAvailableYet]
         : suggestions;
 
     return Container(
@@ -1143,7 +1164,6 @@ class _AISuggestionsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-
           ...List.generate(visibleSuggestions.length, (i) {
             return Padding(
               padding: EdgeInsets.only(
@@ -1190,9 +1210,6 @@ class _AISuggestionsCard extends StatelessWidget {
   }
 }
 
-/// =======================
-/// Health insights
-/// =======================
 class _HealthInsightsGrid extends StatelessWidget {
   final int diabetes;
   final int allergies;
@@ -1208,13 +1225,15 @@ class _HealthInsightsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Column(
       children: [
         Row(
           children: [
             Expanded(
               child: _HealthInsightCard(
-                title: "Diabetes",
+                title: l10n.diabetes,
                 value: "$diabetes%",
                 icon: Icons.bloodtype_outlined,
               ),
@@ -1222,7 +1241,7 @@ class _HealthInsightsGrid extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _HealthInsightCard(
-                title: "Allergies",
+                title: l10n.allergies,
                 value: "$allergies%",
                 icon: Icons.warning_amber_rounded,
               ),
@@ -1234,7 +1253,7 @@ class _HealthInsightsGrid extends StatelessWidget {
           children: [
             Expanded(
               child: _HealthInsightCard(
-                title: "Low Sodium",
+                title: l10n.lowSodium,
                 value: "$lowSodium%",
                 icon: Icons.health_and_safety_outlined,
               ),
@@ -1242,7 +1261,7 @@ class _HealthInsightsGrid extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _HealthInsightCard(
-                title: "High Protein",
+                title: l10n.highProtein,
                 value: "$highProtein%",
                 icon: Icons.fitness_center_rounded,
               ),
@@ -1319,9 +1338,6 @@ class _HealthInsightCard extends StatelessWidget {
   }
 }
 
-/// =======================
-/// Top meals
-/// =======================
 class _TopMealsList extends StatelessWidget {
   final List<Map<String, dynamic>> items;
   const _TopMealsList({required this.items});
@@ -1331,12 +1347,14 @@ class _TopMealsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (items.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(16),
         alignment: Alignment.center,
         child: Text(
-          "No meal requests yet",
+          l10n.noMealRequestsYet,
           style: TextStyle(
             fontWeight: FontWeight.w700,
             color: Colors.black.withOpacity(0.55),
@@ -1383,7 +1401,7 @@ class _TopMealsList extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  "$count orders",
+                  "$count ${l10n.orders}",
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     color: Colors.black.withOpacity(0.55),
@@ -1398,9 +1416,6 @@ class _TopMealsList extends StatelessWidget {
   }
 }
 
-/// =======================
-/// Button
-/// =======================
 class _GenerateReportButton extends StatelessWidget {
   final VoidCallback onTap;
   const _GenerateReportButton({required this.onTap});
@@ -1409,26 +1424,27 @@ class _GenerateReportButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return SizedBox(
       width: double.infinity,
       height: 54,
       child: ElevatedButton(
         onPressed: onTap,
-        style:
-            ElevatedButton.styleFrom(
-              elevation: 0,
-              backgroundColor: primaryDark,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-            ).copyWith(
-              overlayColor: WidgetStateProperty.all(
-                Colors.white.withOpacity(0.08),
-              ),
-            ),
-        child: const Text(
-          "GENERATE REPORT",
-          style: TextStyle(
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          backgroundColor: primaryDark,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+        ).copyWith(
+          overlayColor: WidgetStateProperty.all(
+            Colors.white.withOpacity(0.08),
+          ),
+        ),
+        child: Text(
+          l10n.generateReport.toUpperCase(),
+          style: const TextStyle(
             letterSpacing: 1.2,
             fontWeight: FontWeight.w900,
             color: Colors.white,
@@ -1439,10 +1455,6 @@ class _GenerateReportButton extends StatelessWidget {
   }
 }
 
-
-/// =======================
-/// AI dashboard insights
-/// =======================
 class _AiDashboardSection extends StatelessWidget {
   final String? analysis;
   final bool isLoading;
@@ -1458,12 +1470,12 @@ class _AiDashboardSection extends StatelessWidget {
   static const Color primary = Color(0xFF0B4A40);
   static const Color primaryMid = Color(0xFF167062);
   static const Color mint = Color(0xFFA8E7CF);
-  static const Color softMint = Color(0xFFE8F7F1);
   static const Color gold = Color(0xFFF0E0C0);
 
   @override
   Widget build(BuildContext context) {
-    final parsed = _parseAnalysis(analysis ?? '');
+    final l10n = AppLocalizations.of(context)!;
+    final parsed = _parseAnalysis(analysis ?? '', l10n);
 
     return Container(
       width: double.infinity,
@@ -1503,22 +1515,22 @@ class _AiDashboardSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "AI Dashboard Insights",
-                      style: TextStyle(
+                      l10n.aiDashboardInsights,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 15.5,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    SizedBox(height: 3),
+                    const SizedBox(height: 3),
                     Text(
-                      "Smart analysis based on orders, meals, ratings, and risks",
-                      style: TextStyle(
+                      l10n.smartAnalysisBasedOnOrders,
+                      style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
@@ -1543,9 +1555,9 @@ class _AiDashboardSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: Colors.white.withOpacity(0.12)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  SizedBox(
+                  const SizedBox(
                     width: 22,
                     height: 22,
                     child: CircularProgressIndicator(
@@ -1553,11 +1565,11 @@ class _AiDashboardSection extends StatelessWidget {
                       color: Colors.white,
                     ),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      "Generating AI insights...",
-                      style: TextStyle(
+                      l10n.generatingAiInsights,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
                       ),
@@ -1568,19 +1580,19 @@ class _AiDashboardSection extends StatelessWidget {
             )
           else ...[
             _AiInsightCard(
-              title: "AI Summary",
+              title: l10n.aiSummary,
               icon: Icons.analytics_rounded,
               content: parsed.summary,
             ),
             const SizedBox(height: 10),
             _AiInsightCard(
-              title: "Feedback & Risk Analysis",
+              title: l10n.feedbackRiskAnalysis,
               icon: Icons.warning_amber_rounded,
               content: parsed.risks,
             ),
             const SizedBox(height: 10),
             _AiInsightCard(
-              title: "Smart Recommendations",
+              title: l10n.smartRecommendations,
               icon: Icons.tips_and_updates_rounded,
               content: parsed.recommendations,
               highlighted: true,
@@ -1591,21 +1603,26 @@ class _AiDashboardSection extends StatelessWidget {
     );
   }
 
-  _ParsedAiAnalysis _parseAnalysis(String value) {
+  _ParsedAiAnalysis _parseAnalysis(String value, AppLocalizations l10n) {
     final cleaned = _cleanText(value);
 
     if (cleaned.trim().isEmpty) {
-      return const _ParsedAiAnalysis(
-        summary: 'No AI summary available yet.',
-        risks: 'No feedback or risk analysis available yet.',
-        recommendations: 'No smart recommendations available yet.',
+      return _ParsedAiAnalysis(
+        summary: l10n.noAiSummaryAvailableYet,
+        risks: l10n.noFeedbackRiskAnalysisAvailableYet,
+        recommendations: l10n.noSmartRecommendationsAvailableYet,
       );
     }
 
     final summary = _extractSection(
       cleaned,
       ['Overall Summary', 'AI Summary', 'Summary'],
-      ['Most Requested Meals', 'Problems or Risks', 'Feedback Analysis', 'Recommendations'],
+      [
+        'Most Requested Meals',
+        'Problems or Risks',
+        'Feedback Analysis',
+        'Recommendations',
+      ],
     );
 
     final meals = _extractSection(
@@ -1627,13 +1644,16 @@ class _AiDashboardSection extends StatelessWidget {
     );
 
     return _ParsedAiAnalysis(
-      summary: _joinNonEmpty([
-        summary,
-        if (meals.isNotEmpty) 'Most Requested Meals:\n$meals',
-      ], fallback: 'No AI summary available yet.'),
-      risks: risks.isEmpty ? 'No feedback or risk analysis available yet.' : risks,
+      summary: _joinNonEmpty(
+        [
+          summary,
+          if (meals.isNotEmpty) '${l10n.mostRequestedMeals}:\n$meals',
+        ],
+        fallback: l10n.noAiSummaryAvailableYet,
+      ),
+      risks: risks.isEmpty ? l10n.noFeedbackRiskAnalysisAvailableYet : risks,
       recommendations: recommendations.isEmpty
-          ? 'No smart recommendations available yet.'
+          ? l10n.noSmartRecommendationsAvailableYet
           : recommendations,
     );
   }
