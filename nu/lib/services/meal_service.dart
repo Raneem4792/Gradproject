@@ -276,4 +276,18 @@ class MealService {
     return [];
   }
 }
+
+Future<List<Meal>> getAiRecommendedMeals(String pilgrimID) async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/meals/ai-recommended/$pilgrimID'),
+  );
+
+  if (response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(response.body);
+    return data.map((json) => Meal.fromJson(json)).toList();
+  } else {
+    throw Exception('Failed to load AI recommended meals');
+  }
+}
+
 }

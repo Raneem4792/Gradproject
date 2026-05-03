@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-
 import 'l10n/app_localizations.dart';
-
+import 'pages/home_page.dart';
 import 'pages/pilgrim_home_screen.dart';
 import 'pages/provider_home_screen.dart';
 import 'pages/signup_page.dart';
@@ -59,9 +58,10 @@ class _NusuqAppState extends State<NusuqApp> {
         Locale('ar'),
       ],
 
-      initialRoute: SignUpScreen.routeName,
+      initialRoute: HomePage.routeName,
 
       routes: {
+        HomePage.routeName: (context) => const HomePage(),
         SignUpScreen.routeName: (context) => const SignUpScreen(),
         LoginScreen.routeName: (context) => const LoginScreen(),
 

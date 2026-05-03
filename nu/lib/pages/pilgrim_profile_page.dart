@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../l10n/app_localizations.dart';
 import '../main.dart';
@@ -48,18 +49,21 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
   String selectedHealthCondition = "None";
   String selectedDietaryPreference = "Regular";
   List<String> selectedAllergies = [];
+  String otherAllergyText = "";
   List<String> tags = [];
 
   String tempSelectedAge = "";
   String tempSelectedHealthCondition = "";
   String tempSelectedDietaryPreference = "";
   List<String> tempSelectedAllergies = [];
+  String tempOtherAllergyText = "";
 
   bool notificationsEnabled = true;
 
   late final TextEditingController fullNameController;
   late final TextEditingController emailController;
   late final TextEditingController phoneController;
+  late final TextEditingController otherAllergyController;
 
   final List<String> ageOptions = List.generate(83, (index) => "${18 + index}");
 
@@ -88,16 +92,15 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
   ];
 
   final List<String> allergyOptions = const [
-    "Nuts",
-    "Seafood",
-    "Dairy",
+    "Peanuts",
+    "Tree Nuts",
+    "Milk",
     "Eggs",
-    "Gluten",
-    "Soy",
-    "Sesame",
+    "Fish",
     "Shellfish",
     "Wheat",
-    "Medication",
+    "Soy",
+    "Sesame",
     "Other",
   ];
 
@@ -108,6 +111,7 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
     fullNameController = TextEditingController(text: fullName);
     emailController = TextEditingController(text: email);
     phoneController = TextEditingController(text: phone);
+    otherAllergyController = TextEditingController(text: otherAllergyText);
 
     _rebuildHealthTags();
     _loadPersonalProfile();
@@ -119,6 +123,7 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
     fullNameController.dispose();
     emailController.dispose();
     phoneController.dispose();
+    otherAllergyController.dispose();
     super.dispose();
   }
 
@@ -144,7 +149,10 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
             ? profile.dietaryPreferences
             : "Regular";
 
-        selectedAllergies = profile.allergyList;
+        final loadedAllergies = _splitKnownAndOtherAllergies(profile.allergyList);
+        selectedAllergies = loadedAllergies.knownAllergies;
+        otherAllergyText = loadedAllergies.otherAllergyText;
+        otherAllergyController.text = otherAllergyText;
 
         _rebuildHealthTags();
         _isHealthLoading = false;
@@ -155,6 +163,8 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
         selectedHealthCondition = "None";
         selectedDietaryPreference = "Regular";
         selectedAllergies = [];
+        otherAllergyText = "";
+        otherAllergyController.clear();
         _rebuildHealthTags();
         _isHealthLoading = false;
       });
@@ -188,6 +198,44 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
     } catch (e) {
       setState(() => _isPersonalLoading = false);
     }
+  }
+
+  ({List<String> knownAllergies, String otherAllergyText})
+      _splitKnownAndOtherAllergies(List<String> allergies) {
+    final known = <String>[];
+    final custom = <String>[];
+
+    for (final allergy in allergies) {
+      final value = allergy.trim();
+      if (value.isEmpty) continue;
+
+      if (allergyOptions.contains(value) && value != "Other") {
+        known.add(value);
+      } else if (value != "Other") {
+        custom.add(value);
+      }
+    }
+
+    if (custom.isNotEmpty && !known.contains("Other")) {
+      known.add("Other");
+    }
+
+    return (knownAllergies: known, otherAllergyText: custom.join(", "));
+  }
+
+  List<String> _finalAllergiesForSaving() {
+    final allergies = selectedAllergies
+        .where((item) => item != "Other")
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+
+    final customAllergy = otherAllergyController.text.trim();
+    if (selectedAllergies.contains("Other") && customAllergy.isNotEmpty) {
+      allergies.add(customAllergy);
+    }
+
+    return allergies;
   }
 
   void _rebuildHealthTags() {
@@ -290,12 +338,15 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
           age: int.tryParse(selectedAge) ?? 0,
           healthConditions: selectedHealthCondition,
           dietaryPreferences: selectedDietaryPreference,
-          allergies: selectedAllergies.join(", "),
+          allergies: _finalAllergiesForSaving().join(", "),
         );
 
         await _healthService.saveProfile(profile);
 
         setState(() {
+          selectedAllergies = List<String>.from(_finalAllergiesForSaving());
+          otherAllergyText = "";
+          otherAllergyController.clear();
           _rebuildHealthTags();
           isEditingHealth = false;
         });
@@ -313,8 +364,14 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
       tempSelectedHealthCondition = selectedHealthCondition;
       tempSelectedDietaryPreference = selectedDietaryPreference;
       tempSelectedAllergies = List<String>.from(selectedAllergies);
+      tempOtherAllergyText = otherAllergyText;
+
+      final editableAllergies = _splitKnownAndOtherAllergies(selectedAllergies);
 
       setState(() {
+        selectedAllergies = editableAllergies.knownAllergies;
+        otherAllergyText = editableAllergies.otherAllergyText;
+        otherAllergyController.text = otherAllergyText;
         isEditingHealth = true;
       });
     }
@@ -326,6 +383,8 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
       selectedHealthCondition = tempSelectedHealthCondition;
       selectedDietaryPreference = tempSelectedDietaryPreference;
       selectedAllergies = List<String>.from(tempSelectedAllergies);
+      otherAllergyText = tempOtherAllergyText;
+      otherAllergyController.text = otherAllergyText;
       _rebuildHealthTags();
       isEditingHealth = false;
     });
@@ -511,12 +570,12 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
 
   String _localizedAllergy(AppLocalizations l10n, String value) {
     switch (value) {
-      case "Nuts":
-        return l10n.nuts;
-      case "Seafood":
-        return l10n.seafood;
-      case "Dairy":
-        return l10n.dairy;
+      case "Peanuts":
+        return "Peanuts";
+      case "Tree Nuts":
+        return "Tree Nuts";
+      case "Milk":
+        return "Milk";
       case "Eggs":
         return l10n.eggs;
       case "Gluten":
@@ -525,12 +584,12 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
         return l10n.soy;
       case "Sesame":
         return l10n.sesame;
+      case "Fish":
+        return "Fish";
       case "Shellfish":
         return l10n.shellfish;
       case "Wheat":
         return l10n.wheat;
-      case "Medication":
-        return l10n.medication;
       case "Other":
         return l10n.other;
       default:
@@ -611,6 +670,7 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
                 selectedHealthCondition: selectedHealthCondition,
                 selectedDietaryPreference: selectedDietaryPreference,
                 selectedAllergies: selectedAllergies,
+                otherAllergyController: otherAllergyController,
                 localizedTags: _localizedTags(l10n),
                 ageOptions: ageOptions,
                 healthConditionOptions: healthConditionOptions,
@@ -642,7 +702,16 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
                       }
                     } else {
                       selectedAllergies.remove(allergy);
+                      if (allergy == "Other") {
+                        otherAllergyText = "";
+                        otherAllergyController.clear();
+                      }
                     }
+                  });
+                },
+                onOtherAllergyChanged: (value) {
+                  setState(() {
+                    otherAllergyText = value;
                   });
                 },
                 onEditTap: _toggleHealthEdit,
@@ -955,6 +1024,7 @@ class _HealthProfileCard extends StatelessWidget {
   final String selectedHealthCondition;
   final String selectedDietaryPreference;
   final List<String> selectedAllergies;
+  final TextEditingController otherAllergyController;
   final List<String> localizedTags;
 
   final List<String> ageOptions;
@@ -972,6 +1042,7 @@ class _HealthProfileCard extends StatelessWidget {
   final ValueChanged<String?> onHealthConditionChanged;
   final ValueChanged<String?> onDietaryPreferenceChanged;
   final void Function(String allergy, bool selected) onAllergyToggle;
+  final ValueChanged<String> onOtherAllergyChanged;
 
   final VoidCallback onEditTap;
   final VoidCallback onCancelTap;
@@ -982,6 +1053,7 @@ class _HealthProfileCard extends StatelessWidget {
     required this.selectedHealthCondition,
     required this.selectedDietaryPreference,
     required this.selectedAllergies,
+    required this.otherAllergyController,
     required this.localizedTags,
     required this.ageOptions,
     required this.healthConditionOptions,
@@ -994,6 +1066,7 @@ class _HealthProfileCard extends StatelessWidget {
     required this.onHealthConditionChanged,
     required this.onDietaryPreferenceChanged,
     required this.onAllergyToggle,
+    required this.onOtherAllergyChanged,
     required this.onEditTap,
     required this.onCancelTap,
   });
@@ -1045,8 +1118,10 @@ class _HealthProfileCard extends StatelessWidget {
               label: l10n.allergies,
               items: allergyOptions,
               selectedItems: selectedAllergies,
+              otherController: otherAllergyController,
               localizedValue: (item) => localizedAllergy(l10n, item),
               onToggle: onAllergyToggle,
+              onOtherChanged: onOtherAllergyChanged,
             ),
           ] else ...[
             _InfoRow(
@@ -1543,16 +1618,20 @@ class _MultiSelectAllergyField extends StatelessWidget {
   final String label;
   final List<String> items;
   final List<String> selectedItems;
+  final TextEditingController otherController;
   final String Function(String item) localizedValue;
   final void Function(String allergy, bool selected) onToggle;
+  final ValueChanged<String> onOtherChanged;
 
   const _MultiSelectAllergyField({
     required this.icon,
     required this.label,
     required this.items,
     required this.selectedItems,
+    required this.otherController,
     required this.localizedValue,
     required this.onToggle,
+    required this.onOtherChanged,
   });
 
   @override
@@ -1611,6 +1690,49 @@ class _MultiSelectAllergyField extends StatelessWidget {
                     );
                   }).toList(),
                 ),
+                if (selectedItems.contains("Other")) ...[
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: otherController,
+                    onChanged: onOtherChanged,
+                    textInputAction: TextInputAction.done,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r"[a-zA-Z\u0600-\u06FF\s,.-]"),
+                      ),
+                    ],
+                    decoration: InputDecoration(
+                      labelText: "Specify other allergy",
+                      hintText: "Example: Strawberry",
+                      isDense: true,
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: Colors.black.withOpacity(0.08),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: Colors.black.withOpacity(0.08),
+                        ),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(14)),
+                        borderSide: BorderSide(
+                          color: PilgrimProfilePage.primary,
+                          width: 1.2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

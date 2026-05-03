@@ -33,9 +33,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   bool canResend = false;
   Timer? timer;
 
+  String? emailServerError;
+  String? codeServerError;
+  String? passwordServerError;
+
   static const Color primaryDark = Color(0xFF062C26);
   static const Color primary = Color(0xFF0D4C4A);
   static const Color primaryMid = Color(0xFF1A6B66);
+  static const Color errorRed = Color(0xFFB42318);
   static const Color accent = Color(0xFF16A085);
   static const Color cardBg = Color(0xFFF8FAFA);
   static const Color inputBg = Color(0xFFF2F5F4);
@@ -50,6 +55,80 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     super.dispose();
   }
 
+  void clearServerErrors() {
+    emailServerError = null;
+    codeServerError = null;
+    passwordServerError = null;
+  }
+
+  String friendlyErrorMessage(dynamic error, AppLocalizations l10n) {
+    final raw = error.toString().replaceFirst('Exception: ', '');
+    final message = raw.toLowerCase();
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    String t(String ar, String en) => isArabic ? ar : en;
+
+    if (message.contains('email') &&
+        (message.contains('not found') || message.contains('not registered'))) {
+      return t('البريد الإلكتروني غير مسجل.', 'This email is not registered.');
+    }
+
+    if (message.contains('failed to send code') ||
+        message.contains('user not found') ||
+        message.contains('not found') ||
+        message.contains('not registered')) {
+      return t('البريد الإلكتروني غير مسجل.', 'This email is not registered.');
+    }
+
+    if (message.contains('invalid') && message.contains('email')) {
+      return t(
+        'صيغة البريد الإلكتروني غير صحيحة.',
+        'Please enter a valid email address.',
+      );
+    }
+
+    if (message.contains('invalid') && message.contains('code')) {
+      return t('رمز التحقق غير صحيح.', 'Invalid reset code.');
+    }
+
+    if (message.contains('expired') && message.contains('code')) {
+      return t(
+        'انتهت صلاحية رمز التحقق، أرسلي رمز جديد.',
+        'Reset code has expired. Please resend a new code.',
+      );
+    }
+
+    if (message.contains('network') ||
+        message.contains('socketexception') ||
+        message.contains('failed host lookup')) {
+      return t(
+        'تعذر الاتصال بالخادم. تأكدي من الإنترنت ثم حاولي مرة أخرى.',
+        'Unable to connect to the server. Check your internet and try again.',
+      );
+    }
+
+    if (message.contains('server error')) {
+      return l10n.somethingWentWrong;
+    }
+
+    return t('حدث خطأ، حاولي مرة أخرى.', 'Something went wrong. Please try again.');
+  }
+
+  void applyServerErrorToField(String message) {
+    final lower = message.toLowerCase();
+
+    if (lower.contains('email')) {
+      emailServerError = message;
+    } else if (lower.contains('code') || lower.contains('otp')) {
+      codeServerError = message;
+    } else if (lower.contains('password')) {
+      passwordServerError = message;
+    } else if (codeSent) {
+      codeServerError = message;
+    } else {
+      emailServerError = message;
+    }
+  }
+
   String? validateEmail(String? value) {
     final l10n = AppLocalizations.of(context)!;
     final text = (value ?? '').trim();
@@ -59,7 +138,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       return l10n.pleaseEnterValidEmail;
     }
 
-    return null;
+    return emailServerError;
   }
 
   String? validateCode(String? value) {
@@ -70,7 +149,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     if (text.isEmpty) return l10n.pleaseEnterResetCode;
     if (text.length != 6) return l10n.codeMustBe6Digits;
 
-    return null;
+    return codeServerError;
   }
 
   String? validatePassword(String? value) {
@@ -89,7 +168,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       return l10n.passwordNeedsNumber;
     }
 
-    return null;
+    return passwordServerError;
   }
 
   String? validateConfirmPassword(String? value) {
@@ -164,7 +243,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   onTap: () => Navigator.pop(context, "ar"),
                 ),
                 ListTile(
-                  title: Text(l10n.english),
+                  title: const Text("English"),
                   trailing: currentLocale == "en"
                       ? const Icon(Icons.check, color: primary)
                       : null,
@@ -184,6 +263,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   Future<void> sendCode() async {
     final l10n = AppLocalizations.of(context)!;
+
+    setState(() {
+      clearServerErrors();
+    });
 
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
@@ -215,11 +298,20 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     } catch (e) {
       if (!mounted) return;
 
+      final message = friendlyErrorMessage(e, l10n);
+
+      setState(() {
+        clearServerErrors();
+        emailServerError = message;
+      });
+
+      _formKey.currentState?.validate();
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: primaryMid,
+          backgroundColor: errorRed,
           content: Text(
-            e.toString().replaceFirst('Exception: ', ''),
+            message,
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w700,
@@ -236,6 +328,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   Future<void> resetPassword() async {
     final l10n = AppLocalizations.of(context)!;
+
+    setState(() {
+      clearServerErrors();
+    });
 
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
@@ -267,11 +363,20 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     } catch (e) {
       if (!mounted) return;
 
+      final message = friendlyErrorMessage(e, l10n);
+
+      setState(() {
+        clearServerErrors();
+        applyServerErrorToField(message);
+      });
+
+      _formKey.currentState?.validate();
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: primaryMid,
+          backgroundColor: errorRed,
           content: Text(
-            e.toString().replaceFirst('Exception: ', ''),
+            message,
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w700,
@@ -305,7 +410,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         fontSize: 13,
       ),
       errorStyle: const TextStyle(
-        color: primary,
+        color: errorRed,
         fontWeight: FontWeight.w700,
         fontSize: 11.8,
       ),
@@ -324,11 +429,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: primaryMid, width: 1.2),
+        borderSide: const BorderSide(color: errorRed, width: 1.2),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: primaryMid, width: 1.4),
+        borderSide: const BorderSide(color: errorRed, width: 1.4),
       ),
     );
   }
@@ -432,6 +537,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             keyboardType: TextInputType.emailAddress,
                             validator: validateEmail,
                             textInputAction: TextInputAction.next,
+                            onChanged: (_) {
+                              if (emailServerError != null) {
+                                setState(() => emailServerError = null);
+                              }
+                            },
                             decoration: inputStyle(
                               hint: l10n.enterYourEmail,
                               icon: Icons.email_outlined,
@@ -452,6 +562,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                 LengthLimitingTextInputFormatter(6),
                               ],
                               textInputAction: TextInputAction.next,
+                              onChanged: (_) {
+                                if (codeServerError != null) {
+                                  setState(() => codeServerError = null);
+                                }
+                              },
                               decoration: inputStyle(
                                 hint: l10n.enter6DigitCode,
                                 icon: Icons.pin_outlined,
@@ -490,14 +605,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                               obscureText: obscureNewPassword,
                               validator: validatePassword,
                               textInputAction: TextInputAction.next,
+                              onChanged: (_) {
+                                if (passwordServerError != null) {
+                                  setState(() => passwordServerError = null);
+                                }
+                              },
                               decoration: inputStyle(
                                 hint: l10n.enterNewPassword,
                                 icon: Icons.lock_outline,
                                 suffixIcon: IconButton(
                                   onPressed: () {
                                     setState(() {
-                                      obscureNewPassword =
-                                          !obscureNewPassword;
+                                      obscureNewPassword = !obscureNewPassword;
                                     });
                                   },
                                   icon: Icon(
@@ -597,6 +716,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                         codeController.clear();
                                         newPassController.clear();
                                         confirmPassController.clear();
+                                        clearServerErrors();
                                       });
                                     },
                               child: Text(

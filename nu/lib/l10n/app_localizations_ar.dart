@@ -21,7 +21,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get chooseLanguage => 'اختر اللغة';
 
   @override
-  String get english => 'الإنجليزية';
+  String get english => 'English';
 
   @override
   String get arabic => 'العربية';

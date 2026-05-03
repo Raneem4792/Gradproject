@@ -80,6 +80,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   static const Color primaryDark = Color(0xFF062C26);
   static const Color primary = Color(0xFF0D4C4A);
   static const Color primaryMid = Color(0xFF1A6B66);
+  static const Color errorRed = Color(0xFFB42318);
+  static const Color errorBg = Color(0xFFFFF1F0);
   static const Color accent = Color(0xFF16A085);
   static const Color cardBg = Color(0xFFF8FAFA);
   static const Color inputBg = Color(0xFFF2F5F4);
@@ -183,6 +185,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
 
     return error;
+  }
+
+
+  void _applyFriendlyFieldError(String rawError, AppLocalizations l10n) {
+    final message = rawError.toLowerCase();
+    final friendly = _friendlyErrorMessage(rawError, l10n);
+
+    if (message.contains('email')) {
+      _emailServerError = friendly;
+    } else if (message.contains('phone')) {
+      _phoneServerError = friendly;
+    } else if (message.contains('campaign') ||
+        message.contains('foreign key') ||
+        message.contains('er_no_referenced_row_2')) {
+      _campaignServerError = friendly;
+    } else if (message.contains('pilgrim id') || message.contains('provider id')) {
+      _idServerError = friendly;
+    } else if (message.contains('password')) {
+      _passwordServerError = friendly;
+    } else if (message.contains('full name') || message.contains('name')) {
+      _fullNameServerError = friendly;
+    } else {
+      _generalError = friendly;
+    }
   }
 
   void _applyServerFieldError({
@@ -531,7 +557,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           );
         } else {
           final rawError = _extractRawErrorMessage(e);
-          _generalError = _friendlyErrorMessage(rawError, l10n);
+          _applyFriendlyFieldError(rawError, l10n);
         }
       });
 
@@ -543,7 +569,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: primaryMid,
+          backgroundColor: errorRed,
           content: Text(
             snackMessage,
             style: const TextStyle(
@@ -1079,6 +1105,8 @@ class _AppField extends StatelessWidget {
 
   static const Color primary = Color(0xFF0D4C4A);
   static const Color primaryMid = Color(0xFF1A6B66);
+  static const Color errorRed = Color(0xFFB42318);
+  static const Color errorBg = Color(0xFFFFF1F0);
   static const Color inputBg = Color(0xFFF2F5F4);
 
   @override
@@ -1108,7 +1136,7 @@ class _AppField extends StatelessWidget {
         ),
         errorMaxLines: 2,
         errorStyle: const TextStyle(
-          color: primary,
+          color: errorRed,
           fontWeight: FontWeight.w700,
           fontSize: 11.8,
         ),
@@ -1134,11 +1162,11 @@ class _AppField extends StatelessWidget {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primaryMid, width: 1.2),
+          borderSide: const BorderSide(color: errorRed, width: 1.2),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primaryMid, width: 1.4),
+          borderSide: const BorderSide(color: errorRed, width: 1.4),
         ),
       ),
     );
@@ -1164,6 +1192,8 @@ class _PhoneField extends StatelessWidget {
 
   static const Color primary = Color(0xFF0D4C4A);
   static const Color primaryMid = Color(0xFF1A6B66);
+  static const Color errorRed = Color(0xFFB42318);
+  static const Color errorBg = Color(0xFFFFF1F0);
   static const Color inputBg = Color(0xFFF2F5F4);
 
   @override
@@ -1198,7 +1228,7 @@ class _PhoneField extends StatelessWidget {
           fontSize: 11.5,
         ),
         errorStyle: const TextStyle(
-          color: primary,
+          color: errorRed,
           fontWeight: FontWeight.w700,
           fontSize: 11.8,
         ),
@@ -1274,11 +1304,11 @@ class _PhoneField extends StatelessWidget {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primaryMid, width: 1.2),
+          borderSide: const BorderSide(color: errorRed, width: 1.2),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primaryMid, width: 1.4),
+          borderSide: const BorderSide(color: errorRed, width: 1.4),
         ),
       ),
     );

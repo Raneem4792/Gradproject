@@ -28,6 +28,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _submittedOnce = false;
 
   String? _generalError;
+  String? _idServerError;
+  String? _passwordServerError;
 
   final _idController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -35,6 +37,8 @@ class _LoginScreenState extends State<LoginScreen> {
   static const Color primaryDark = Color(0xFF062C26);
   static const Color primary = Color(0xFF0D4C4A);
   static const Color primaryMid = Color(0xFF1A6B66);
+  static const Color errorRed = Color(0xFFB42318);
+  static const Color errorBg = Color(0xFFFFF1F0);
   static const Color accent = Color(0xFF16A085);
   static const Color cardBg = Color(0xFFF8FAFA);
   static const Color inputBg = Color(0xFFF2F5F4);
@@ -62,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (text.length < 6) return l10n.idTooShort;
     if (text.length > 20) return l10n.idTooLong;
 
-    return null;
+    return _idServerError;
   }
 
   String? _validatePassword(String? value) {
@@ -74,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (text.length < 8) return l10n.passwordTooShort;
     if (text.length > 20) return l10n.passwordTooLong;
 
-    return null;
+    return _passwordServerError;
   }
 
   String _friendlyErrorMessage(String error, AppLocalizations l10n) {
@@ -164,6 +168,8 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _submittedOnce = true;
       _generalError = null;
+      _idServerError = null;
+      _passwordServerError = null;
     });
 
     if (!_formKey.currentState!.validate()) return;
@@ -214,11 +220,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
       setState(() {
         _generalError = errorMessage;
+        _idServerError = errorMessage;
+        _passwordServerError = errorMessage;
       });
+
+      _formKey.currentState?.validate();
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: primaryMid,
+          backgroundColor: errorRed,
           content: Text(
             errorMessage,
             style: const TextStyle(
@@ -328,9 +338,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     vertical: 10,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: infoBg,
+                                    color: errorBg,
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: infoBorder),
+                                    border: Border.all(color: errorRed),
                                   ),
                                   child: Row(
                                     crossAxisAlignment:
@@ -338,7 +348,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     children: [
                                       const Icon(
                                         Icons.info_outline,
-                                        color: infoText,
+                                        color: errorRed,
                                         size: 18,
                                       ),
                                       const SizedBox(width: 8),
@@ -346,7 +356,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         child: Text(
                                           _generalError!,
                                           style: const TextStyle(
-                                            color: infoText,
+                                            color: errorRed,
                                             fontWeight: FontWeight.w700,
                                             fontSize: 12.5,
                                           ),
@@ -372,8 +382,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                   LengthLimitingTextInputFormatter(20),
                                 ],
                                 onChanged: (_) {
-                                  if (_generalError != null) {
-                                    setState(() => _generalError = null);
+                                  if (_generalError != null || _idServerError != null || _passwordServerError != null) {
+                                    setState(() {
+                                      _generalError = null;
+                                      _idServerError = null;
+                                      _passwordServerError = null;
+                                    });
                                   }
                                 },
                               ),
@@ -403,8 +417,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                                 onChanged: (_) {
-                                  if (_generalError != null) {
-                                    setState(() => _generalError = null);
+                                  if (_generalError != null || _idServerError != null || _passwordServerError != null) {
+                                    setState(() {
+                                      _generalError = null;
+                                      _idServerError = null;
+                                      _passwordServerError = null;
+                                    });
                                   }
                                 },
                               ),
@@ -611,6 +629,8 @@ class _AppField extends StatelessWidget {
 
   static const Color primary = Color(0xFF0D4C4A);
   static const Color primaryMid = Color(0xFF1A6B66);
+  static const Color errorRed = Color(0xFFB42318);
+  static const Color errorBg = Color(0xFFFFF1F0);
   static const Color inputBg = Color(0xFFF2F5F4);
 
   @override
@@ -640,7 +660,7 @@ class _AppField extends StatelessWidget {
           fontSize: 11.5,
         ),
         errorStyle: const TextStyle(
-          color: primary,
+          color: errorRed,
           fontWeight: FontWeight.w700,
           fontSize: 11.8,
         ),
@@ -666,11 +686,11 @@ class _AppField extends StatelessWidget {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primaryMid, width: 1.2),
+          borderSide: const BorderSide(color: errorRed, width: 1.2),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primaryMid, width: 1.4),
+          borderSide: const BorderSide(color: errorRed, width: 1.4),
         ),
       ),
     );

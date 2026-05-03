@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/meal.dart';
 import '../services/meal_service.dart';
+import '../session/user_session.dart';
 import 'pilgrim_submit_meal_request_page.dart';
 import 'pilgrim_home_screen.dart';
 import 'pilgrim_order_history_page.dart';
@@ -35,6 +36,21 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
   @override
   void initState() {
     super.initState();
+    _loadAiRecommendedMeals();
+  }
+
+  void _loadAiRecommendedMeals() {
+    final pilgrimID = UserSession.userId;
+
+    if (pilgrimID == null || pilgrimID.isEmpty) {
+      _mealsFuture = Future.error('User is not logged in');
+      return;
+    }
+
+    _mealsFuture = _mealService.getAiRecommendedMeals(pilgrimID);
+  }
+
+  void _loadAllMeals() {
     _mealsFuture = _mealService.getMeals();
   }
 
@@ -159,10 +175,7 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
               );
             }
 
-            final allMeals = snapshot.data ?? <Meal>[];
-            final visibleMeals = showRecommendedOnly
-                ? allMeals.where((meal) => meal.isHealthMatched).toList()
-                : allMeals;
+            final visibleMeals = snapshot.data ?? <Meal>[];
 
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 22),
@@ -173,26 +186,28 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
                   const SizedBox(height: 18),
                   _MealsSectionTitle(title: l10n.smartFilters),
                   const SizedBox(height: 10),
-
                   _MealFilterBar(
                     showRecommendedOnly: showRecommendedOnly,
                     onSelectRecommended: () {
-                      setState(() => showRecommendedOnly = true);
+                      setState(() {
+                        showRecommendedOnly = true;
+                        _loadAiRecommendedMeals();
+                      });
                     },
                     onSelectAll: () {
-                      setState(() => showRecommendedOnly = false);
+                      setState(() {
+                        showRecommendedOnly = false;
+                        _loadAllMeals();
+                      });
                     },
                   ),
-
                   const SizedBox(height: 16),
-
                   _MealsSectionTitle(
                     title: showRecommendedOnly
                         ? l10n.aiRecommendedMeals
                         : l10n.allAvailableMeals,
                   ),
                   const SizedBox(height: 10),
-
                   if (visibleMeals.isEmpty)
                     const _EmptyMealsState()
                   else
@@ -205,7 +220,10 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
                           mealType: _localizedMealType(context, meal.mealType),
                           description: meal.description,
                           nutritionLine: meal.nutritionLine,
-                          isHealthMatched: meal.isHealthMatched,
+                          aiReason: meal.aiReason,
+                          isHealthMatched: showRecommendedOnly
+                              ? true
+                              : meal.isHealthMatched,
                           icon: _getMealIcon(meal.mealType),
                           onSelectMeal: () {
                             _openSubmitMealRequestPage(
@@ -258,7 +276,10 @@ class _PilgrimMealsAppBar extends StatelessWidget
           children: [
             IconButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PilgrimHomeScreen()),
+                );
               },
               icon: const Icon(
                 Icons.arrow_back_ios_new_rounded,
@@ -508,6 +529,7 @@ class _MealRequestCard extends StatelessWidget {
   final bool isHealthMatched;
   final IconData icon;
   final VoidCallback onSelectMeal;
+  final String? aiReason;
 
   const _MealRequestCard({
     required this.title,
@@ -518,6 +540,7 @@ class _MealRequestCard extends StatelessWidget {
     required this.isHealthMatched,
     required this.icon,
     required this.onSelectMeal,
+    this.aiReason,
   });
 
   static const Color primary = Color(0xFF0D4C4A);
@@ -676,6 +699,39 @@ class _MealRequestCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+                if (aiReason != null && aiReason!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEAF4F2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: primary.withOpacity(0.12)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.auto_awesome_rounded,
+                          size: 16,
+                          color: primary,
+                        ),
+                        const SizedBox(width: 7),
+                        Expanded(
+                          child: Text(
+                            aiReason!,
+                            style: const TextStyle(
+                              fontSize: 11.6,
+                              height: 1.35,
+                              fontWeight: FontWeight.w700,
+                              color: primaryDark,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 10),
                 Container(
                   padding: const EdgeInsets.symmetric(

@@ -126,12 +126,6 @@ class _PilgrimSubmitMealRequestPageState
                     ),
                     const Divider(height: 22),
                     _InfoRow(
-                      icon: Icons.confirmation_number_outlined,
-                      title: l10n.mealId,
-                      value: widget.mealID.toString(),
-                    ),
-                    const Divider(height: 22),
-                    _InfoRow(
                       icon: Icons.calendar_today_outlined,
                       title: l10n.submitDate,
                       value: submitDate,

@@ -10,6 +10,7 @@ class Meal {
   final String image;
   final String providerID;
   final String providerName;
+  final String? aiReason;
 
   Meal({
     required this.mealID,
@@ -23,6 +24,7 @@ class Meal {
     required this.image,
     required this.providerID,
     required this.providerName,
+    this.aiReason,
   });
 
   static num _toNum(dynamic value) {
@@ -53,6 +55,7 @@ class Meal {
       image: json['image'] ?? '',
       providerID: json['providerID'] ?? '',
       providerName: json['providerName'] ?? 'Unknown Provider',
+      aiReason: json['aiReason'],
     );
   }
 
