@@ -4,7 +4,7 @@
   "notification": "Notification",
   "chooseLanguage": "Choose Language",
   "english": "English",
-  "arabic": "Arabic",
+  "arabic": "العربية",
   "language": "Language",
 
   "basicInformation": "Basic Information",
@@ -497,5 +497,9 @@
 "pleaseWait": "Please wait...",
 "askSomething": "Ask something...",
 "typing": "Typing...",
-"fullNameNoSymbols": "Full name must not contain symbols"
+"fullNameNoSymbols": "Full name must not contain symbols",
+"peanuts": "Peanuts",
+"nuts": "Nuts",
+"milk": "Milk",
+"fish": "Fish"
 }

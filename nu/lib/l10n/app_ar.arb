@@ -3,7 +3,7 @@
   "settings": "الإعدادات",
   "notification": "الإشعارات",
   "chooseLanguage": "اختر اللغة",
-  "english": "الإنجليزية",
+  "english": "English",
   "arabic": "العربية",
   "language": "اللغة",
 
@@ -497,5 +497,9 @@
 "pleaseWait": "يرجى الانتظار...",
 "askSomething": "اسأل شيئًا...",
 "typing": "جاري الكتابة...",
-"fullNameNoSymbols": "يجب ألا يحتوي الاسم على رموز"
+"fullNameNoSymbols": "يجب ألا يحتوي الاسم على رموز",
+"peanuts": "الفول السوداني",
+"nuts": "المكسرات",
+"milk": "الحليب",
+"fish": "السمك"
 }

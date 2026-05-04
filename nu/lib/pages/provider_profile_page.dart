@@ -45,6 +45,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
   late final TextEditingController nameController;
   late final TextEditingController emailController;
   late final TextEditingController phoneController;
+  final GlobalKey<FormState> _providerFormKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -108,6 +109,75 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     }
   }
 
+  String? _validateProviderName(String? value) {
+  final l10n = AppLocalizations.of(context)!;
+  final text = (value ?? '').trim().replaceAll(RegExp(r'\s+'), ' ');
+
+  if (text.isEmpty) return l10n.pleaseEnterFullName;
+  if (text.length < 3) return l10n.fullNameTooShort;
+  if (text.length > 50) return l10n.fullNameTooLong;
+
+  if (RegExp(r'[0-9]').hasMatch(text)) {
+    return l10n.fullNameNoNumbers;
+  }
+
+  if (RegExp(r'[^A-Za-z\u0600-\u06FF ]').hasMatch(text)) {
+    return l10n.fullNameNoSymbols;
+  }
+
+  final isArabicOnly = RegExp(r'^[\u0600-\u06FF ]+$').hasMatch(text);
+  final isEnglishOnly = RegExp(r'^[A-Za-z ]+$').hasMatch(text);
+
+  if (!isArabicOnly && !isEnglishOnly) {
+    return l10n.fullNameArabicOrEnglishOnly;
+  }
+
+  return null;
+}
+
+String? _validateProviderEmail(String? value) {
+  final l10n = AppLocalizations.of(context)!;
+  final text = (value ?? '').trim();
+
+  if (text.isEmpty) return l10n.pleaseEnterEmail;
+  if (text.contains(' ')) return l10n.emailNoSpaces;
+  if (text.length > 100) return l10n.emailTooLong;
+
+  final emailRegex = RegExp(
+    r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$',
+  );
+
+  if (!emailRegex.hasMatch(text)) {
+    return l10n.pleaseEnterValidEmail;
+  }
+
+  return null;
+}
+
+String? _validateProviderPhone(String? value) {
+  final l10n = AppLocalizations.of(context)!;
+  final text = (value ?? '').trim();
+
+  if (text.isEmpty) return l10n.pleaseEnterPhoneNumber;
+  if (text.contains(' ')) return l10n.phoneNoSpaces;
+
+  if (!RegExp(r'^\+?[0-9]+$').hasMatch(text)) {
+    return l10n.phoneDigitsOnly;
+  }
+
+  final digitsOnly = text.replaceAll('+', '');
+
+  if (digitsOnly.length < 8) {
+    return l10n.phoneTooShort;
+  }
+
+  if (digitsOnly.length > 15) {
+    return l10n.phoneTooLong;
+  }
+
+  return null;
+}
+
   Future<void> _toggleBasicInfoEdit() async {
     final l10n = AppLocalizations.of(context)!;
 
@@ -120,7 +190,10 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
         ).showSnackBar(SnackBar(content: Text(l10n.userSessionNotFound)));
         return;
       }
-
+      
+if (!(_providerFormKey.currentState?.validate() ?? false)) {
+  return;
+}
       try {
         final profile = ProviderProfile(
           providerID: providerId,
@@ -358,20 +431,24 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
             if (_isProfileLoading)
               const Center(child: CircularProgressIndicator())
             else
-              _InfoCard(
-                isEditing: isEditingBasicInfo,
-                providerName: providerName,
-                providerId: providerId,
-                email: email,
-                phone: phone,
-                location: displayLocation,
-                serviceType: displayServiceType,
-                nameController: nameController,
-                emailController: emailController,
-                phoneController: phoneController,
-                onEditTap: _toggleBasicInfoEdit,
-                onCancelTap: _cancelBasicInfoEdit,
-              ),
+            _InfoCard(
+  formKey: _providerFormKey,
+  isEditing: isEditingBasicInfo,
+  providerName: providerName,
+  providerId: providerId,
+  email: email,
+  phone: phone,
+  location: displayLocation,
+  serviceType: displayServiceType,
+  nameController: nameController,
+  emailController: emailController,
+  phoneController: phoneController,
+  nameValidator: _validateProviderName,
+  emailValidator: _validateProviderEmail,
+  phoneValidator: _validateProviderPhone,
+  onEditTap: _toggleBasicInfoEdit,
+  onCancelTap: _cancelBasicInfoEdit,
+),
             const SizedBox(height: 16),
 
             _SectionTitle(title: l10n.ordersSummary),
@@ -581,6 +658,11 @@ class _InfoCard extends StatelessWidget {
   final VoidCallback onEditTap;
   final VoidCallback onCancelTap;
 
+  final GlobalKey<FormState> formKey;
+final String? Function(String?) nameValidator;
+final String? Function(String?) emailValidator;
+final String? Function(String?) phoneValidator;
+
   const _InfoCard({
     required this.isEditing,
     required this.providerName,
@@ -594,6 +676,10 @@ class _InfoCard extends StatelessWidget {
     required this.phoneController,
     required this.onEditTap,
     required this.onCancelTap,
+    required this.formKey,
+required this.nameValidator,
+required this.emailValidator,
+required this.phoneValidator,
   });
 
   @override
@@ -612,24 +698,38 @@ class _InfoCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           if (isEditing) ...[
-            _EditableField(
-              icon: Icons.storefront_outlined,
-              label: l10n.providerName,
-              controller: nameController,
-            ),
-            const SizedBox(height: 14),
-            _EditableField(
-              icon: Icons.email_outlined,
-              label: l10n.email,
-              controller: emailController,
-            ),
-            const SizedBox(height: 14),
-            _EditableField(
-              icon: Icons.phone_outlined,
-              label: l10n.phone,
-              controller: phoneController,
-            ),
-          ] else ...[
+  Form(
+    key: formKey,
+    autovalidateMode: AutovalidateMode.onUserInteraction,
+    child: Column(
+      children: [
+        _EditableField(
+          icon: Icons.storefront_outlined,
+          label: l10n.providerName,
+          controller: nameController,
+          keyboardType: TextInputType.name,
+          validator: nameValidator,
+        ),
+        const SizedBox(height: 14),
+        _EditableField(
+          icon: Icons.email_outlined,
+          label: l10n.email,
+          controller: emailController,
+          keyboardType: TextInputType.emailAddress,
+          validator: emailValidator,
+        ),
+        const SizedBox(height: 14),
+        _EditableField(
+          icon: Icons.phone_outlined,
+          label: l10n.phone,
+          controller: phoneController,
+          keyboardType: TextInputType.phone,
+          validator: phoneValidator,
+        ),
+      ],
+    ),
+  ),
+] else ...[
             _InfoRow(
               icon: Icons.storefront_outlined,
               title: l10n.providerName,
@@ -739,6 +839,7 @@ class _EditableField extends StatelessWidget {
   final TextEditingController controller;
   final TextInputType? keyboardType;
   final bool obscureText;
+  final String? Function(String?)? validator;
 
   const _EditableField({
     required this.icon,
@@ -746,6 +847,7 @@ class _EditableField extends StatelessWidget {
     required this.controller,
     this.keyboardType,
     this.obscureText = false,
+    this.validator,
   });
 
   @override
@@ -764,10 +866,11 @@ class _EditableField extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: TextField(
+          child: TextFormField(
             controller: controller,
             keyboardType: keyboardType,
             obscureText: obscureText,
+            validator: validator,
             decoration: InputDecoration(
               labelText: label,
               isDense: true,
@@ -776,6 +879,12 @@ class _EditableField extends StatelessWidget {
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 14,
+              ),
+              errorMaxLines: 2,
+              errorStyle: const TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.w700,
+                fontSize: 11.8,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -790,6 +899,20 @@ class _EditableField extends StatelessWidget {
                 borderSide: BorderSide(
                   color: ProviderProfilePage.primary,
                   width: 1.2,
+                ),
+              ),
+              errorBorder: const OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(14)),
+                borderSide: BorderSide(
+                  color: Colors.redAccent,
+                  width: 1.3,
+                ),
+              ),
+              focusedErrorBorder: const OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(14)),
+                borderSide: BorderSide(
+                  color: Colors.redAccent,
+                  width: 1.5,
                 ),
               ),
             ),
