@@ -11,11 +11,13 @@ router.get('/ai-recommended/:pilgrimID', async (req, res) => {
   try {
     const { pilgrimID } = req.params;
 
+    // 1. Get health profile
     const [healthRows] = await db.query(
       'SELECT * FROM health_profile WHERE pilgrimID = ?',
       [pilgrimID]
     );
 
+    // ✅ إذا ما فيه بروفايل
     if (healthRows.length === 0) {
       return res.json({
         needsProfile: true,
@@ -24,6 +26,7 @@ router.get('/ai-recommended/:pilgrimID', async (req, res) => {
       });
     }
 
+    // 2. Get meals from same campaign provider
     const [meals] = await db.query(
       `
       SELECT 
@@ -48,12 +51,14 @@ router.get('/ai-recommended/:pilgrimID', async (req, res) => {
       [pilgrimID]
     );
 
+    // ✅ إذا ما فيه وجبات
     if (meals.length === 0) {
       return res.json([]);
     }
 
     const healthProfile = healthRows[0];
 
+    // 3. AI Prompt
     const prompt = `
 You are a nutrition assistant for pilgrims.
 
@@ -78,6 +83,7 @@ Return JSON only in this exact format:
 }
 `;
 
+    // 4. Call OpenAI
     const completion = await openai.chat.completions.create({
       model: 'gpt-4.1-mini',
       messages: [
@@ -87,13 +93,22 @@ Return JSON only in this exact format:
         },
       ],
       temperature: 0.2,
+      response_format: { type: 'json_object' }, // 🔥 مهم
     });
 
-    const aiResponse = completion.choices[0].message.content;
+    // 5. تنظيف الرد + حل مشكلة JSON
+    let aiResponse = completion.choices[0].message.content.trim();
+
+    aiResponse = aiResponse
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
+
     const parsed = JSON.parse(aiResponse);
 
     const recommendations = parsed.recommendations || [];
 
+    // 6. مطابقة الوجبات
     const recommendedMeals = recommendations
       .map((rec) => {
         const meal = meals.find(
