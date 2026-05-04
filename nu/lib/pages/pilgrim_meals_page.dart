@@ -51,7 +51,14 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
   }
 
   void _loadAllMeals() {
-    _mealsFuture = _mealService.getMeals();
+    final pilgrimID = UserSession.userId;
+
+    if (pilgrimID == null || pilgrimID.isEmpty) {
+      _mealsFuture = Future.error('User is not logged in');
+      return;
+    }
+
+    _mealsFuture = _mealService.getMealsByPilgrimCampaign(pilgrimID);
   }
 
   IconData _getMealIcon(dynamic mealType) {
@@ -209,7 +216,14 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
                   ),
                   const SizedBox(height: 10),
                   if (visibleMeals.isEmpty)
-                    const _EmptyMealsState()
+                    _EmptyMealsState(
+                      title: showRecommendedOnly
+                          ? 'Complete your health profile to get AI recommended meals'
+                          : 'Meals are not currently available for your campaign',
+                      subtitle: showRecommendedOnly
+                          ? 'Please complete your health profile first, then try again.'
+                          : 'Your campaign provider has not added meals yet.',
+                    )
                   else
                     ...visibleMeals.map(
                       (meal) => Padding(
@@ -797,14 +811,15 @@ class _MealRequestCard extends StatelessWidget {
 }
 
 class _EmptyMealsState extends StatelessWidget {
-  const _EmptyMealsState();
+  final String title;
+  final String subtitle;
+
+  const _EmptyMealsState({required this.title, required this.subtitle});
 
   static const Color primary = Color(0xFF0D4C4A);
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
@@ -816,18 +831,20 @@ class _EmptyMealsState extends StatelessWidget {
       child: Column(
         children: [
           Icon(
-            Icons.search_off_rounded,
-            size: 34,
+            Icons.restaurant_menu_rounded,
+            size: 36,
             color: primary.withOpacity(0.75),
           ),
           const SizedBox(height: 10),
           Text(
-            l10n.noRecommendedMealsFound,
+            title,
+            textAlign: TextAlign.center,
             style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
           ),
           const SizedBox(height: 6),
           Text(
-            l10n.tryViewingAllMealsInstead,
+            subtitle,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,

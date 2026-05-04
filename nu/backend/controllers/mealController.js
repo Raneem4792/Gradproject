@@ -91,6 +91,38 @@ class MealController {
       });
     }
   }
+
+  async getMealsByProvider(req, res) {
+    try {
+      const { providerID } = req.params;
+
+      const meals = await mealService.getMealsByProvider(providerID, req);
+
+      res.status(200).json(meals);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        message: 'Failed to load provider meals',
+      });
+    }
+  }
+
+  async getMealsByPilgrimCampaign(req, res) {
+    try {
+      const { pilgrimID } = req.params;
+
+      const meals = await mealService.getMealsByPilgrimCampaign(pilgrimID, req);
+
+      res.status(200).json(meals);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        message: 'Failed to load campaign meals',
+      });
+    }
+  }
+
 }
 
 module.exports = new MealController();
+

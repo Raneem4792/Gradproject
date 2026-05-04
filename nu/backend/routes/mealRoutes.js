@@ -54,6 +54,14 @@ const upload = multer({
   fileFilter,
 });
 
+router.get('/provider/:providerID', (req, res) =>
+  mealController.getMealsByProvider(req, res)
+);
+
+router.get('/pilgrim/:pilgrimID/campaign', (req, res) =>
+  mealController.getMealsByPilgrimCampaign(req, res)
+);
+
 router.get('/', (req, res) => mealController.getMeals(req, res));
 
 router.post(

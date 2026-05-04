@@ -71,7 +71,13 @@ class _ProviderMealManagementScreenState
   Future<void> _loadMealsFromServer() async {
     setState(() => _isLoading = true);
     try {
-      final data = await _mealService.getMeals();
+      final providerID = UserSession.userId;
+
+      if (providerID == null || providerID.isEmpty) {
+        throw Exception('Provider session not found');
+      }
+
+      final data = await _mealService.getMealsByProvider(providerID);
       if (!mounted) return;
       setState(() {
         _meals = data;
@@ -142,9 +148,7 @@ class _ProviderMealManagementScreenState
                       ),
                       _detailChip('${meal.calories} ${l10n.kcal}'),
                       _detailChip('${meal.protein} ${l10n.gramsProtein}'),
-                      _detailChip(
-                        '${meal.carbohydrates} ${l10n.gramsCarbs}',
-                      ),
+                      _detailChip('${meal.carbohydrates} ${l10n.gramsCarbs}'),
                       _detailChip('${meal.fat} ${l10n.gramsFat}'),
                     ],
                   ),
@@ -157,10 +161,7 @@ class _ProviderMealManagementScreenState
                   _detailRow(l10n.description, meal.description),
                   _detailRow(l10n.calories, '${meal.calories} ${l10n.kcal}'),
                   _detailRow(l10n.protein, '${meal.protein} g'),
-                  _detailRow(
-                    l10n.carbohydrates,
-                    '${meal.carbohydrates} g',
-                  ),
+                  _detailRow(l10n.carbohydrates, '${meal.carbohydrates} g'),
                   _detailRow(l10n.fat, '${meal.fat} g'),
                   const SizedBox(height: 18),
                   Row(
@@ -178,9 +179,7 @@ class _ProviderMealManagementScreenState
                           ),
                           child: Text(
                             l10n.close,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w900,
-                            ),
+                            style: const TextStyle(fontWeight: FontWeight.w900),
                           ),
                         ),
                       ),
@@ -202,9 +201,7 @@ class _ProviderMealManagementScreenState
                           ),
                           child: Text(
                             l10n.edit,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w900,
-                            ),
+                            style: const TextStyle(fontWeight: FontWeight.w900),
                           ),
                         ),
                       ),
@@ -652,9 +649,7 @@ class _MealCard extends StatelessWidget {
                           filled: true,
                         ),
                         _MealPill(text: '${meal.calories} ${l10n.kcal}'),
-                        _MealPill(
-                          text: '${meal.protein}${l10n.gramsProtein}',
-                        ),
+                        _MealPill(text: '${meal.protein}${l10n.gramsProtein}'),
                       ],
                     ),
                     const SizedBox(height: 10),

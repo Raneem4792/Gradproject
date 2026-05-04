@@ -290,4 +290,30 @@ Future<List<Meal>> getAiRecommendedMeals(String pilgrimID) async {
   }
 }
 
+Future<List<Meal>> getMealsByProvider(String providerID) async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/meals/provider/$providerID'),
+  );
+
+  if (response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(response.body);
+    return data.map((json) => Meal.fromJson(json)).toList();
+  } else {
+    throw Exception('Failed to load provider meals');
+  }
+}
+
+Future<List<Meal>> getMealsByPilgrimCampaign(String pilgrimID) async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/meals/pilgrim/$pilgrimID/campaign'),
+  );
+
+  if (response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(response.body);
+    return data.map((json) => Meal.fromJson(json)).toList();
+  } else {
+    throw Exception('Failed to load campaign meals');
+  }
+}
+
 }

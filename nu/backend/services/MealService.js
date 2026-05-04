@@ -99,6 +99,88 @@ class MealService {
     const [result] = await db.query(sql, [id]);
     return result;
   }
+
+  async getMealsByProvider(providerID, req) {
+    const [rows] = await db.query(`
+    SELECT 
+      Meal.mealID,
+      Meal.mealName,
+      Meal.mealType,
+      Meal.description,
+      Meal.protein,
+      Meal.carbohydrates,
+      Meal.fat,
+      Meal.calories,
+      Meal.image,
+      Meal.providerID,
+      Provider.fullName AS providerName
+    FROM Meal
+    LEFT JOIN Provider ON Meal.providerID = Provider.providerID
+    WHERE Meal.providerID = ?
+    ORDER BY Meal.mealID DESC
+  `, [providerID]);
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+    return rows.map((row) => {
+      let imagePath = row.image || '';
+
+      if (imagePath && imagePath.startsWith('/uploads')) {
+        imagePath = `${baseUrl}${imagePath}`;
+      }
+
+      return Meal.fromRow({
+        ...row,
+        image: imagePath,
+        protein: Number(row.protein),
+        carbohydrates: Number(row.carbohydrates),
+        fat: Number(row.fat),
+        calories: Number(row.calories),
+      });
+    });
+  }
+
+  async getMealsByPilgrimCampaign(pilgrimID, req) {
+    const [rows] = await db.query(`
+    SELECT 
+      Meal.mealID,
+      Meal.mealName,
+      Meal.mealType,
+      Meal.description,
+      Meal.protein,
+      Meal.carbohydrates,
+      Meal.fat,
+      Meal.calories,
+      Meal.image,
+      Meal.providerID,
+      Provider.fullName AS providerName
+    FROM Pilgrim
+    JOIN Campaign ON Pilgrim.campaignID = Campaign.campaignID
+    JOIN Meal ON Campaign.providerID = Meal.providerID
+    LEFT JOIN Provider ON Meal.providerID = Provider.providerID
+    WHERE Pilgrim.pilgrimID = ?
+    ORDER BY Meal.mealID DESC
+  `, [pilgrimID]);
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+    return rows.map((row) => {
+      let imagePath = row.image || '';
+
+      if (imagePath && imagePath.startsWith('/uploads')) {
+        imagePath = `${baseUrl}${imagePath}`;
+      }
+
+      return Meal.fromRow({
+        ...row,
+        image: imagePath,
+        protein: Number(row.protein),
+        carbohydrates: Number(row.carbohydrates),
+        fat: Number(row.fat),
+        calories: Number(row.calories),
+      });
+    });
+  }
 }
 
 module.exports = new MealService();
