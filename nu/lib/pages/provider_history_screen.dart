@@ -1319,11 +1319,17 @@ class _ReviewViewSheet extends StatelessWidget {
   }
 }
 
-class ProviderAllReviewsScreen extends StatelessWidget {
+class ProviderAllReviewsScreen extends StatefulWidget {
   const ProviderAllReviewsScreen({super.key, required this.orders});
 
   final List<MealOrder> orders;
 
+  @override
+  State<ProviderAllReviewsScreen> createState() =>
+      _ProviderAllReviewsScreenState();
+}
+
+class _ProviderAllReviewsScreenState extends State<ProviderAllReviewsScreen> {
   static const Color bg = Color(0xFFF1F6F4);
   static const Color primaryDark = Color(0xFF052720);
   static const Color primary = Color(0xFF0B4A40);
@@ -1331,12 +1337,153 @@ class ProviderAllReviewsScreen extends StatelessWidget {
   static const Color mint = Color(0xFFA8E7CF);
   static const Color softMint = Color(0xFFE6F6F0);
 
+  DateTime? selectedReviewDate;
+  String? selectedCampaignKey;
+  String? selectedCampaignLabel;
+
+  String _formatDate(DateTime d) {
+    final dd = d.day.toString().padLeft(2, '0');
+    final mm = d.month.toString().padLeft(2, '0');
+    final yyyy = d.year.toString();
+    return '$dd/$mm/$yyyy';
+  }
+
+  String _campaignKey(MealOrder order) {
+    return '${order.campaignName.trim()}|${order.campaignNumber.trim()}';
+  }
+
+  String _campaignLabel(MealOrder order) {
+    final name = order.campaignName.trim();
+    final number = order.campaignNumber.trim();
+
+    if (name.isEmpty && number.isEmpty) return 'Campaign';
+    if (number.isEmpty) return name;
+    if (name.isEmpty) return number;
+    return '$name • $number';
+  }
+
+  List<MealOrder> get _filteredReviews {
+    final result = widget.orders.where((order) {
+      final okDate = selectedReviewDate == null
+          ? true
+          : order.requestDate.year == selectedReviewDate!.year &&
+              order.requestDate.month == selectedReviewDate!.month &&
+              order.requestDate.day == selectedReviewDate!.day;
+
+      final okCampaign = selectedCampaignKey == null
+          ? true
+          : _campaignKey(order) == selectedCampaignKey;
+
+      return okDate && okCampaign;
+    }).toList();
+
+    result.sort((a, b) => b.requestDate.compareTo(a.requestDate));
+    return result;
+  }
+
+  List<MealOrder> get _uniqueCampaignOrders {
+    final map = <String, MealOrder>{};
+
+    for (final order in widget.orders) {
+      final key = _campaignKey(order);
+      if (key.trim().replaceAll('|', '').isNotEmpty) {
+        map[key] = order;
+      }
+    }
+
+    final list = map.values.toList()
+      ..sort((a, b) => _campaignLabel(a).compareTo(_campaignLabel(b)));
+
+    return list;
+  }
+
+  Future<void> _pickDateFilter() async {
+    final now = DateTime.now();
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: selectedReviewDate ?? now,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
+    );
+
+    if (picked == null) return;
+
+    setState(() {
+      selectedReviewDate = DateTime(picked.year, picked.month, picked.day);
+    });
+  }
+
+  Future<void> _pickCampaignFilter() async {
+    final campaigns = _uniqueCampaignOrders;
+
+    final picked = await showModalBottomSheet<MealOrder?>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Select Campaign',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            ListTile(
+              title: const Text('All Campaigns'),
+              onTap: () => Navigator.pop(ctx, null),
+            ),
+            ...campaigns.map(
+              (order) => ListTile(
+                title: Text(_campaignLabel(order)),
+                onTap: () => Navigator.pop(ctx, order),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (picked == null) {
+      setState(() {
+        selectedCampaignKey = null;
+        selectedCampaignLabel = null;
+      });
+      return;
+    }
+
+    setState(() {
+      selectedCampaignKey = _campaignKey(picked);
+      selectedCampaignLabel = _campaignLabel(picked);
+    });
+  }
+
+  void _clearFilters() {
+    setState(() {
+      selectedReviewDate = null;
+      selectedCampaignKey = null;
+      selectedCampaignLabel = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final reviewedOrders = _filteredReviews;
 
-    final reviewedOrders = List<MealOrder>.from(orders)
-      ..sort((a, b) => b.requestDate.compareTo(a.requestDate));
+    final dateLabel = selectedReviewDate == null
+        ? 'Date'
+        : _formatDate(selectedReviewDate!);
+
+    final campaignLabel = selectedCampaignLabel ?? 'Campaign';
 
     return Scaffold(
       backgroundColor: bg,
@@ -1370,110 +1517,166 @@ class ProviderAllReviewsScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: reviewedOrders.isEmpty
-          ? Center(
-              child: Text(
-                l10n.noReviewsYet,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black45,
-                ),
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: reviewedOrders.length,
-              itemBuilder: (context, i) {
-                final order = reviewedOrders[i];
-
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Colors.white, Color(0xFFF9FCFB)],
-                    ),
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: primary.withOpacity(0.10)),
-                    boxShadow: [
-                      BoxShadow(
-                        blurRadius: 22,
-                        offset: const Offset(0, 12),
-                        color: primary.withOpacity(0.08),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: _DropdownChip(
+                        label: dateLabel,
+                        onTap: _pickDateFilter,
                       ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 110,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                mint.withOpacity(0.95),
-                                primaryMid.withOpacity(0.75),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _DropdownChip(
+                        label: campaignLabel,
+                        onTap: _pickCampaignFilter,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      '${reviewedOrders.length} ${l10n.allReviews}',
+                      style: TextStyle(
+                        color: primary.withOpacity(0.75),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: _clearFilters,
+                      child: const Text(
+                        'Clear',
+                        style: TextStyle(
+                          color: primary,
+                          fontWeight: FontWeight.w900,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: reviewedOrders.isEmpty
+                ? Center(
+                    child: Text(
+                      l10n.noReviewsYet,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black45,
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                    itemCount: reviewedOrders.length,
+                    itemBuilder: (context, i) {
+                      final order = reviewedOrders[i];
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.white, Color(0xFFF9FCFB)],
+                          ),
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(color: primary.withOpacity(0.10)),
+                          boxShadow: [
+                            BoxShadow(
+                              blurRadius: 22,
+                              offset: const Offset(0, 12),
+                              color: primary.withOpacity(0.08),
+                            ),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                "#${order.orderID}",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  color: primary.withOpacity(0.82),
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                order.mealName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 15,
-                                  color: primaryDark,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              _Stars(rating: order.reviewRating ?? 0),
-                              const SizedBox(height: 10),
                               Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(12),
+                                width: 8,
+                                height: 110,
                                 decoration: BoxDecoration(
-                                  color: softMint,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: mint.withOpacity(0.55),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      mint.withOpacity(0.95),
+                                      primaryMid.withOpacity(0.75),
+                                    ],
                                   ),
+                                  borderRadius: BorderRadius.circular(999),
                                 ),
-                                child: Text(
-                                  "${order.pilgrimName} • ${order.campaignName}",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "#${order.orderID}",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        color: primary.withOpacity(0.82),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      order.mealName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 15,
+                                        color: primaryDark,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _Stars(rating: order.reviewRating ?? 0),
+                                    const SizedBox(height: 10),
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: softMint,
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: mint.withOpacity(0.55),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        "${order.pilgrimName} • ${order.campaignName}",
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
+          ),
+        ],
+      ),
     );
   }
 }
