@@ -3,7 +3,18 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/meal.dart';
 import '../services/meal_service.dart';
+import 'pilgrim_submit_meal_request_page.dart';
+import 'pilgrim_home_screen.dart';
+import 'pilgrim_order_history_page.dart';
+import 'pilgrim_profile_page.dart';
+import '../widgets/pilgrim_bottom_nav.dart';
 import '../session/user_session.dart';
+import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
+import '../main.dart';
+import '../models/meal.dart';
+import '../services/meal_service.dart';
 import 'pilgrim_submit_meal_request_page.dart';
 import 'pilgrim_home_screen.dart';
 import 'pilgrim_order_history_page.dart';
@@ -24,11 +35,6 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
   bool showRecommendedOnly = true;
 
   static const Color bg = Color(0xFFF3F6F5);
-  static const Color primaryDark = Color(0xFF062C26);
-  static const Color primary = Color(0xFF0D4C4A);
-  static const Color primaryMid = Color(0xFF1A6B66);
-  static const Color mint = Color(0xFF9FE5C9);
-  static const Color gold = Color(0xFFF0E0C0);
 
   final MealService _mealService = MealService();
   late Future<List<Meal>> _mealsFuture;
@@ -139,8 +145,6 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
         context,
         MaterialPageRoute(builder: (_) => const PilgrimHomeScreen()),
       );
-    } else if (i == 1) {
-      // Already on Meals page
     } else if (i == 2) {
       Navigator.pushReplacement(
         context,
@@ -152,6 +156,20 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
         MaterialPageRoute(builder: (_) => const PilgrimProfilePage()),
       );
     }
+  }
+
+  void _selectRecommended() {
+    setState(() {
+      showRecommendedOnly = true;
+      _loadAiRecommendedMeals();
+    });
+  }
+
+  void _selectAll() {
+    setState(() {
+      showRecommendedOnly = false;
+      _loadAllMeals();
+    });
   }
 
   @override
@@ -195,18 +213,8 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
                   const SizedBox(height: 10),
                   _MealFilterBar(
                     showRecommendedOnly: showRecommendedOnly,
-                    onSelectRecommended: () {
-                      setState(() {
-                        showRecommendedOnly = true;
-                        _loadAiRecommendedMeals();
-                      });
-                    },
-                    onSelectAll: () {
-                      setState(() {
-                        showRecommendedOnly = false;
-                        _loadAllMeals();
-                      });
-                    },
+                    onSelectRecommended: _selectRecommended,
+                    onSelectAll: _selectAll,
                   ),
                   const SizedBox(height: 16),
                   _MealsSectionTitle(
@@ -234,10 +242,7 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
                           mealType: _localizedMealType(context, meal.mealType),
                           description: meal.description,
                           nutritionLine: meal.nutritionLine,
-                          aiReason: meal.aiReason,
-                          isHealthMatched: showRecommendedOnly
-                              ? true
-                              : meal.isHealthMatched,
+                          isHealthMatched: meal.isHealthMatched,
                           icon: _getMealIcon(meal.mealType),
                           onSelectMeal: () {
                             _openSubmitMealRequestPage(
@@ -290,10 +295,7 @@ class _PilgrimMealsAppBar extends StatelessWidget
           children: [
             IconButton(
               onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const PilgrimHomeScreen()),
-                );
+                Navigator.pop(context);
               },
               icon: const Icon(
                 Icons.arrow_back_ios_new_rounded,
@@ -543,7 +545,6 @@ class _MealRequestCard extends StatelessWidget {
   final bool isHealthMatched;
   final IconData icon;
   final VoidCallback onSelectMeal;
-  final String? aiReason;
 
   const _MealRequestCard({
     required this.title,
@@ -554,7 +555,6 @@ class _MealRequestCard extends StatelessWidget {
     required this.isHealthMatched,
     required this.icon,
     required this.onSelectMeal,
-    this.aiReason,
   });
 
   static const Color primary = Color(0xFF0D4C4A);
@@ -713,39 +713,6 @@ class _MealRequestCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                if (aiReason != null && aiReason!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEAF4F2),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: primary.withOpacity(0.12)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.auto_awesome_rounded,
-                          size: 16,
-                          color: primary,
-                        ),
-                        const SizedBox(width: 7),
-                        Expanded(
-                          child: Text(
-                            aiReason!,
-                            style: const TextStyle(
-                              fontSize: 11.6,
-                              height: 1.35,
-                              fontWeight: FontWeight.w700,
-                              color: primaryDark,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
                 const SizedBox(height: 10),
                 Container(
                   padding: const EdgeInsets.symmetric(

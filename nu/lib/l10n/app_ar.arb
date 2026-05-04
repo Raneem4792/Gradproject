@@ -496,5 +496,6 @@
 "aiChatSomethingWentWrong": "عذرًا، حدث خطأ ما. يرجى المحاولة مرة أخرى.",
 "pleaseWait": "يرجى الانتظار...",
 "askSomething": "اسأل شيئًا...",
-"typing": "جاري الكتابة..."
+"typing": "جاري الكتابة...",
+"fullNameNoSymbols": "يجب ألا يحتوي الاسم على رموز"
 }

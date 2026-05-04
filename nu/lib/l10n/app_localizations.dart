@@ -2842,6 +2842,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Typing...'**
   String get typing;
+
+  /// No description provided for @fullNameNoSymbols.
+  ///
+  /// In en, this message translates to:
+  /// **'Full name must not contain symbols'**
+  String get fullNameNoSymbols;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
