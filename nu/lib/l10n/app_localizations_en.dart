@@ -24,7 +24,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get english => 'English';
 
   @override
-  String get arabic => 'العربية';
+  String get arabic => 'Arabic';
 
   @override
   String get language => 'Language';
@@ -1393,4 +1393,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get typing => 'Typing...';
+
+  @override
+  String get fullNameNoSymbols => 'Full name must not contain symbols';
 }

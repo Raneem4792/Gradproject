@@ -496,5 +496,6 @@
 "aiChatSomethingWentWrong": "Sorry, something went wrong. Please try again.",
 "pleaseWait": "Please wait...",
 "askSomething": "Ask something...",
-"typing": "Typing..."
+"typing": "Typing...",
+"fullNameNoSymbols": "Full name must not contain symbols"
 }
