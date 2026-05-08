@@ -81,7 +81,7 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
     "Arthritis",
     "Epilepsy",
     "Mobility Issue",
-    "Other",
+
   ];
 
   final List<String> dietaryPreferenceOptions = const [
@@ -94,7 +94,7 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
 
   final List<String> allergyOptions = const [
     "Peanuts",
-    "Tree Nuts",
+    "Nuts",
     "Milk",
     "Eggs",
     "Fish",
@@ -613,8 +613,6 @@ void _cancelPersonalEdit() {
         return l10n.epilepsy;
       case "Mobility Issue":
         return l10n.mobilityIssue;
-      case "Other":
-        return l10n.other;
       default:
         return value;
     }
@@ -640,11 +638,11 @@ void _cancelPersonalEdit() {
   String _localizedAllergy(AppLocalizations l10n, String value) {
     switch (value) {
       case "Peanuts":
-        return "Peanuts";
-      case "Tree Nuts":
-        return "Tree Nuts";
+        return l10n.peanuts;;
+      case "Nuts":
+        return l10n.nuts;;
       case "Milk":
-        return "Milk";
+        return l10n.milk;;
       case "Eggs":
         return l10n.eggs;
       case "Gluten":
@@ -654,7 +652,7 @@ void _cancelPersonalEdit() {
       case "Sesame":
         return l10n.sesame;
       case "Fish":
-        return "Fish";
+        return l10n.fish;;
       case "Shellfish":
         return l10n.shellfish;
       case "Wheat":

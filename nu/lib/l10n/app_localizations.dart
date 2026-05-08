@@ -128,7 +128,7 @@ abstract class AppLocalizations {
   /// No description provided for @arabic.
   ///
   /// In en, this message translates to:
-  /// **'Arabic'**
+  /// **'العربية'**
   String get arabic;
 
   /// No description provided for @language.
@@ -2848,6 +2848,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Full name must not contain symbols'**
   String get fullNameNoSymbols;
+
+  /// No description provided for @peanuts.
+  ///
+  /// In en, this message translates to:
+  /// **'Peanuts'**
+  String get peanuts;
+
+  /// No description provided for @milk.
+  ///
+  /// In en, this message translates to:
+  /// **'Milk'**
+  String get milk;
+
+  /// No description provided for @fish.
+  ///
+  /// In en, this message translates to:
+  /// **'Fish'**
+  String get fish;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
