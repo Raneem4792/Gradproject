@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
+import 'admin_dashboard_page.dart';
 import '../l10n/app_localizations.dart';
 import '../main.dart';
 import 'signup_page.dart';
@@ -183,7 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       UserSession.setUser(
-        id: user.userID,
+        id: user.role == 'admin' ? _idController.text.trim() : user.userID,
         name: user.fullName,
         userEmail: user.email,
         userPhone: user.phoneNumber,
@@ -207,6 +207,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (user.role == 'provider') {
         Navigator.pushReplacementNamed(context, ProviderHomeScreen.routeName);
+      } else if (user.role == 'admin') {
+        Navigator.pushReplacementNamed(context, AdminDashboardPage.routeName);
       } else {
         Navigator.pushReplacementNamed(context, PilgrimHomeScreen.routeName);
       }
@@ -382,7 +384,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   LengthLimitingTextInputFormatter(20),
                                 ],
                                 onChanged: (_) {
-                                  if (_generalError != null || _idServerError != null || _passwordServerError != null) {
+                                  if (_generalError != null ||
+                                      _idServerError != null ||
+                                      _passwordServerError != null) {
                                     setState(() {
                                       _generalError = null;
                                       _idServerError = null;
@@ -417,7 +421,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                                 onChanged: (_) {
-                                  if (_generalError != null || _idServerError != null || _passwordServerError != null) {
+                                  if (_generalError != null ||
+                                      _idServerError != null ||
+                                      _passwordServerError != null) {
                                     setState(() {
                                       _generalError = null;
                                       _idServerError = null;

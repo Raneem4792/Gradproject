@@ -54,7 +54,73 @@ class AuthService {
       };
     }
 
+    const [adminRows] = await db.query(
+      `SELECT adminID, fullName, email, phoneNumber, password
+   FROM admin
+   WHERE adminID = ?`,
+      [id]
+    );
+
+    if (adminRows.length > 0) {
+
+      const user = adminRows[0];
+
+      const isMatch = await bcrypt.compare(
+        password,
+        user.password
+      );
+
+      if (!isMatch) return null;
+
+      return {
+        message: 'Login successful',
+        role: 'admin',
+        user: {
+          adminID: user.adminID,
+          fullName: user.fullName,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+        },
+      };
+    }
+
     return null;
+  }
+
+  async adminLogin(adminID, password) {
+
+    const [adminRows] = await db.query(
+      `SELECT adminID, fullName, email, phoneNumber, password
+     FROM admin
+     WHERE adminID = ?`,
+      [adminID]
+    );
+
+    if (adminRows.length === 0) {
+      return null;
+    }
+
+    const admin = adminRows[0];
+
+    const isMatch = await bcrypt.compare(
+      password,
+      admin.password
+    );
+
+    if (!isMatch) {
+      return null;
+    }
+
+    return {
+      message: 'Admin login successful',
+      role: 'admin',
+      user: {
+        adminID: admin.adminID,
+        fullName: admin.fullName,
+        email: admin.email,
+        phoneNumber: admin.phoneNumber,
+      },
+    };
   }
 
   async signupPilgrim({

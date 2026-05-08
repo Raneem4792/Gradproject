@@ -3,6 +3,7 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 
 router.post('/login', (req, res) => authController.login(req, res));
+router.post('/admin-login', (req, res) => authController.adminLogin(req, res));
 router.post('/signup/pilgrim', (req, res) => authController.signupPilgrim(req, res));
 router.post('/signup/provider', (req, res) => authController.signupProvider(req, res));
 

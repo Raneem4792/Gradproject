@@ -303,6 +303,40 @@ class AuthController {
     }
   }
 
+  async adminLogin(req, res) {
+    try {
+
+      const { adminID, password } = req.body;
+
+      if (!adminID || !password) {
+        return res.status(400).json({
+          message: 'Admin ID and password are required',
+        });
+      }
+
+      const result = await authService.adminLogin(
+        adminID,
+        password
+      );
+
+      if (!result) {
+        return res.status(401).json({
+          message: 'Invalid credentials',
+        });
+      }
+
+      return res.status(200).json(result);
+
+    } catch (error) {
+
+      console.error('Admin login error:', error);
+
+      return res.status(500).json({
+        message: 'Server error',
+      });
+    }
+  }
+
   async signupPilgrim(req, res) {
     try {
       const {

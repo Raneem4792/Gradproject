@@ -17,6 +17,7 @@ const aiChatRoutes = require('./routes/aiChatRoutes');
 const aiDashboardRoutes = require('./routes/aiDashboardRoutes');
 const passwordResetRoutes = require('./routes/passwordResetRoutes');
 const aiMealRoutes = require('./routes/aiMealRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -41,6 +42,7 @@ app.use('/api', aiChatRoutes);
 app.use('/api', aiDashboardRoutes);
 app.use('/api/password-reset', passwordResetRoutes);
 app.use('/api/meals', aiMealRoutes);
+app.use('/api/admin', adminRoutes);
 
 
 // استدعاء الداتابيس

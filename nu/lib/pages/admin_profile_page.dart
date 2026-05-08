@@ -1,0 +1,638 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+import '../session/user_session.dart';
+import '../widgets/admin_bottom_nav.dart';
+import 'login_page.dart';
+
+class AdminProfilePage extends StatefulWidget {
+  static const String routeName = '/admin-profile';
+
+  const AdminProfilePage({super.key});
+
+  @override
+  State<AdminProfilePage> createState() => _AdminProfilePageState();
+}
+
+class _AdminProfilePageState extends State<AdminProfilePage> {
+  late Future<AdminProfile> _profileFuture;
+
+  static const Color bg = Color(0xFFF1F7F4);
+  static const Color primaryDark = Color(0xFF052720);
+  static const Color primary = Color(0xFF0B4A40);
+  static const Color primaryMid = Color(0xFF167062);
+  static const Color mint = Color(0xFFA8E7CF);
+  static const Color softMint = Color(0xFFE8F3F1);
+  static const Color gold = Color(0xFFF0E0C0);
+
+  String get baseUrl {
+    if (kIsWeb) return 'http://localhost:3000/api';
+    return 'http://10.0.2.2:3000/api';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _profileFuture = _loadAdminProfile();
+  }
+
+Future<AdminProfile> _loadAdminProfile() async {
+  final adminId = UserSession.userId;
+
+  print('ADMIN ID: $adminId');
+
+  final response = await http.get(
+    Uri.parse('$baseUrl/admin/profile/$adminId'),
+  );
+
+  print(response.body);
+
+  if (response.statusCode == 200) {
+    return AdminProfile.fromJson(jsonDecode(response.body));
+  }
+
+  throw Exception('Failed to load admin profile');
+}
+
+  Future<void> _refreshProfile() async {
+    setState(() {
+      _profileFuture = _loadAdminProfile();
+    });
+
+    await _profileFuture;
+  }
+
+  Future<void> _logout() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          title: const Text(
+            'Log Out',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              color: Colors.black87,
+            ),
+          ),
+          content: const Text(
+            'Are you sure you want to log out?',
+            style: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  color: primary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text(
+                'Log Out',
+                style: TextStyle(
+                  color: Colors.redAccent,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldLogout == true) {
+      UserSession.clear();
+
+      if (!mounted) return;
+
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        LoginScreen.routeName,
+        (route) => false,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: bg,
+      appBar: const _AdminProfileAppBar(),
+      bottomNavigationBar: const AdminBottomNav(currentIndex: 4),
+      body: SafeArea(
+        top: false,
+        child: RefreshIndicator(
+          color: primary,
+          onRefresh: _refreshProfile,
+          child: FutureBuilder<AdminProfile>(
+            future: _profileFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(color: primary),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return _ErrorState(onRetry: _refreshProfile);
+              }
+
+              final admin = snapshot.data!;
+
+              return ListView(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+                children: [
+                  _ProfileHeaderCard(admin: admin),
+                  const SizedBox(height: 16),
+                  const _SectionTitle(title: 'Basic Information'),
+                  const SizedBox(height: 10),
+                  _AdminInfoCard(admin: admin),
+                  const SizedBox(height: 16),
+                  const _SectionTitle(title: 'Account'),
+                  const SizedBox(height: 10),
+                  _AccountCard(admin: admin),
+                  const SizedBox(height: 22),
+                  _LogoutButton(onTap: _logout),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class AdminProfile {
+  final String adminID;
+  final String fullName;
+  final String email;
+  final String phoneNumber;
+
+  AdminProfile({
+    required this.adminID,
+    required this.fullName,
+    required this.email,
+    required this.phoneNumber,
+  });
+
+  factory AdminProfile.fromJson(Map<String, dynamic> json) {
+    return AdminProfile(
+      adminID: json['adminID']?.toString() ?? '',
+      fullName: json['fullName']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      phoneNumber: json['phoneNumber']?.toString() ?? '',
+    );
+  }
+}
+
+class _AdminProfileAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
+  const _AdminProfileAppBar();
+
+  @override
+  Size get preferredSize => const Size.fromHeight(58);
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.6,
+        shadowColor: Colors.black.withOpacity(0.08),
+        surfaceTintColor: Colors.white,
+        automaticallyImplyLeading: false,
+        titleSpacing: 16,
+        title: const Text(
+          'NUSUQ',
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 17,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.4,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileHeaderCard extends StatelessWidget {
+  final AdminProfile admin;
+
+  const _ProfileHeaderCard({
+    required this.admin,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: Stack(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  _AdminProfilePageState.primaryDark,
+                  _AdminProfilePageState.primary,
+                  _AdminProfilePageState.primaryMid,
+                ],
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 74,
+                  height: 74,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.14),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.25),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.admin_panel_settings_rounded,
+                    color: Colors.white,
+                    size: 38,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'System Admin',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        admin.fullName.isEmpty ? 'Admin' : admin.fullName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        'Admin ID: ${admin.adminID}',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.82),
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _AdminProfilePageState.mint.withOpacity(0.95),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: const Text(
+                          'Verified Account',
+                          style: TextStyle(
+                            color: _AdminProfilePageState.primaryDark,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            right: -28,
+            top: -36,
+            child: Container(
+              width: 118,
+              height: 118,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _AdminProfilePageState.mint.withOpacity(0.10),
+              ),
+            ),
+          ),
+          Positioned(
+            left: -28,
+            bottom: -36,
+            child: Container(
+              width: 126,
+              height: 126,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _AdminProfilePageState.gold.withOpacity(0.08),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdminInfoCard extends StatelessWidget {
+  final AdminProfile admin;
+
+  const _AdminInfoCard({
+    required this.admin,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _WhiteCard(
+      child: Column(
+        children: [
+          _InfoRow(
+            icon: Icons.person_outline_rounded,
+            title: 'Full Name',
+            value: admin.fullName,
+          ),
+          const Divider(height: 22),
+          _InfoRow(
+            icon: Icons.badge_outlined,
+            title: 'Admin ID',
+            value: admin.adminID,
+          ),
+          const Divider(height: 22),
+          _InfoRow(
+            icon: Icons.email_outlined,
+            title: 'Email',
+            value: admin.email,
+          ),
+          const Divider(height: 22),
+          _InfoRow(
+            icon: Icons.phone_outlined,
+            title: 'Phone Number',
+            value: admin.phoneNumber,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AccountCard extends StatelessWidget {
+  final AdminProfile admin;
+
+  const _AccountCard({
+    required this.admin,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return const _WhiteCard(
+      child: Column(
+        children: [
+          _InfoRow(
+            icon: Icons.security_rounded,
+            title: 'Role',
+            value: 'Administrator',
+          ),
+          Divider(height: 22),
+          _InfoRow(
+            icon: Icons.verified_user_outlined,
+            title: 'Status',
+            value: 'Active',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+
+  const _InfoRow({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final shownValue = value.isEmpty ? 'Not available' : value;
+
+    return Row(
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: _AdminProfilePageState.softMint,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(
+            icon,
+            color: _AdminProfilePageState.primary,
+            size: 21,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Colors.black.withOpacity(0.55),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                shownValue,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+
+  const _SectionTitle({
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w900,
+        color: Colors.black.withOpacity(0.8),
+      ),
+    );
+  }
+}
+
+class _LogoutButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _LogoutButton({
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          side: BorderSide(
+            color: Colors.red.withOpacity(0.22),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          backgroundColor: Colors.white,
+        ),
+        icon: const Icon(
+          Icons.logout_rounded,
+          color: Colors.redAccent,
+        ),
+        label: const Text(
+          'Log Out',
+          style: TextStyle(
+            color: Colors.redAccent,
+            fontSize: 14.5,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WhiteCard extends StatelessWidget {
+  final Widget child;
+
+  const _WhiteCard({
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 20,
+            offset: const Offset(0, 12),
+            color: Colors.black.withOpacity(0.05),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  final Future<void> Function() onRetry;
+
+  const _ErrorState({
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        const SizedBox(height: 120),
+        const Icon(
+          Icons.error_outline_rounded,
+          color: _AdminProfilePageState.primary,
+          size: 58,
+        ),
+        const SizedBox(height: 14),
+        const Center(
+          child: Text(
+            'Failed to load admin profile',
+            style: TextStyle(
+              color: _AdminProfilePageState.primary,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Center(
+          child: ElevatedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Try again'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _AdminProfilePageState.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: 12,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

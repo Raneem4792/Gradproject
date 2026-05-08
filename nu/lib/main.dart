@@ -13,7 +13,11 @@ import 'pages/forgot_password_page.dart';
 import 'pages/pilgrim_profile_page.dart';
 import 'pages/provider_profile_page.dart';
 import 'pages/pilgrim_meals_page.dart';
-
+import 'pages/admin_manage_accounts_page.dart';
+import 'pages/admin_dashboard_page.dart';
+import 'pages/admin_monitor_orders_page.dart';
+import 'pages/admin_notifications_page.dart';
+import 'pages/admin_profile_page.dart';
 void main() {
   runApp(const NusuqApp());
 }
@@ -83,6 +87,11 @@ class _NusuqAppState extends State<NusuqApp> {
         PilgrimMealsPage.routeName: (_) => const PilgrimMealsPage(),
 
         ForgotPasswordPage.routeName: (context) => const ForgotPasswordPage(),
+        AdminManageAccountsPage.routeName: (context) => const AdminManageAccountsPage(),
+        AdminDashboardPage.routeName: (context) => const AdminDashboardPage(),
+        AdminMonitorOrdersPage.routeName: (context) => const AdminMonitorOrdersPage(),
+        AdminNotificationsPage.routeName: (context) => const AdminNotificationsPage(),
+        AdminProfilePage.routeName: (context) => const AdminProfilePage(),
       },
     );
   }
