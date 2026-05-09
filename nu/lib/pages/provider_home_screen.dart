@@ -1,5 +1,9 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 
 import '../l10n/app_localizations.dart';
 import 'incoming_meal_requests_page.dart';
@@ -41,20 +45,51 @@ class _SectionLabel extends StatelessWidget {
 
 class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
   int _navIndex = 0;
+  int unreadCount = 0;
 
   final ProviderService _providerService = ProviderService();
   late Future<Map<String, dynamic>> _homeFuture;
 
   static const Color bg = Color(0xFFF3F6F5);
 
+  String get baseUrl {
+    if (kIsWeb) {
+      return 'http://localhost:3000/api';
+    }
+    return 'http://10.0.2.2:3000/api';
+  }
+
   @override
   void initState() {
     super.initState();
     _reloadHomeData();
+    _loadUnreadCount();
   }
 
   void _reloadHomeData() {
     _homeFuture = _providerService.getProviderHomeData(UserSession.userId!);
+  }
+
+  Future<void> _loadUnreadCount() async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '$baseUrl/notifications/unread-count/${UserSession.userId}/provider',
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (!mounted) return;
+
+        setState(() {
+          unreadCount = data['count'] ?? 0;
+        });
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
   }
 
   Future<void> _openIncomingRequestsPage() async {
@@ -88,11 +123,15 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
     }
   }
 
-  void _openNotificationsPage() {
-    Navigator.push(
+  Future<void> _openNotificationsPage() async {
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const ProviderNotificationsPage()),
     );
+
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    _loadUnreadCount();
   }
 
   @override
@@ -101,7 +140,10 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: _ProviderMainAppBar(onTapNotifications: _openNotificationsPage),
+      appBar: _ProviderMainAppBar(
+        onTapNotifications: _openNotificationsPage,
+        unreadCount: unreadCount,
+      ),
       body: SafeArea(
         top: false,
         child: FutureBuilder<Map<String, dynamic>>(
@@ -142,7 +184,6 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
                 children: [
                   _ProviderTopBlock(providerName: providerName),
                   const SizedBox(height: 14),
-
                   _RequestsCard(
                     newRequestsCount: newRequestsCount,
                     orderText: orderText,
@@ -150,10 +191,8 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
                     onTapCard: _openIncomingRequestsPage,
                   ),
                   const SizedBox(height: 18),
-
                   _SectionLabel(title: l10n.services),
                   const SizedBox(height: 12),
-
                   const ProviderServicesList(),
                 ],
               ),
@@ -172,53 +211,85 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
 class _ProviderMainAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final VoidCallback onTapNotifications;
+  final int unreadCount;
 
-  const _ProviderMainAppBar({required this.onTapNotifications});
-
-  static const Color primary = Color(0xFF0D4C4A);
+  const _ProviderMainAppBar({
+    required this.onTapNotifications,
+    required this.unreadCount,
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(58);
 
   @override
-Widget build(BuildContext context) {
-  return Directionality(
-    textDirection: TextDirection.ltr,
-    child: AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0.6,
-      shadowColor: Colors.black.withOpacity(0.08),
-      surfaceTintColor: Colors.white,
-      automaticallyImplyLeading: false,
-      titleSpacing: 8,
-      title: const Row(
-        children: [
-          SizedBox(width: 4),
-          Text(
-            "NUSUQ",
-            style: TextStyle(
-              color: Colors.black87,
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.4,
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.6,
+        shadowColor: Colors.black.withOpacity(0.08),
+        surfaceTintColor: Colors.white,
+        automaticallyImplyLeading: false,
+        titleSpacing: 8,
+        title: const Row(
+          children: [
+            SizedBox(width: 4),
+            Text(
+              "NUSUQ",
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            onPressed: onTapNotifications,
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(
+                  Icons.notifications,
+                  color: Colors.black87,
+                  size: 20,
+                ),
+                if (unreadCount > 0)
+                  Positioned(
+                    right: -7,
+                    top: -7,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(
+                        minWidth: 17,
+                        minHeight: 17,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        unreadCount > 99 ? '99+' : unreadCount.toString(),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
+          const SizedBox(width: 6),
         ],
       ),
-      actions: [
-        IconButton(
-          onPressed: onTapNotifications,
-          icon: const Icon(
-            Icons.notifications,
-            color: Colors.black87,
-            size: 20,
-          ),
-        ),
-        const SizedBox(width: 6),
-      ],
-    ),
-  );
-}
+    );
+  }
 }
 
 class _ProviderTopBlock extends StatelessWidget {

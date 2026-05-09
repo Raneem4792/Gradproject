@@ -19,11 +19,11 @@ class _AdminMonitorOrdersPageState extends State<AdminMonitorOrdersPage> {
 
   late Future<List<AdminOrdersCampaign>> _ordersFuture;
 
-  static const Color bg = Color(0xFFF1F7F4);
-  static const Color primaryDark = Color(0xFF052720);
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color primaryMid = Color(0xFF167062);
-  static const Color mint = Color(0xFFA8E7CF);
+  static const Color bg = Color(0xFFF3F6F5);
+  static const Color primaryDark = Color(0xFF062C26);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color primaryMid = Color(0xFF1A6B66);
+  static const Color mint = Color(0xFF9FE5C9);
 
   @override
   void initState() {
@@ -130,15 +130,20 @@ class _AdminOrdersAppBar extends StatelessWidget implements PreferredSizeWidget 
         shadowColor: Colors.black.withOpacity(0.08),
         surfaceTintColor: Colors.white,
         automaticallyImplyLeading: false,
-        titleSpacing: 16,
-        title: const Text(
-          'NUSUQ',
-          style: TextStyle(
-            color: Colors.black87,
-            fontSize: 17,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.4,
-          ),
+        titleSpacing: 8,
+        title: const Row(
+          children: [
+            SizedBox(width: 4),
+            Text(
+              'NUSUQ',
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -156,116 +161,146 @@ class _OrdersTopBlock extends StatelessWidget {
     required this.activeOrders,
   });
 
-  static const Color primaryDark = Color(0xFF052720);
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color primaryMid = Color(0xFF167062);
-  static const Color mint = Color(0xFFA8E7CF);
-  static const Color gold = Color(0xFFF0E0C0);
+  static const Color primaryDark = Color(0xFF062C26);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color primaryMid = Color(0xFF1A6B66);
+  static const Color mint = Color(0xFF9FE5C9);
 
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
-      child: Stack(
-        children: [
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [primaryDark, primary, primaryMid],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              blurRadius: 24,
+              offset: const Offset(0, 14),
+              color: Colors.black.withOpacity(0.07),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -36,
+              top: -44,
+              child: Container(
+                width: 132,
+                height: 132,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: mint.withOpacity(0.14),
+                ),
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(
-                      Icons.receipt_long_rounded,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Monitor Orders',
-                        style: TextStyle(
+            Positioned(
+              left: -44,
+              bottom: -50,
+              child: Container(
+                width: 112,
+                height: 112,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.black.withOpacity(0.10),
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [primaryDark, primary, primaryMid],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.11),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.26),
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.receipt_long_rounded,
                           color: Colors.white,
-                          fontSize: 21,
-                          fontWeight: FontWeight.w900,
+                          size: 25,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'View all meal orders grouped by campaigns and their assigned providers.',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.86),
-                    fontSize: 13,
-                    height: 1.4,
-                    fontWeight: FontWeight.w600,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Monitor Orders',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Campaign orders and providers',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.86),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatPill(
-                        title: 'Campaigns',
-                        value: campaignsCount.toString(),
-                        icon: Icons.flag_rounded,
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _StatPill(
+                          title: 'Campaigns',
+                          value: campaignsCount.toString(),
+                          icon: Icons.flag_rounded,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _StatPill(
-                        title: 'Orders',
-                        value: totalOrders.toString(),
-                        icon: Icons.shopping_bag_rounded,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _StatPill(
+                          title: 'Orders',
+                          value: totalOrders.toString(),
+                          icon: Icons.shopping_bag_rounded,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _StatPill(
-                        title: 'Active',
-                        value: activeOrders.toString(),
-                        icon: Icons.timelapse_rounded,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _StatPill(
+                          title: 'Active',
+                          value: activeOrders.toString(),
+                          icon: Icons.timelapse_rounded,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            right: -30,
-            top: -40,
-            child: Container(
-              width: 130,
-              height: 130,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: mint.withOpacity(0.12),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ),
-          Positioned(
-            left: -40,
-            bottom: -50,
-            child: Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: gold.withOpacity(0.10),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -282,16 +317,16 @@ class _StatPill extends StatelessWidget {
     required this.icon,
   });
 
-  static const Color mint = Color(0xFFA8E7CF);
+  static const Color mint = Color(0xFF9FE5C9);
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
+        color: Colors.white.withOpacity(0.11),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withOpacity(0.16)),
+        border: Border.all(color: Colors.white.withOpacity(0.14)),
       ),
       child: Column(
         children: [
@@ -302,7 +337,7 @@ class _StatPill extends StatelessWidget {
             style: const TextStyle(
               color: Colors.white,
               fontSize: 18,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 2),
@@ -344,10 +379,10 @@ class _CampaignOrdersCard extends StatelessWidget {
 
   const _CampaignOrdersCard({required this.campaign});
 
-  static const Color primaryDark = Color(0xFF052720);
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color mint = Color(0xFFA8E7CF);
-  static const Color softMint = Color(0xFFE8F3F1);
+  static const Color primaryDark = Color(0xFF062C26);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color mint = Color(0xFF9FE5C9);
+  static const Color softMint = Color(0xFFF0F6F4);
 
   @override
   Widget build(BuildContext context) {
@@ -355,19 +390,19 @@ class _CampaignOrdersCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             blurRadius: 20,
             offset: const Offset(0, 12),
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.045),
           ),
         ],
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          tilePadding: const EdgeInsets.fromLTRB(16, 8, 12, 8),
+          tilePadding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
           childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
           leading: CircleAvatar(
             radius: 23,
@@ -379,7 +414,7 @@ class _CampaignOrdersCard extends StatelessWidget {
             style: const TextStyle(
               color: primaryDark,
               fontSize: 15.5,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w800,
             ),
           ),
           subtitle: Padding(
@@ -427,8 +462,8 @@ class _ProviderBox extends StatelessWidget {
 
   const _ProviderBox({required this.provider});
 
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color softMint = Color(0xFFE8F3F1);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color softMint = Color(0xFFF0F6F4);
 
   @override
   Widget build(BuildContext context) {
@@ -466,9 +501,9 @@ class _OrderCard extends StatelessWidget {
 
   const _OrderCard({required this.order});
 
-  static const Color primaryDark = Color(0xFF052720);
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color softMint = Color(0xFFE8F3F1);
+  static const Color primaryDark = Color(0xFF062C26);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color softMint = Color(0xFFF0F6F4);
 
   Color _statusColor(String status) {
     final value = status.toLowerCase();
@@ -591,7 +626,7 @@ class _InfoLine extends StatelessWidget {
     required this.text,
   });
 
-  static const Color primary = Color(0xFF0B4A40);
+  static const Color primary = Color(0xFF0D4C4A);
 
   @override
   Widget build(BuildContext context) {
@@ -627,8 +662,8 @@ class _SmallChip extends StatelessWidget {
     required this.icon,
   });
 
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color softMint = Color(0xFFE8F3F1);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color softMint = Color(0xFFF0F6F4);
 
   @override
   Widget build(BuildContext context) {
@@ -662,8 +697,8 @@ class _SmallEmptyMessage extends StatelessWidget {
 
   const _SmallEmptyMessage({required this.text});
 
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color softMint = Color(0xFFE8F3F1);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color softMint = Color(0xFFF0F6F4);
 
   @override
   Widget build(BuildContext context) {
@@ -690,7 +725,7 @@ class _SmallEmptyMessage extends StatelessWidget {
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
-  static const Color primary = Color(0xFF0B4A40);
+  static const Color primary = Color(0xFF0D4C4A);
 
   @override
   Widget build(BuildContext context) {
@@ -732,7 +767,7 @@ class _ErrorState extends StatelessWidget {
     required this.onRetry,
   });
 
-  static const Color primary = Color(0xFF0B4A40);
+  static const Color primary = Color(0xFF0D4C4A);
 
   @override
   Widget build(BuildContext context) {

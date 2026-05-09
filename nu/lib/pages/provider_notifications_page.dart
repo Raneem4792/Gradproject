@@ -1,9 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/meal_service.dart';
 import '../models/notification_model.dart';
+import '../session/user_session.dart';
 
 class ProviderNotificationsPage extends StatefulWidget {
   static const String routeName = '/provider-notifications';
@@ -22,18 +25,46 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage> {
   final MealService _mealService = MealService();
   late Future<List<AppNotification>> _notificationsFuture;
 
+  String get _userId => UserSession.userId ?? '';
+  static const String _userType = 'provider';
+
+  String get baseUrl {
+    if (kIsWeb) return 'http://localhost:3000/api';
+    return 'http://10.0.2.2:3000/api';
+  }
+
   @override
   void initState() {
     super.initState();
-    _notificationsFuture = _mealService.getNotifications("1123456", "provider");
+    _notificationsFuture = _loadNotificationsAndMarkRead();
   }
 
-  void _refreshNotifications() {
-    setState(() {
-      _notificationsFuture = _mealService.getNotifications(
-        "1123456",
-        "provider",
+  Future<List<AppNotification>> _loadNotificationsAndMarkRead() async {
+    final notifications = await _mealService.getNotifications(
+      _userId,
+      _userType,
+    );
+
+    await _markNotificationsAsRead();
+
+    return notifications;
+  }
+
+  Future<void> _markNotificationsAsRead() async {
+    try {
+      await http.put(
+        Uri.parse('$baseUrl/notifications/mark-read/$_userId/$_userType'),
       );
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  Future<void> _refreshNotifications() async {
+    await _markNotificationsAsRead();
+
+    setState(() {
+      _notificationsFuture = _mealService.getNotifications(_userId, _userType);
     });
   }
 
@@ -149,7 +180,7 @@ class _ProviderNotificationsAppBar extends StatelessWidget
 
 class _ProviderNotificationsTopBlock extends StatelessWidget {
   final int unreadCount;
-  final VoidCallback onMarkAllRead;
+  final Future<void> Function() onMarkAllRead;
 
   const _ProviderNotificationsTopBlock({
     required this.unreadCount,
@@ -240,7 +271,9 @@ class _ProviderNotificationsTopBlock extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           InkWell(
-            onTap: onMarkAllRead,
+            onTap: () {
+              onMarkAllRead();
+            },
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),

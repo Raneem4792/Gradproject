@@ -20,12 +20,12 @@ class AdminProfilePage extends StatefulWidget {
 class _AdminProfilePageState extends State<AdminProfilePage> {
   late Future<AdminProfile> _profileFuture;
 
-  static const Color bg = Color(0xFFF1F7F4);
-  static const Color primaryDark = Color(0xFF052720);
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color primaryMid = Color(0xFF167062);
-  static const Color mint = Color(0xFFA8E7CF);
-  static const Color softMint = Color(0xFFE8F3F1);
+  static const Color bg = Color(0xFFF3F6F5);
+  static const Color primaryDark = Color(0xFF062C26);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color primaryMid = Color(0xFF1A6B66);
+  static const Color mint = Color(0xFF9FE5C9);
+  static const Color softMint = Color(0xFFEAF5F2);
   static const Color gold = Color(0xFFF0E0C0);
 
   String get baseUrl {
@@ -154,10 +154,10 @@ Future<AdminProfile> _loadAdminProfile() async {
               final admin = snapshot.data!;
 
               return ListView(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 22),
                 children: [
                   _ProfileHeaderCard(admin: admin),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
                   const _SectionTitle(title: 'Basic Information'),
                   const SizedBox(height: 10),
                   _AdminInfoCard(admin: admin),
@@ -217,15 +217,20 @@ class _AdminProfileAppBar extends StatelessWidget
         shadowColor: Colors.black.withOpacity(0.08),
         surfaceTintColor: Colors.white,
         automaticallyImplyLeading: false,
-        titleSpacing: 16,
-        title: const Text(
-          'NUSUQ',
-          style: TextStyle(
-            color: Colors.black87,
-            fontSize: 17,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.4,
-          ),
+        titleSpacing: 8,
+        title: const Row(
+          children: [
+            SizedBox(width: 4),
+            Text(
+              'NUSUQ',
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -243,123 +248,134 @@ class _ProfileHeaderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
-      child: Stack(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  _AdminProfilePageState.primaryDark,
-                  _AdminProfilePageState.primary,
-                  _AdminProfilePageState.primaryMid,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              blurRadius: 24,
+              offset: const Offset(0, 14),
+              color: Colors.black.withOpacity(0.07),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    _AdminProfilePageState.primaryDark,
+                    _AdminProfilePageState.primary,
+                    _AdminProfilePageState.primaryMid,
+                  ],
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.12),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.26),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.admin_panel_settings_rounded,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          admin.fullName.isEmpty ? 'Admin' : admin.fullName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'System Admin',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.86),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          children: [
+                            _HeaderChip(text: 'ID: ${admin.adminID}'),
+                            const _HeaderChip(text: 'Verified Account'),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 74,
-                  height: 74,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.14),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.25),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.admin_panel_settings_rounded,
-                    color: Colors.white,
-                    size: 38,
-                  ),
+            Positioned(
+              right: -55,
+              top: -45,
+              child: Container(
+                width: 132,
+                height: 132,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.07),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'System Admin',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        admin.fullName.isEmpty ? 'Admin' : admin.fullName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 7),
-                      Text(
-                        'Admin ID: ${admin.adminID}',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.82),
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _AdminProfilePageState.mint.withOpacity(0.95),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: const Text(
-                          'Verified Account',
-                          style: TextStyle(
-                            color: _AdminProfilePageState.primaryDark,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            right: -28,
-            top: -36,
-            child: Container(
-              width: 118,
-              height: 118,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _AdminProfilePageState.mint.withOpacity(0.10),
               ),
             ),
-          ),
-          Positioned(
-            left: -28,
-            bottom: -36,
-            child: Container(
-              width: 126,
-              height: 126,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _AdminProfilePageState.gold.withOpacity(0.08),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderChip extends StatelessWidget {
+  final String text;
+
+  const _HeaderChip({
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.13),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.14),
+        ),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: Colors.white.withOpacity(0.86),
+          fontSize: 11.2,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }
@@ -457,7 +473,7 @@ class _InfoRow extends StatelessWidget {
           height: 42,
           decoration: BoxDecoration(
             color: _AdminProfilePageState.softMint,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Icon(
             icon,
@@ -508,7 +524,7 @@ class _SectionTitle extends StatelessWidget {
     return Text(
       title,
       style: TextStyle(
-        fontSize: 14,
+        fontSize: 13.5,
         fontWeight: FontWeight.w900,
         color: Colors.black.withOpacity(0.8),
       ),
@@ -535,7 +551,7 @@ class _LogoutButton extends StatelessWidget {
             color: Colors.red.withOpacity(0.22),
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(20),
           ),
           backgroundColor: Colors.white,
         ),
@@ -627,7 +643,7 @@ class _ErrorState extends StatelessWidget {
                 vertical: 12,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
           ),

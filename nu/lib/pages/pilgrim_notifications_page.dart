@@ -1,9 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart' hide TextDirection;
 
 import '../l10n/app_localizations.dart';
 import '../services/meal_service.dart';
 import '../models/notification_model.dart';
+import '../session/user_session.dart';
 
 class PilgrimNotificationsPage extends StatefulWidget {
   static const String routeName = '/pilgrim-notifications';
@@ -22,21 +25,45 @@ class _PilgrimNotificationsPageState extends State<PilgrimNotificationsPage> {
   final MealService _mealService = MealService();
   late Future<List<AppNotification>> _notificationsFuture;
 
+  String get _userId => UserSession.userId ?? '';
+  static const String _userType = 'pilgrim';
+
+  String get baseUrl {
+    if (kIsWeb) return 'http://localhost:3000/api';
+    return 'http://10.0.2.2:3000/api';
+  }
+
+  Future<List<AppNotification>> _loadNotificationsAndMarkRead() async {
+    final notifications = await _mealService.getNotifications(
+      _userId,
+      _userType,
+    );
+
+    await _markNotificationsAsRead();
+
+    return _mealService.getNotifications(_userId, _userType);
+  }
+
   @override
   void initState() {
     super.initState();
-    _notificationsFuture = _mealService.getNotifications(
-      "1127611513",
-      "pilgrim",
-    );
+
+    _notificationsFuture = _loadNotificationsAndMarkRead();
   }
 
-  void _refreshData() {
-    setState(() {
-      _notificationsFuture = _mealService.getNotifications(
-        "1127611513",
-        "pilgrim",
+  Future<void> _markNotificationsAsRead() async {
+    try {
+      await http.put(
+        Uri.parse('$baseUrl/notifications/mark-read/$_userId/$_userType'),
       );
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  Future<void> _refreshData() async {
+    setState(() {
+      _notificationsFuture = _loadNotificationsAndMarkRead();
     });
   }
 
@@ -75,9 +102,7 @@ class _PilgrimNotificationsPageState extends State<PilgrimNotificationsPage> {
                     onMarkAllRead: _refreshData,
                   ),
                   const SizedBox(height: 18),
-                  _NotificationsSectionHeader(
-                    title: l10n.recentNotifications,
-                  ),
+                  _NotificationsSectionHeader(title: l10n.recentNotifications),
                   const SizedBox(height: 10),
 
                   if (notifications.isEmpty)
@@ -157,7 +182,7 @@ class _PilgrimNotificationsAppBar extends StatelessWidget
 
 class _NotificationsHeroCard extends StatelessWidget {
   final int unreadCount;
-  final VoidCallback onMarkAllRead;
+  final Future<void> Function() onMarkAllRead;
 
   const _NotificationsHeroCard({
     required this.unreadCount,
@@ -257,7 +282,9 @@ class _NotificationsHeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           InkWell(
-            onTap: onMarkAllRead,
+            onTap: () {
+              onMarkAllRead();
+            },
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),

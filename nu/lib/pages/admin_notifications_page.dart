@@ -32,8 +32,8 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
   String selectedNotificationType = 'alert';
   String selectedRecipientType = 'all_pilgrims';
 
-  static const Color bg = Color(0xFFF1F7F4);
-  static const Color primary = Color(0xFF0B4A40);
+  static const Color bg = Color(0xFFF3F6F5);
+  static const Color primary = Color(0xFF0D4C4A);
 
   String get baseUrl {
     if (kIsWeb) {
@@ -246,7 +246,7 @@ class _NotificationsAppBar extends StatelessWidget
         shadowColor: Colors.black.withOpacity(0.08),
         surfaceTintColor: Colors.white,
         automaticallyImplyLeading: false,
-        titleSpacing: 16,
+        titleSpacing: 8,
         title: const Text(
           'NUSUQ',
           style: TextStyle(
@@ -264,10 +264,10 @@ class _NotificationsAppBar extends StatelessWidget
 class _TopBlock extends StatelessWidget {
   const _TopBlock();
 
-  static const Color primaryDark = Color(0xFF052720);
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color primaryMid = Color(0xFF167062);
-  static const Color mint = Color(0xFFA8E7CF);
+  static const Color primaryDark = Color(0xFF062C26);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color primaryMid = Color(0xFF1A6B66);
+  static const Color mint = Color(0xFF9FE5C9);
 
   @override
   Widget build(BuildContext context) {
@@ -333,7 +333,7 @@ class _TabSwitch extends StatelessWidget {
     required this.onChanged,
   });
 
-  static const Color primary = Color(0xFF0B4A40);
+  static const Color primary = Color(0xFF0D4C4A);
 
   @override
   Widget build(BuildContext context) {
@@ -384,7 +384,7 @@ class _TabButton extends StatelessWidget {
     required this.onTap,
   });
 
-  static const Color primary = Color(0xFF0B4A40);
+  static const Color primary = Color(0xFF0D4C4A);
 
   @override
   Widget build(BuildContext context) {
@@ -451,7 +451,7 @@ class _CreateNotificationTab extends StatelessWidget {
     required this.onSend,
   });
 
-  static const Color primary = Color(0xFF0B4A40);
+  static const Color primary = Color(0xFF0D4C4A);
 
   @override
   Widget build(BuildContext context) {
@@ -583,7 +583,7 @@ class _SentNotificationsTab extends StatelessWidget {
     required this.formatDate,
   });
 
-  static const Color primary = Color(0xFF0B4A40);
+  static const Color primary = Color(0xFF0D4C4A);
 
   @override
   Widget build(BuildContext context) {
@@ -694,8 +694,8 @@ class _InputField extends StatelessWidget {
     this.validator,
   });
 
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color softMint = Color(0xFFE8F3F1);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color softMint = Color(0xFFEAF5F2);
 
   @override
   Widget build(BuildContext context) {
@@ -740,8 +740,8 @@ class _DropdownField extends StatelessWidget {
     required this.onChanged,
   });
 
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color softMint = Color(0xFFE8F3F1);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color softMint = Color(0xFFEAF5F2);
 
   @override
   Widget build(BuildContext context) {
@@ -780,8 +780,8 @@ class _MessageField extends StatelessWidget {
     required this.controller,
   });
 
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color softMint = Color(0xFFE8F3F1);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color softMint = Color(0xFFEAF5F2);
 
   @override
   Widget build(BuildContext context) {
@@ -836,9 +836,9 @@ class _SentNotificationCard extends StatelessWidget {
     required this.timestamp,
   });
 
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color primaryDark = Color(0xFF052720);
-  static const Color softMint = Color(0xFFE8F3F1);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color primaryDark = Color(0xFF062C26);
+  static const Color softMint = Color(0xFFEAF5F2);
 
   @override
   Widget build(BuildContext context) {
@@ -957,8 +957,8 @@ class _MiniChip extends StatelessWidget {
 
   const _MiniChip({required this.text});
 
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color softMint = Color(0xFFE8F3F1);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color softMint = Color(0xFFEAF5F2);
 
   @override
   Widget build(BuildContext context) {
@@ -992,8 +992,8 @@ class _MessageBox extends StatelessWidget {
     required this.text,
   });
 
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color softMint = Color(0xFFE8F3F1);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color softMint = Color(0xFFEAF5F2);
 
   @override
   Widget build(BuildContext context) {

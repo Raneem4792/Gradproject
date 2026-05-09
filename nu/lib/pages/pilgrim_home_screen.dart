@@ -1,4 +1,8 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../l10n/app_localizations.dart';
 import 'pilgrim_meals_page.dart';
@@ -21,19 +25,50 @@ class PilgrimHomeScreen extends StatefulWidget {
 
 class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
   int _navIndex = 0;
+  int unreadCount = 0;
 
   final PilgrimService _pilgrimService = PilgrimService();
   late Future<Map<String, dynamic>> _homeFuture;
+
+  static const Color bg = Color(0xFFF3F6F5);
+  static const Color mint = Color(0xFF9FE5C9);
+  static const Color gold = Color(0xFFF0E0C0);
+
+  String get baseUrl {
+    if (kIsWeb) {
+      return 'http://localhost:3000/api';
+    }
+    return 'http://10.0.2.2:3000/api';
+  }
 
   @override
   void initState() {
     super.initState();
     _homeFuture = _pilgrimService.getPilgrimHomeData(UserSession.userId!);
+    _loadUnreadCount();
   }
 
-  static const Color bg = Color(0xFFF3F6F5);
-  static const Color mint = Color(0xFF9FE5C9);
-  static const Color gold = Color(0xFFF0E0C0);
+  Future<void> _loadUnreadCount() async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '$baseUrl/notifications/unread-count/${UserSession.userId}/pilgrim',
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (!mounted) return;
+
+        setState(() {
+          unreadCount = data['count'] ?? 0;
+        });
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
 
   void _openMealsPage() {
     Navigator.push(
@@ -79,12 +114,21 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
     );
   }
 
-  void _openNotificationsPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const PilgrimNotificationsPage()),
-    );
-  }
+Future<void> _openNotificationsPage() async {
+  await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) =>
+          const PilgrimNotificationsPage(),
+    ),
+  );
+
+  await Future.delayed(
+    const Duration(milliseconds: 300),
+  );
+
+  _loadUnreadCount();
+}
 
   String _localizedStatus(AppLocalizations l10n, String status) {
     switch (status.toLowerCase().trim()) {
@@ -109,7 +153,10 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: _PilgrimMainAppBar(onTapNotifications: _openNotificationsPage),
+      appBar: _PilgrimMainAppBar(
+        onTapNotifications: _openNotificationsPage,
+        unreadCount: unreadCount,
+      ),
       body: SafeArea(
         top: false,
         child: FutureBuilder<Map<String, dynamic>>(
@@ -145,10 +192,8 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
                     onTapAskAI: _openAIChatPage,
                   ),
                   const SizedBox(height: 18),
-
                   _SectionHeader(title: l10n.orderNow),
                   const SizedBox(height: 10),
-
                   Row(
                     children: [
                       Expanded(
@@ -186,12 +231,9 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 18),
-
                   _SectionHeader(title: l10n.orderHistory),
                   const SizedBox(height: 10),
-
                   if (latestOrder == null)
                     const _EmptyOrderHistoryCard()
                   else
@@ -203,7 +245,6 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
                       badgeText: l10n.tapToViewPreviousOrders,
                       onTap: _openOrderHistoryPage,
                     ),
-
                   const SizedBox(height: 8),
                 ],
               ),
@@ -224,8 +265,12 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
 class _PilgrimMainAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final VoidCallback onTapNotifications;
+  final int unreadCount;
 
-  const _PilgrimMainAppBar({required this.onTapNotifications});
+  const _PilgrimMainAppBar({
+    required this.onTapNotifications,
+    required this.unreadCount,
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(58);
@@ -241,27 +286,57 @@ class _PilgrimMainAppBar extends StatelessWidget
         surfaceTintColor: Colors.white,
         automaticallyImplyLeading: false,
         titleSpacing: 8,
-title: const Row(
-  children: [
-    SizedBox(width: 4),
-    Text(
-      "NUSUQ",
-      style: TextStyle(
-        color: Colors.black87,
-        fontSize: 17,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 0.4,
-      ),
-    ),
-  ],
-),
+        title: const Row(
+          children: [
+            SizedBox(width: 4),
+            Text(
+              "NUSUQ",
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             onPressed: onTapNotifications,
-            icon: const Icon(
-              Icons.notifications,
-              color: Colors.black87,
-              size: 20,
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(
+                  Icons.notifications,
+                  color: Colors.black87,
+                  size: 20,
+                ),
+                if (unreadCount > 0)
+                  Positioned(
+                    right: -7,
+                    top: -7,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(
+                        minWidth: 17,
+                        minHeight: 17,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        unreadCount > 99 ? '99+' : unreadCount.toString(),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
           const SizedBox(width: 6),

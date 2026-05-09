@@ -183,7 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       UserSession.setUser(
-        id: user.role == 'admin' ? _idController.text.trim() : user.userID,
+        id: _idController.text.trim(),
         name: user.fullName,
         userEmail: user.email,
         userPhone: user.phoneNumber,
