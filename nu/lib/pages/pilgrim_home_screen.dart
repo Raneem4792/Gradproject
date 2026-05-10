@@ -114,21 +114,16 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
     );
   }
 
-Future<void> _openNotificationsPage() async {
-  await Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) =>
-          const PilgrimNotificationsPage(),
-    ),
-  );
+  Future<void> _openNotificationsPage() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PilgrimNotificationsPage()),
+    );
 
-  await Future.delayed(
-    const Duration(milliseconds: 300),
-  );
+    await Future.delayed(const Duration(milliseconds: 300));
 
-  _loadUnreadCount();
-}
+    _loadUnreadCount();
+  }
 
   String _localizedStatus(AppLocalizations l10n, String status) {
     switch (status.toLowerCase().trim()) {
@@ -194,9 +189,11 @@ Future<void> _openNotificationsPage() async {
                   const SizedBox(height: 18),
                   _SectionHeader(title: l10n.orderNow),
                   const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 520),
                         child: _OrderNowCard(
                           title: l10n.meals,
                           subtitle: l10n.browseDailyMeals,
@@ -204,7 +201,7 @@ Future<void> _openNotificationsPage() async {
                           gradient: const LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [Color(0xFFEAF7F2), Color(0xFFDCEFE8)],
+                            colors: [Color(0xFFF3FAF7), Color(0xFFE8F4EF)],
                           ),
                           onEnter: _openMealsPage,
                           icon: Icons.restaurant_menu_rounded,
@@ -212,24 +209,7 @@ Future<void> _openNotificationsPage() async {
                           buttonText: l10n.startOrder,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _OrderNowCard(
-                          title: l10n.buffet,
-                          subtitle: l10n.exploreBuffetOptions,
-                          chipText: l10n.groupService,
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [Color(0xFFFAF1DF), Color(0xFFF3ECE2)],
-                          ),
-                          onEnter: _noop,
-                          icon: Icons.local_dining_rounded,
-                          chipColor: gold,
-                          buttonText: l10n.viewOptions,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                   const SizedBox(height: 18),
                   _SectionHeader(title: l10n.orderHistory),
@@ -631,145 +611,151 @@ class _OrderNowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 230,
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onEnter,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.black.withOpacity(0.05)),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 22,
-            offset: const Offset(0, 12),
-            color: Colors.black.withOpacity(0.06),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(22),
+        child: Ink(
+          height: 175,
+          decoration: BoxDecoration(
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Colors.black.withOpacity(0.05)),
+            boxShadow: [
+              BoxShadow(
+                blurRadius: 22,
+                offset: const Offset(0, 12),
+                color: Colors.black.withOpacity(0.06),
               ),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Container(decoration: BoxDecoration(gradient: gradient)),
-                  Positioned(
-                    right: -22,
-                    top: -18,
-                    child: Container(
-                      width: 92,
-                      height: 92,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.18),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 14,
-                    top: 14,
-                    child: Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.72),
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                          color: Colors.black.withOpacity(0.05),
-                        ),
-                      ),
-                      child: Icon(
-                        icon,
-                        size: 23,
-                        color: primaryDark.withOpacity(0.92),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 14,
-                    top: 74,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: chipColor.withOpacity(0.28),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        chipText,
-                        style: TextStyle(
-                          fontSize: 11.2,
-                          fontWeight: FontWeight.w800,
-                          color: primaryDark.withOpacity(0.85),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 14,
-                    right: 14,
-                    bottom: 16,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 16,
-                            color: primaryDark.withOpacity(0.96),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          subtitle,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            height: 1.3,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                            color: primaryDark.withOpacity(0.67),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-            child: SizedBox(
-              height: 42,
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: onEnter,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
+          child: Stack(
+            children: [
+              Positioned(
+                right: -22,
+                top: -18,
+                child: Container(
+                  width: 92,
+                  height: 92,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.18),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+
+              Positioned(
+                left: 16,
+                top: 16,
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.76),
                     borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: Colors.black.withOpacity(0.05)),
                   ),
-                ),
-                child: Text(
-                  buttonText,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
+                  child: Icon(
+                    icon,
+                    size: 23,
+                    color: primaryDark.withOpacity(0.92),
                   ),
                 ),
               ),
-            ),
+
+              Positioned(
+                left: 16,
+                top: 78,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: chipColor.withOpacity(0.28),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    chipText,
+                    style: TextStyle(
+                      fontSize: 11.2,
+                      fontWeight: FontWeight.w800,
+                      color: primaryDark.withOpacity(0.85),
+                    ),
+                  ),
+                ),
+              ),
+
+              Positioned(
+                left: 16,
+                right: 120,
+                bottom: 22,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                        color: primaryDark.withOpacity(0.96),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        height: 1.3,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: primaryDark.withOpacity(0.67),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Positioned(
+                right: 16,
+                bottom: 18,
+                child: Container(
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: primary,
+                    borderRadius: BorderRadius.circular(999),
+                    boxShadow: [
+                      BoxShadow(
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                        color: primary.withOpacity(0.18),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        buttonText,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

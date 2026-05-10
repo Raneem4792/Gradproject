@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+
 import '../models/meal.dart';
 import '../models/meal_order.dart';
 import '../models/notification_model.dart';
@@ -16,38 +18,123 @@ class MealService {
     }
   }
 
-  // ✅ جلب كل الوجبات
-  Future<List<Meal>> getMeals() async {
-    final response = await http.get(Uri.parse('$baseUrl/meals'));
+  // يحول أي رد من السيرفر إلى List بشكل آمن
+  List<dynamic> _extractList(
+    dynamic decoded, {
+    String? key,
+    List<String> possibleKeys = const [],
+  }) {
+    if (decoded == null) return [];
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => Meal.fromJson(json)).toList();
-    } else {
-      throw Exception('Failed to load meals');
+    if (decoded is List) {
+      return decoded;
+    }
+
+    if (decoded is Map) {
+      final map = Map<String, dynamic>.from(decoded);
+
+      if (key != null && map[key] is List) {
+        return map[key] as List;
+      }
+
+      for (final possibleKey in possibleKeys) {
+        if (map[possibleKey] is List) {
+          return map[possibleKey] as List;
+        }
+      }
+
+      for (final possibleKey in const [
+        'data',
+        'meals',
+        'orders',
+        'campaigns',
+        'notifications',
+        'results',
+      ]) {
+        if (map[possibleKey] is List) {
+          return map[possibleKey] as List;
+        }
+      }
+
+      // احتياط لو السيرفر رجع Map مثل:
+      // { "1": {...}, "2": {...} }
+      return map.values.toList();
+    }
+
+    return [];
+  }
+
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+
+    return {};
+  }
+
+  String _extractErrorMessage(String responseBody, String fallback) {
+    try {
+      final decoded = jsonDecode(responseBody);
+
+      if (decoded is Map && decoded['message'] != null) {
+        return decoded['message'].toString();
+      }
+
+      if (decoded is Map && decoded['error'] != null) {
+        return decoded['error'].toString();
+      }
+
+      return fallback;
+    } catch (_) {
+      return fallback;
     }
   }
 
-  // ✅ تجهيز ملف الصورة بحيث يشتغل على web والموبايل
+  // جلب كل الوجبات
+  Future<List<Meal>> getMeals() async {
+    final response = await http.get(Uri.parse('$baseUrl/meals'));
+
+    print('GET MEALS STATUS CODE: ${response.statusCode}');
+    print('GET MEALS RESPONSE BODY: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      final data = _extractList(
+        decoded,
+        key: 'meals',
+        possibleKeys: const ['data', 'meals', 'results'],
+      );
+
+      return data.map((item) => Meal.fromJson(_asMap(item))).toList();
+    } else {
+      throw Exception(
+        _extractErrorMessage(response.body, 'Failed to load meals'),
+      );
+    }
+  }
+
+  // تجهيز ملف الصورة بحيث يشتغل على web والموبايل
   Future<http.MultipartFile?> _buildImageFile(XFile? imageFile) async {
     if (imageFile == null) return null;
 
     if (kIsWeb) {
       Uint8List bytes = await imageFile.readAsBytes();
+
       return http.MultipartFile.fromBytes(
         'image',
         bytes,
         filename: imageFile.name,
       );
     } else {
-      return await http.MultipartFile.fromPath(
-        'image',
-        imageFile.path,
-      );
+      return await http.MultipartFile.fromPath('image', imageFile.path);
     }
   }
 
-  // ✅ إضافة وجبة جديدة
+  // إضافة وجبة جديدة
   Future<void> addMeal(Meal meal, {XFile? imageFile}) async {
     final request = http.MultipartRequest(
       'POST',
@@ -68,6 +155,7 @@ class MealService {
     }
 
     final imageMultipart = await _buildImageFile(imageFile);
+
     if (imageMultipart != null) {
       request.files.add(imageMultipart);
     }
@@ -79,18 +167,16 @@ class MealService {
     print('ADD MEAL RESPONSE BODY: ${response.body}');
 
     if (response.statusCode != 201) {
-      try {
-        final data = jsonDecode(response.body);
-        throw Exception(data['message'] ?? 'Failed to add meal');
-      } catch (_) {
-        throw Exception(
+      throw Exception(
+        _extractErrorMessage(
+          response.body,
           'Failed to add meal. Server response: ${response.body}',
-        );
-      }
+        ),
+      );
     }
   }
 
-  // ✅ تعديل وجبة
+  // تعديل وجبة
   Future<void> updateMeal(int mealID, Meal meal, {XFile? imageFile}) async {
     final request = http.MultipartRequest(
       'PUT',
@@ -110,6 +196,7 @@ class MealService {
     }
 
     final imageMultipart = await _buildImageFile(imageFile);
+
     if (imageMultipart != null) {
       request.files.add(imageMultipart);
     }
@@ -121,29 +208,32 @@ class MealService {
     print('UPDATE MEAL RESPONSE BODY: ${response.body}');
 
     if (response.statusCode != 200) {
-      try {
-        final data = jsonDecode(response.body);
-        throw Exception(data['message'] ?? 'Failed to update meal');
-      } catch (_) {
-        throw Exception(
+      throw Exception(
+        _extractErrorMessage(
+          response.body,
           'Failed to update meal. Server response: ${response.body}',
-        );
-      }
+        ),
+      );
     }
   }
 
-  // ✅ حذف وجبة
+  // حذف وجبة
   Future<void> deleteMeal(int mealID) async {
     final response = await http.delete(
       Uri.parse('$baseUrl/meals/delete/$mealID'),
     );
 
+    print('DELETE MEAL STATUS CODE: ${response.statusCode}');
+    print('DELETE MEAL RESPONSE BODY: ${response.body}');
+
     if (response.statusCode != 200) {
-      throw Exception('Failed to delete meal');
+      throw Exception(
+        _extractErrorMessage(response.body, 'Failed to delete meal'),
+      );
     }
   }
 
-  // ✅ إنشاء طلب جديد (للحاج)
+  // إنشاء طلب جديد للحاج
   Future<Map<String, dynamic>> createOrder({
     required int mealID,
     required String pilgrimID,
@@ -151,36 +241,51 @@ class MealService {
     final response = await http.post(
       Uri.parse('$baseUrl/orders'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'mealID': mealID,
-        'pilgrimID': pilgrimID,
-      }),
+      body: jsonEncode({'mealID': mealID, 'pilgrimID': pilgrimID}),
     );
 
-    final data = jsonDecode(response.body);
+    print('CREATE ORDER STATUS CODE: ${response.statusCode}');
+    print('CREATE ORDER RESPONSE BODY: ${response.body}');
+
+    final decoded = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+    final data = _asMap(decoded);
 
     if (response.statusCode == 201) {
       return data;
     } else {
-      throw Exception(data['message'] ?? 'Failed to create order');
+      throw Exception(data['message']?.toString() ?? 'Failed to create order');
     }
   }
 
-  // ✅ جلب طلبات الحاج
+  // جلب طلبات الحاج
   Future<List<MealOrder>> getOrdersByPilgrim(String pilgrimID) async {
     final response = await http.get(
       Uri.parse('$baseUrl/orders/pilgrim/$pilgrimID'),
     );
 
+    print('GET PILGRIM ORDERS STATUS CODE: ${response.statusCode}');
+    print('GET PILGRIM ORDERS RESPONSE BODY: ${response.body}');
+
     if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => MealOrder.fromJson(json)).toList();
+      final decoded = jsonDecode(response.body);
+      final data = _extractList(
+        decoded,
+        key: 'orders',
+        possibleKeys: const ['data', 'orders', 'results'],
+      );
+
+      return data.map((item) => MealOrder.fromJson(_asMap(item))).toList();
     } else {
-      throw Exception('Failed to load orders: ${response.statusCode}');
+      throw Exception(
+        _extractErrorMessage(
+          response.body,
+          'Failed to load orders: ${response.statusCode}',
+        ),
+      );
     }
   }
 
-  // ✅ جلب حملات المزود
+  // جلب حملات المزود
   Future<List<Map<String, dynamic>>> getProviderCampaigns(
     String providerID,
   ) async {
@@ -188,15 +293,26 @@ class MealService {
       Uri.parse('$baseUrl/orders/provider/$providerID/campaigns'),
     );
 
+    print('GET PROVIDER CAMPAIGNS STATUS CODE: ${response.statusCode}');
+    print('GET PROVIDER CAMPAIGNS RESPONSE BODY: ${response.body}');
+
     if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((e) => Map<String, dynamic>.from(e)).toList();
+      final decoded = jsonDecode(response.body);
+      final data = _extractList(
+        decoded,
+        key: 'campaigns',
+        possibleKeys: const ['data', 'campaigns', 'results'],
+      );
+
+      return data.map((item) => _asMap(item)).toList();
     } else {
-      throw Exception('Failed to load campaigns');
+      throw Exception(
+        _extractErrorMessage(response.body, 'Failed to load campaigns'),
+      );
     }
   }
 
-  // ✅ جلب طلبات المزود مع فلتر الحملة
+  // جلب طلبات المزود مع فلتر الحملة
   Future<List<MealOrder>> getOrdersByProvider(
     String providerID, {
     String? campaignID,
@@ -209,15 +325,26 @@ class MealService {
 
     final response = await http.get(uri);
 
+    print('GET PROVIDER ORDERS STATUS CODE: ${response.statusCode}');
+    print('GET PROVIDER ORDERS RESPONSE BODY: ${response.body}');
+
     if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => MealOrder.fromJson(json)).toList();
+      final decoded = jsonDecode(response.body);
+      final data = _extractList(
+        decoded,
+        key: 'orders',
+        possibleKeys: const ['data', 'orders', 'results'],
+      );
+
+      return data.map((item) => MealOrder.fromJson(_asMap(item))).toList();
     } else {
-      throw Exception('Failed to load provider orders');
+      throw Exception(
+        _extractErrorMessage(response.body, 'Failed to load provider orders'),
+      );
     }
   }
 
-  // ✅ تقييم الطلب
+  // تقييم الطلب
   Future<void> createRate({
     required int orderID,
     required int stars,
@@ -233,12 +360,17 @@ class MealService {
       }),
     );
 
+    print('CREATE RATE STATUS CODE: ${response.statusCode}');
+    print('CREATE RATE RESPONSE BODY: ${response.body}');
+
     if (response.statusCode != 201) {
-      throw Exception('Failed to submit rating');
+      throw Exception(
+        _extractErrorMessage(response.body, 'Failed to submit rating'),
+      );
     }
   }
 
-  // ✅ تحديث حالة الطلب
+  // تحديث حالة الطلب
   Future<String> updateOrderStatus({
     required int orderID,
     required String status,
@@ -249,71 +381,130 @@ class MealService {
       body: jsonEncode({'status': status}),
     );
 
-    final data = jsonDecode(response.body);
+    print('UPDATE ORDER STATUS CODE: ${response.statusCode}');
+    print('UPDATE ORDER RESPONSE BODY: ${response.body}');
+
+    final decoded = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+    final data = _asMap(decoded);
 
     if (response.statusCode == 200) {
-      return data['message'] ?? 'Order status updated successfully';
+      return data['message']?.toString() ?? 'Order status updated successfully';
     } else {
-      throw Exception(data['message'] ?? 'Failed to update order status');
+      throw Exception(
+        data['message']?.toString() ?? 'Failed to update order status',
+      );
     }
   }
 
-  Future<List<AppNotification>> getNotifications(String userId, String userType) async {
-  try {
-    final response = await http.get(
-      Uri.parse('$baseUrl/notifications/$userId/$userType'),
-    );
+  // جلب الإشعارات
+  Future<List<AppNotification>> getNotifications(
+    String userId,
+    String userType,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/notifications/$userId/$userType'),
+      );
 
-    if (response.statusCode == 200) {
-      List data = json.decode(response.body);
-      return data.map((item) => AppNotification.fromJson(item)).toList();
-    } else {
-      print("Server Error: ${response.statusCode}");
+      print('GET NOTIFICATIONS STATUS CODE: ${response.statusCode}');
+      print('GET NOTIFICATIONS RESPONSE BODY: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        final data = _extractList(
+          decoded,
+          key: 'notifications',
+          possibleKeys: const ['data', 'notifications', 'results'],
+        );
+
+        return data
+            .map((item) => AppNotification.fromJson(_asMap(item)))
+            .toList();
+      } else {
+        print('Server Error: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      print('Error fetching notifications: $e');
       return [];
     }
-  } catch (e) {
-    print("Error fetching notifications: $e");
-    return [];
   }
-}
 
-Future<List<Meal>> getAiRecommendedMeals(String pilgrimID) async {
-  final response = await http.get(
-    Uri.parse('$baseUrl/meals/ai-recommended/$pilgrimID'),
-  );
+  // جلب الوجبات المقترحة بالذكاء الاصطناعي
+  Future<List<Meal>> getAiRecommendedMeals(String pilgrimID) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/meals/ai-recommended/$pilgrimID'),
+    );
 
-  if (response.statusCode == 200) {
-    final List<dynamic> data = jsonDecode(response.body);
-    return data.map((json) => Meal.fromJson(json)).toList();
-  } else {
-    throw Exception('Failed to load AI recommended meals');
+    print('GET AI MEALS STATUS CODE: ${response.statusCode}');
+    print('GET AI MEALS RESPONSE BODY: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      final data = _extractList(
+        decoded,
+        key: 'meals',
+        possibleKeys: const ['data', 'meals', 'recommendedMeals', 'results'],
+      );
+
+      return data.map((item) => Meal.fromJson(_asMap(item))).toList();
+    } else {
+      throw Exception(
+        _extractErrorMessage(
+          response.body,
+          'Failed to load AI recommended meals',
+        ),
+      );
+    }
   }
-}
 
-Future<List<Meal>> getMealsByProvider(String providerID) async {
-  final response = await http.get(
-    Uri.parse('$baseUrl/meals/provider/$providerID'),
-  );
+  // جلب وجبات المزود
+  Future<List<Meal>> getMealsByProvider(String providerID) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/meals/provider/$providerID'),
+    );
 
-  if (response.statusCode == 200) {
-    final List<dynamic> data = jsonDecode(response.body);
-    return data.map((json) => Meal.fromJson(json)).toList();
-  } else {
-    throw Exception('Failed to load provider meals');
+    print('GET PROVIDER MEALS STATUS CODE: ${response.statusCode}');
+    print('GET PROVIDER MEALS RESPONSE BODY: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      final data = _extractList(
+        decoded,
+        key: 'meals',
+        possibleKeys: const ['data', 'meals', 'results'],
+      );
+
+      return data.map((item) => Meal.fromJson(_asMap(item))).toList();
+    } else {
+      throw Exception(
+        _extractErrorMessage(response.body, 'Failed to load provider meals'),
+      );
+    }
   }
-}
 
-Future<List<Meal>> getMealsByPilgrimCampaign(String pilgrimID) async {
-  final response = await http.get(
-    Uri.parse('$baseUrl/meals/pilgrim/$pilgrimID/campaign'),
-  );
+  // جلب وجبات حملة الحاج
+  Future<List<Meal>> getMealsByPilgrimCampaign(String pilgrimID) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/meals/pilgrim/$pilgrimID/campaign'),
+    );
 
-  if (response.statusCode == 200) {
-    final List<dynamic> data = jsonDecode(response.body);
-    return data.map((json) => Meal.fromJson(json)).toList();
-  } else {
-    throw Exception('Failed to load campaign meals');
+    print('GET CAMPAIGN MEALS STATUS CODE: ${response.statusCode}');
+    print('GET CAMPAIGN MEALS RESPONSE BODY: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      final data = _extractList(
+        decoded,
+        key: 'meals',
+        possibleKeys: const ['data', 'meals', 'campaignMeals', 'results'],
+      );
+
+      return data.map((item) => Meal.fromJson(_asMap(item))).toList();
+    } else {
+      throw Exception(
+        _extractErrorMessage(response.body, 'Failed to load campaign meals'),
+      );
+    }
   }
-}
-
 }
