@@ -96,6 +96,13 @@ class _ProviderMealManagementScreenState
 
   void _showMealDetails(Meal meal) {
     final l10n = AppLocalizations.of(context)!;
+    final languageCode = Localizations.localeOf(context).languageCode;
+    final mealName = meal.localizedMealName(languageCode);
+    final mealType = meal.localizedMealType(languageCode);
+    final description = meal.localizedDescription(languageCode);
+    final canonicalMealType = meal.mealTypeEn.trim().isNotEmpty
+        ? meal.mealTypeEn
+        : meal.mealType;
 
     showDialog(
       context: context,
@@ -130,7 +137,7 @@ class _ProviderMealManagementScreenState
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    meal.mealName,
+                    mealName,
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
@@ -143,7 +150,7 @@ class _ProviderMealManagementScreenState
                     runSpacing: 8,
                     children: [
                       _detailChip(
-                        _localizedMealType(context, meal.mealType),
+                        _localizedMealType(context, canonicalMealType),
                         filled: true,
                       ),
                       _detailChip('${meal.calories} ${l10n.kcal}'),
@@ -153,12 +160,12 @@ class _ProviderMealManagementScreenState
                     ],
                   ),
                   const SizedBox(height: 18),
-                  _detailRow(l10n.mealName, meal.mealName),
+                  _detailRow(l10n.mealName, mealName),
                   _detailRow(
                     l10n.mealType,
-                    _localizedMealType(context, meal.mealType),
+                    _localizedMealType(context, canonicalMealType),
                   ),
-                  _detailRow(l10n.description, meal.description),
+                  _detailRow(l10n.description, description),
                   _detailRow(l10n.calories, '${meal.calories} ${l10n.kcal}'),
                   _detailRow(l10n.protein, '${meal.protein} g'),
                   _detailRow(l10n.carbohydrates, '${meal.carbohydrates} g'),
@@ -285,6 +292,8 @@ class _ProviderMealManagementScreenState
 
   Future<void> _deleteMeal(Meal meal) async {
     final l10n = AppLocalizations.of(context)!;
+    final languageCode = Localizations.localeOf(context).languageCode;
+    final mealName = meal.localizedMealName(languageCode);
 
     final ok = await showDialog<bool>(
       context: context,
@@ -296,7 +305,7 @@ class _ProviderMealManagementScreenState
           style: const TextStyle(fontWeight: FontWeight.w900),
         ),
         content: Text(
-          l10n.areYouSureDeleteMeal(meal.mealName),
+          l10n.areYouSureDeleteMeal(mealName),
           style: const TextStyle(
             color: Colors.black54,
             fontWeight: FontWeight.w600,
@@ -570,6 +579,13 @@ class _MealCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final languageCode = Localizations.localeOf(context).languageCode;
+    final mealName = meal.localizedMealName(languageCode);
+    final mealType = meal.localizedMealType(languageCode);
+    final description = meal.localizedDescription(languageCode);
+    final canonicalMealType = meal.mealTypeEn.trim().isNotEmpty
+        ? meal.mealTypeEn
+        : meal.mealType;
 
     return Material(
       color: Colors.transparent,
@@ -630,7 +646,7 @@ class _MealCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      meal.mealName,
+                      mealName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -645,7 +661,7 @@ class _MealCard extends StatelessWidget {
                       runSpacing: 8,
                       children: [
                         _MealPill(
-                          text: _localizedMealType(context, meal.mealType),
+                          text: _localizedMealType(context, canonicalMealType),
                           filled: true,
                         ),
                         _MealPill(text: '${meal.calories} ${l10n.kcal}'),
@@ -655,7 +671,7 @@ class _MealCard extends StatelessWidget {
                     const SizedBox(height: 10),
                     _InfoRow(
                       icon: Icons.description_outlined,
-                      text: meal.description,
+                      text: description,
                     ),
                     const SizedBox(height: 6),
                     _InfoRow(
@@ -885,8 +901,10 @@ class _MealFormSheetState extends State<_MealFormSheet> {
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
 
-  late TextEditingController _name;
-  late TextEditingController _desc;
+  late TextEditingController _nameAr;
+  late TextEditingController _nameEn;
+  late TextEditingController _descAr;
+  late TextEditingController _descEn;
   late TextEditingController _cal;
   late TextEditingController _pro;
   late TextEditingController _carb;
@@ -902,8 +920,10 @@ class _MealFormSheetState extends State<_MealFormSheet> {
   @override
   void initState() {
     super.initState();
-    _name = TextEditingController(text: widget.initial?.mealName ?? '');
-    _desc = TextEditingController(text: widget.initial?.description ?? '');
+    _nameAr = TextEditingController(text: widget.initial?.mealNameAr ?? '');
+    _nameEn = TextEditingController(text: widget.initial?.mealNameEn ?? '');
+    _descAr = TextEditingController(text: widget.initial?.descriptionAr ?? '');
+    _descEn = TextEditingController(text: widget.initial?.descriptionEn ?? '');
     _cal = TextEditingController(
       text: widget.initial?.calories.toString() ?? '',
     );
@@ -914,18 +934,21 @@ class _MealFormSheetState extends State<_MealFormSheet> {
       text: widget.initial?.carbohydrates.toString() ?? '',
     );
     _fat = TextEditingController(text: widget.initial?.fat.toString() ?? '');
-    _selectedMealType = _mealTypes.contains(widget.initial?.mealType)
-        ? widget.initial!.mealType
-        : (widget.initial?.mealType.isNotEmpty == true
-              ? widget.initial!.mealType
-              : 'Healthy');
+    final initialType = widget.initial?.mealTypeEn.trim().isNotEmpty == true
+        ? widget.initial!.mealTypeEn
+        : widget.initial?.mealType ?? '';
+    _selectedMealType = _mealTypes.contains(initialType)
+        ? initialType
+        : (initialType.isNotEmpty ? initialType : 'Healthy');
     _existingImage = widget.initial?.image ?? '';
   }
 
   @override
   void dispose() {
-    _name.dispose();
-    _desc.dispose();
+    _nameAr.dispose();
+    _nameEn.dispose();
+    _descAr.dispose();
+    _descEn.dispose();
     _cal.dispose();
     _pro.dispose();
     _carb.dispose();
@@ -1159,11 +1182,23 @@ class _MealFormSheetState extends State<_MealFormSheet> {
 
     setState(() => _isSaving = true);
 
+    final mealTypeAr = _localizedMealType(context, _selectedMealType);
+
     final meal = Meal(
       mealID: widget.initial?.mealID ?? 0,
-      mealName: _name.text.trim(),
+      mealName: _nameEn.text.trim().isNotEmpty
+          ? _nameEn.text.trim()
+          : _nameAr.text.trim(),
+      mealNameEn: _nameEn.text.trim(),
+      mealNameAr: _nameAr.text.trim(),
       mealType: _selectedMealType,
-      description: _desc.text.trim(),
+      mealTypeEn: _selectedMealType,
+      mealTypeAr: mealTypeAr,
+      description: _descEn.text.trim().isNotEmpty
+          ? _descEn.text.trim()
+          : _descAr.text.trim(),
+      descriptionEn: _descEn.text.trim(),
+      descriptionAr: _descAr.text.trim(),
       protein: num.parse(_pro.text.trim()),
       carbohydrates: num.parse(_carb.text.trim()),
       fat: num.parse(_fat.text.trim()),
@@ -1266,11 +1301,20 @@ class _MealFormSheetState extends State<_MealFormSheet> {
                 ),
               ),
               const SizedBox(height: 18),
-              _sectionLabel(l10n.mealName),
+              _sectionLabel('Meal Name - Arabic'),
               const SizedBox(height: 8),
               _styledInput(
-                _name,
-                l10n.enterMealName,
+                _nameAr,
+                'اسم الوجبة بالعربي',
+                validator: _mealNameValidator,
+                prefixIcon: Icons.restaurant_menu_rounded,
+              ),
+              const SizedBox(height: 14),
+              _sectionLabel('Meal Name - English'),
+              const SizedBox(height: 8),
+              _styledInput(
+                _nameEn,
+                'Meal name in English',
                 validator: _mealNameValidator,
                 prefixIcon: Icons.restaurant_menu_rounded,
               ),
@@ -1321,11 +1365,21 @@ class _MealFormSheetState extends State<_MealFormSheet> {
                 borderRadius: BorderRadius.circular(18),
               ),
               const SizedBox(height: 14),
-              _sectionLabel(l10n.description),
+              _sectionLabel('Description - Arabic'),
               const SizedBox(height: 8),
               _styledInput(
-                _desc,
-                l10n.writeMealDescription,
+                _descAr,
+                'وصف الوجبة بالعربي',
+                maxLines: 4,
+                validator: _descriptionValidator,
+                prefixIcon: Icons.description_outlined,
+              ),
+              const SizedBox(height: 14),
+              _sectionLabel('Description - English'),
+              const SizedBox(height: 8),
+              _styledInput(
+                _descEn,
+                'Meal description in English',
                 maxLines: 4,
                 validator: _descriptionValidator,
                 prefixIcon: Icons.description_outlined,

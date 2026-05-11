@@ -105,9 +105,10 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
 
     try {
       final reply = await _aiChatService.sendMessage(
-        message: text,
-        pilgrimID: pilgrimID,
-      );
+  message: text,
+  pilgrimID: pilgrimID,
+  language: Localizations.localeOf(context).languageCode,
+);
 
       if (!mounted) return;
 

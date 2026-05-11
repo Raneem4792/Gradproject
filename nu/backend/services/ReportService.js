@@ -4,6 +4,22 @@ class ReportService {
     async getProviderDashboard(providerID, language = 'en') {
         const isArabic = language === 'ar';
 
+        const pickMealName = (row) => {
+            if (isArabic) {
+                return row.mealName_ar || row.mealName || row.mealName_en || '';
+            }
+
+            return row.mealName_en || row.mealName || row.mealName_ar || '';
+        };
+
+        const pickMealType = (row) => {
+            if (isArabic) {
+                return row.mealType_ar || row.mealType || row.mealType_en || '';
+            }
+
+            return row.mealType_en || row.mealType || row.mealType_ar || '';
+        };
+
         const text = {
             noWrittenReview: isArabic
                 ? 'لا يوجد تقييم مكتوب'
@@ -63,8 +79,14 @@ class ReportService {
         mo.status,
         mo.pilgrimID,
         mo.mealID,
+
         m.mealName,
-        m.mealType
+        m.mealName_ar,
+        m.mealName_en,
+
+        m.mealType,
+        m.mealType_ar,
+        m.mealType_en
       FROM meal_order mo
       JOIN meal m ON mo.mealID = m.mealID
       WHERE m.providerID = ?
@@ -169,13 +191,22 @@ class ReportService {
         const starsFilled = Math.max(0, Math.min(5, Math.round(averageScore)));
 
         const mealMap = {};
+
         for (const order of todayOrders) {
             const key = order.mealID;
 
             if (!mealMap[key]) {
                 mealMap[key] = {
                     mealID: order.mealID,
-                    name: order.mealName,
+
+                    name: pickMealName(order),
+                    name_ar: order.mealName_ar || order.mealName || order.mealName_en || '',
+                    name_en: order.mealName_en || order.mealName || order.mealName_ar || '',
+
+                    mealType: pickMealType(order),
+                    mealType_ar: order.mealType_ar || order.mealType || order.mealType_en || '',
+                    mealType_en: order.mealType_en || order.mealType || order.mealType_ar || '',
+
                     orders: 0,
                 };
             }
@@ -188,6 +219,7 @@ class ReportService {
             .slice(0, 3);
 
         const demandTrend = [];
+
         for (let i = 6; i >= 0; i--) {
             const d = new Date();
             d.setDate(now.getDate() - i);
@@ -286,14 +318,6 @@ class ReportService {
             aiSuggestions.push(text.orderStable);
             aiSuggestions.push(text.keepMonitoring);
         }
-
-        console.log('FEEDBACK DEBUG =', {
-            averageScore,
-            starsFilled,
-            totalReviews,
-            highestScore,
-            latestReview,
-        });
 
         return {
             updatedAt: new Date().toISOString(),

@@ -1,18 +1,116 @@
 const adminService = require('../services/adminService');
 
+const cleanText = (value) => {
+  if (value === undefined || value === null) return '';
+  return String(value).trim();
+};
+
+const isValidNotificationText = (value) => {
+  /*
+    يسمح بـ:
+    - عربي
+    - إنجليزي
+    - أرقام
+    - مسافات
+    - علامات طبيعية للرسائل
+    ويمنع رموز مزعجة أو خطرة مثل:
+    < > { } [ ] ` | ^ *
+  */
+  const regex = /^[\u0600-\u06FFa-zA-Z0-9\s.,'’"()\-_/!?،؛:]+$/;
+  return regex.test(value);
+};
+
+const validateNotificationData = ({
+  title,
+  title_ar,
+  title_en,
+  notificationType,
+  messageContent,
+  messageContent_ar,
+  messageContent_en,
+  recipientType,
+  recipientUserID,
+}) => {
+  const errors = [];
+
+  const finalTitleAr = cleanText(title_ar || title);
+  const finalTitleEn = cleanText(title_en || title);
+
+  const finalMessageAr = cleanText(messageContent_ar || messageContent);
+  const finalMessageEn = cleanText(messageContent_en || messageContent);
+
+  const finalNotificationType = cleanText(notificationType);
+  const finalRecipientType = cleanText(recipientType);
+  const finalRecipientUserID = cleanText(recipientUserID);
+
+  if (!finalTitleAr && !finalTitleEn) {
+    errors.push('Notification title is required');
+  }
+
+  if (finalTitleAr && finalTitleAr.length > 255) {
+    errors.push('Arabic title must be less than 255 characters');
+  }
+
+  if (finalTitleEn && finalTitleEn.length > 255) {
+    errors.push('English title must be less than 255 characters');
+  }
+
+  if (finalTitleAr && !isValidNotificationText(finalTitleAr)) {
+    errors.push('Arabic title contains invalid characters');
+  }
+
+  if (finalTitleEn && !isValidNotificationText(finalTitleEn)) {
+    errors.push('English title contains invalid characters');
+  }
+
+  if (!finalMessageAr && !finalMessageEn) {
+    errors.push('Notification message is required');
+  }
+
+  if (finalMessageAr && finalMessageAr.length > 1000) {
+    errors.push('Arabic message must be less than 1000 characters');
+  }
+
+  if (finalMessageEn && finalMessageEn.length > 1000) {
+    errors.push('English message must be less than 1000 characters');
+  }
+
+  if (finalMessageAr && !isValidNotificationText(finalMessageAr)) {
+    errors.push('Arabic message contains invalid characters');
+  }
+
+  if (finalMessageEn && !isValidNotificationText(finalMessageEn)) {
+    errors.push('English message contains invalid characters');
+  }
+
+  if (!finalNotificationType) {
+    errors.push('Notification type is required');
+  }
+
+  if (!finalRecipientType) {
+    errors.push('Recipient type is required');
+  }
+
+  const bulkRecipientTypes = ['all_pilgrims', 'all_providers'];
+
+  if (!bulkRecipientTypes.includes(finalRecipientType) && !finalRecipientUserID) {
+    errors.push('Recipient user ID is required for a specific user');
+  }
+
+  return errors;
+};
+
 exports.getAccountsTree = async (req, res) => {
   try {
-
-    const data =
-      await adminService.getAccountsTree();
+    const data = await adminService.getAccountsTree();
 
     res.json(data);
-
   } catch (error) {
+    console.error('Get accounts tree error:', error);
 
     res.status(500).json({
       message: 'Failed to fetch accounts tree',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -20,8 +118,11 @@ exports.getAccountsTree = async (req, res) => {
 exports.getOrdersMonitor = async (req, res) => {
   try {
     const data = await adminService.getOrdersMonitor();
+
     res.json(data);
   } catch (error) {
+    console.error('Get orders monitor error:', error);
+
     res.status(500).json({
       message: 'Failed to fetch orders monitor',
       error: error.message,
@@ -31,40 +132,49 @@ exports.getOrdersMonitor = async (req, res) => {
 
 exports.createNotification = async (req, res) => {
   try {
-
     const {
       title,
+      title_ar,
+      title_en,
       notificationType,
       messageContent,
+      messageContent_ar,
+      messageContent_en,
       recipientType,
       recipientUserID,
       createdByAdminID,
     } = req.body;
 
-    if (
-      !title ||
-      !notificationType ||
-      !messageContent ||
-      !recipientType
-    ) {
+    const notificationData = {
+      title: cleanText(title),
+      title_ar: cleanText(title_ar),
+      title_en: cleanText(title_en),
+
+      notificationType: cleanText(notificationType),
+
+      messageContent: cleanText(messageContent),
+      messageContent_ar: cleanText(messageContent_ar),
+      messageContent_en: cleanText(messageContent_en),
+
+      recipientType: cleanText(recipientType),
+      recipientUserID: cleanText(recipientUserID),
+      createdByAdminID: cleanText(createdByAdminID),
+    };
+
+    const validationErrors = validateNotificationData(notificationData);
+
+    if (validationErrors.length > 0) {
       return res.status(400).json({
-        message: 'Missing required fields',
+        message: 'Invalid notification data',
+        errors: validationErrors,
       });
     }
 
-    const data =
-      await adminService.createNotification({
-        title,
-        notificationType,
-        messageContent,
-        recipientType,
-        recipientUserID,
-        createdByAdminID,
-      });
+    const data = await adminService.createNotification(notificationData);
 
     res.status(201).json(data);
-
   } catch (error) {
+    console.error('Create notification error:', error);
 
     res.status(500).json({
       message: 'Failed to create notification',
@@ -76,8 +186,11 @@ exports.createNotification = async (req, res) => {
 exports.getSentNotifications = async (req, res) => {
   try {
     const data = await adminService.getSentNotifications();
+
     res.json(data);
   } catch (error) {
+    console.error('Get sent notifications error:', error);
+
     res.status(500).json({
       message: 'Failed to fetch sent notifications',
       error: error.message,
@@ -92,11 +205,15 @@ exports.getAdminProfile = async (req, res) => {
     const admin = await adminService.getAdminProfile(adminID);
 
     if (!admin) {
-      return res.status(404).json({ message: 'Admin not found' });
+      return res.status(404).json({
+        message: 'Admin not found',
+      });
     }
 
     res.json(admin);
   } catch (error) {
+    console.error('Get admin profile error:', error);
+
     res.status(500).json({
       message: 'Failed to load admin profile',
       error: error.message,

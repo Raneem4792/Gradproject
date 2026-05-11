@@ -6,9 +6,11 @@ const getPilgrimHomeData = async (req, res) => {
 
     // بيانات الحاج
     const [pilgrimRows] = await db.query(
-      `SELECT pilgrimID, fullName, email, phoneNumber, campaignID
-       FROM pilgrim
-       WHERE pilgrimID = ?`,
+      `
+      SELECT pilgrimID, fullName, email, phoneNumber, campaignID
+      FROM pilgrim
+      WHERE pilgrimID = ?
+      `,
       [pilgrimID]
     );
 
@@ -22,19 +24,25 @@ const getPilgrimHomeData = async (req, res) => {
 
     // آخر طلب للحاج
     const [orderRows] = await db.query(
-      `SELECT 
-          mo.orderID,
-          mo.requestDate,
-          mo.status,
-          m.mealName,
-          m.protein,
-          m.carbohydrates,
-          m.calories
-       FROM meal_order mo
-       JOIN Meal m ON mo.mealID = m.mealID
-       WHERE mo.pilgrimID = ?
-       ORDER BY mo.requestDate DESC
-       LIMIT 1`,
+      `
+      SELECT 
+        mo.orderID,
+        mo.requestDate,
+        mo.status,
+
+        m.mealName,
+        m.mealName_en,
+        m.mealName_ar,
+
+        m.protein,
+        m.carbohydrates,
+        m.calories
+      FROM meal_order mo
+      JOIN Meal m ON mo.mealID = m.mealID
+      WHERE mo.pilgrimID = ?
+      ORDER BY mo.requestDate DESC
+      LIMIT 1
+      `,
       [pilgrimID]
     );
 
@@ -42,12 +50,34 @@ const getPilgrimHomeData = async (req, res) => {
 
     if (orderRows.length > 0) {
       const order = orderRows[0];
+
       latestOrder = {
         orderID: order.orderID,
-        mealName: order.mealName,
+
+        // القديم نخليه عشان ما ينكسر الفرونت القديم
+        mealName:
+          order.mealName ||
+          order.mealName_en ||
+          order.mealName_ar ||
+          '',
+
+        // الجديد
+        mealName_en:
+          order.mealName_en ||
+          order.mealName ||
+          order.mealName_ar ||
+          '',
+
+        mealName_ar:
+          order.mealName_ar ||
+          order.mealName ||
+          order.mealName_en ||
+          '',
+
         requestDate: order.requestDate,
         status: order.status,
-        kcalLine: '${order.protein} Protein · ${order.carbohydrates}g Carbs · ${order.calories} kcal',
+
+        kcalLine: `${order.protein}g Protein · ${order.carbohydrates}g Carbs · ${order.calories} kcal`,
       };
     }
 

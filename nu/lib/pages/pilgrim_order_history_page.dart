@@ -43,7 +43,10 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
     _ordersFuture = _mealService.getOrdersByPilgrim(pilgrimId);
   }
 
-  List<Map<String, dynamic>> _mapOrders(List<MealOrder> apiOrders) {
+  List<Map<String, dynamic>> _mapOrders(
+    List<MealOrder> apiOrders,
+    String languageCode,
+  ) {
     return apiOrders.map<Map<String, dynamic>>((order) {
       final status = order.status.toLowerCase();
 
@@ -64,7 +67,7 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
 
       return {
         "orderId": order.orderID.toString(),
-        "mealName": order.mealName,
+        "mealName": order.localizedMealName(languageCode),
         "orderDate": order.formattedRequestDate,
         "orderStatus": uiStatus,
         "isReviewed": order.isReviewed,
@@ -140,6 +143,7 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final languageCode = Localizations.localeOf(context).languageCode;
 
     return Scaffold(
       backgroundColor: bg,
@@ -165,7 +169,7 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
               );
             }
 
-            orders = _mapOrders(snapshot.data ?? []);
+            orders = _mapOrders(snapshot.data ?? [], languageCode);
 
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 22),

@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
@@ -14,6 +15,7 @@ class AiChatService {
   Future<String> sendMessage({
     required String message,
     required String pilgrimID,
+    required String language,
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/ai-chat'),
@@ -21,12 +23,13 @@ class AiChatService {
       body: jsonEncode({
         'message': message,
         'pilgrimID': pilgrimID,
+        'language': language,
       }),
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return data['reply'] ?? 'No reply received.';
+      return data['reply']?.toString() ?? 'No reply received.';
     } else {
       throw Exception('Failed to get AI response');
     }

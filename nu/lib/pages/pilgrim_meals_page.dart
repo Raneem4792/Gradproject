@@ -9,17 +9,6 @@ import 'pilgrim_order_history_page.dart';
 import 'pilgrim_profile_page.dart';
 import '../widgets/pilgrim_bottom_nav.dart';
 import '../session/user_session.dart';
-import 'package:flutter/material.dart';
-
-import '../l10n/app_localizations.dart';
-import '../main.dart';
-import '../models/meal.dart';
-import '../services/meal_service.dart';
-import 'pilgrim_submit_meal_request_page.dart';
-import 'pilgrim_home_screen.dart';
-import 'pilgrim_order_history_page.dart';
-import 'pilgrim_profile_page.dart';
-import '../widgets/pilgrim_bottom_nav.dart';
 
 class PilgrimMealsPage extends StatefulWidget {
   static const String routeName = '/pilgrim-meals';
@@ -172,9 +161,32 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
     });
   }
 
+  String _localizedNutritionLine(
+    BuildContext context, {
+    required dynamic calories,
+    required dynamic protein,
+    required dynamic carbohydrates,
+    required dynamic fat,
+  }) {
+    final languageCode = Localizations.localeOf(context).languageCode;
+    final isArabic = languageCode.toLowerCase().startsWith('ar');
+
+    final caloriesText = calories?.toString() ?? '0';
+    final proteinText = protein?.toString() ?? '0';
+    final carbsText = carbohydrates?.toString() ?? '0';
+    final fatText = fat?.toString() ?? '0';
+
+    if (isArabic) {
+      return '$caloriesText سعرة حرارية • $proteinText جم بروتين • $carbsText جم كربوهيدرات • $fatText جم دهون';
+    }
+
+    return '$caloriesText kcal • ${proteinText}g protein • ${carbsText}g carbs • ${fatText}g fat';
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final languageCode = Localizations.localeOf(context).languageCode;
 
     return Scaffold(
       backgroundColor: bg,
@@ -226,37 +238,59 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
                   if (visibleMeals.isEmpty)
                     _EmptyMealsState(
                       title: showRecommendedOnly
-                          ? 'Complete your health profile to get AI recommended meals'
-                          : 'Meals are not currently available for your campaign',
+                          ? l10n.completeHealthProfileForAiMeals
+                          : l10n.mealsAreNotCurrentlyAvailableForYourCampaign,
                       subtitle: showRecommendedOnly
-                          ? 'Please complete your health profile first, then try again.'
-                          : 'Your campaign provider has not added meals yet.',
+                          ? l10n.completeHealthProfileFirstThenTryAgain
+                          : l10n.yourCampaignProviderHasNotAddedMealsYet,
                     )
                   else
-                    ...visibleMeals.map(
-                      (meal) => Padding(
+                    ...visibleMeals.map((meal) {
+                      final mealName = meal.localizedMealName(languageCode);
+                      final mealType = meal.localizedMealType(languageCode);
+                      final description = meal.localizedDescription(
+                        languageCode,
+                      );
+
+                      final nutritionLine = _localizedNutritionLine(
+                        context,
+                        calories: meal.calories,
+                        protein: meal.protein,
+                        carbohydrates: meal.carbohydrates,
+                        fat: meal.fat,
+                      );
+
+                      return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _MealRequestCard(
-                          title: meal.mealName,
+                          title: mealName,
                           providerName: meal.providerName,
-                          mealType: _localizedMealType(context, meal.mealType),
-                          description: meal.description,
-                          nutritionLine: meal.nutritionLine,
+                          mealType: _localizedMealType(context, mealType),
+                          description: description,
+                          nutritionLine: nutritionLine,
                           isHealthMatched: meal.isHealthMatched,
-                          icon: _getMealIcon(meal.mealType),
+                          icon: _getMealIcon(
+                            meal.mealTypeEn.isNotEmpty
+                                ? meal.mealTypeEn
+                                : meal.mealType,
+                          ),
                           onSelectMeal: () {
                             _openSubmitMealRequestPage(
                               mealID: meal.mealID,
-                              title: meal.mealName,
-                              description: meal.description,
+                              title: mealName,
+                              description: description,
                               providerName: meal.providerName,
-                              nutritionLine: meal.nutritionLine,
-                              icon: _getMealIcon(meal.mealType),
+                              nutritionLine: nutritionLine,
+                              icon: _getMealIcon(
+                                meal.mealTypeEn.isNotEmpty
+                                    ? meal.mealTypeEn
+                                    : meal.mealType,
+                              ),
                             );
                           },
                         ),
-                      ),
-                    ),
+                      );
+                    }),
                 ],
               ),
             );

@@ -18,7 +18,6 @@ class MealService {
     }
   }
 
-  // يحول أي رد من السيرفر إلى List بشكل آمن
   List<dynamic> _extractList(
     dynamic decoded, {
     String? key,
@@ -56,8 +55,6 @@ class MealService {
         }
       }
 
-      // احتياط لو السيرفر رجع Map مثل:
-      // { "1": {...}, "2": {...} }
       return map.values.toList();
     }
 
@@ -88,36 +85,73 @@ class MealService {
         return decoded['error'].toString();
       }
 
+      if (decoded is Map && decoded['errors'] != null) {
+        final errors = decoded['errors'];
+
+        if (errors is List && errors.isNotEmpty) {
+          return errors.join('\n');
+        }
+
+        return errors.toString();
+      }
+
       return fallback;
     } catch (_) {
       return fallback;
     }
   }
 
-  // جلب كل الوجبات
-  Future<List<Meal>> getMeals() async {
-    final response = await http.get(Uri.parse('$baseUrl/meals'));
+  void _addMealFieldsToRequest(http.MultipartRequest request, Meal meal) {
+    final mealNameEn = meal.mealNameEn.trim().isNotEmpty
+        ? meal.mealNameEn.trim()
+        : meal.mealName.trim();
 
-    print('GET MEALS STATUS CODE: ${response.statusCode}');
-    print('GET MEALS RESPONSE BODY: ${response.body}');
+    final mealNameAr = meal.mealNameAr.trim().isNotEmpty
+        ? meal.mealNameAr.trim()
+        : meal.mealName.trim();
 
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body);
-      final data = _extractList(
-        decoded,
-        key: 'meals',
-        possibleKeys: const ['data', 'meals', 'results'],
-      );
+    final mealTypeEn = meal.mealTypeEn.trim().isNotEmpty
+        ? meal.mealTypeEn.trim()
+        : meal.mealType.trim();
 
-      return data.map((item) => Meal.fromJson(_asMap(item))).toList();
-    } else {
-      throw Exception(
-        _extractErrorMessage(response.body, 'Failed to load meals'),
-      );
+    final mealTypeAr = meal.mealTypeAr.trim().isNotEmpty
+        ? meal.mealTypeAr.trim()
+        : meal.mealType.trim();
+
+    final descriptionEn = meal.descriptionEn.trim().isNotEmpty
+        ? meal.descriptionEn.trim()
+        : meal.description.trim();
+
+    final descriptionAr = meal.descriptionAr.trim().isNotEmpty
+        ? meal.descriptionAr.trim()
+        : meal.description.trim();
+
+    request.fields['mealName'] = mealNameEn;
+    request.fields['mealName_en'] = mealNameEn;
+    request.fields['mealName_ar'] = mealNameAr;
+
+    request.fields['mealType'] = mealTypeEn;
+    request.fields['mealType_en'] = mealTypeEn;
+    request.fields['mealType_ar'] = mealTypeAr;
+
+    request.fields['description'] = descriptionEn;
+    request.fields['description_en'] = descriptionEn;
+    request.fields['description_ar'] = descriptionAr;
+
+    request.fields['protein'] = meal.protein.toString();
+    request.fields['carbohydrates'] = meal.carbohydrates.toString();
+    request.fields['fat'] = meal.fat.toString();
+    request.fields['calories'] = meal.calories.toString();
+
+    if (meal.providerID.trim().isNotEmpty) {
+      request.fields['providerID'] = meal.providerID.trim();
+    }
+
+    if (meal.image.trim().isNotEmpty) {
+      request.fields['existingImage'] = meal.image.trim();
     }
   }
 
-  // تجهيز ملف الصورة بحيث يشتغل على web والموبايل
   Future<http.MultipartFile?> _buildImageFile(XFile? imageFile) async {
     if (imageFile == null) return null;
 
@@ -134,25 +168,36 @@ class MealService {
     }
   }
 
-  // إضافة وجبة جديدة
+  Future<List<Meal>> getMeals() async {
+    final response = await http.get(Uri.parse('$baseUrl/meals'));
+
+    print('GET MEALS STATUS CODE: ${response.statusCode}');
+    print('GET MEALS RESPONSE BODY: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+
+      final data = _extractList(
+        decoded,
+        key: 'meals',
+        possibleKeys: const ['data', 'meals', 'results'],
+      );
+
+      return data.map((item) => Meal.fromJson(_asMap(item))).toList();
+    } else {
+      throw Exception(
+        _extractErrorMessage(response.body, 'Failed to load meals'),
+      );
+    }
+  }
+
   Future<void> addMeal(Meal meal, {XFile? imageFile}) async {
     final request = http.MultipartRequest(
       'POST',
       Uri.parse('$baseUrl/meals/add'),
     );
 
-    request.fields['mealName'] = meal.mealName;
-    request.fields['mealType'] = meal.mealType;
-    request.fields['description'] = meal.description;
-    request.fields['protein'] = meal.protein.toString();
-    request.fields['carbohydrates'] = meal.carbohydrates.toString();
-    request.fields['fat'] = meal.fat.toString();
-    request.fields['calories'] = meal.calories.toString();
-    request.fields['providerID'] = meal.providerID;
-
-    if (meal.image.isNotEmpty) {
-      request.fields['existingImage'] = meal.image;
-    }
+    _addMealFieldsToRequest(request, meal);
 
     final imageMultipart = await _buildImageFile(imageFile);
 
@@ -176,24 +221,13 @@ class MealService {
     }
   }
 
-  // تعديل وجبة
   Future<void> updateMeal(int mealID, Meal meal, {XFile? imageFile}) async {
     final request = http.MultipartRequest(
       'PUT',
       Uri.parse('$baseUrl/meals/update/$mealID'),
     );
 
-    request.fields['mealName'] = meal.mealName;
-    request.fields['mealType'] = meal.mealType;
-    request.fields['description'] = meal.description;
-    request.fields['protein'] = meal.protein.toString();
-    request.fields['carbohydrates'] = meal.carbohydrates.toString();
-    request.fields['fat'] = meal.fat.toString();
-    request.fields['calories'] = meal.calories.toString();
-
-    if (meal.image.isNotEmpty) {
-      request.fields['existingImage'] = meal.image;
-    }
+    _addMealFieldsToRequest(request, meal);
 
     final imageMultipart = await _buildImageFile(imageFile);
 
@@ -217,7 +251,6 @@ class MealService {
     }
   }
 
-  // حذف وجبة
   Future<void> deleteMeal(int mealID) async {
     final response = await http.delete(
       Uri.parse('$baseUrl/meals/delete/$mealID'),
@@ -233,7 +266,6 @@ class MealService {
     }
   }
 
-  // إنشاء طلب جديد للحاج
   Future<Map<String, dynamic>> createOrder({
     required int mealID,
     required String pilgrimID,
@@ -257,7 +289,6 @@ class MealService {
     }
   }
 
-  // جلب طلبات الحاج
   Future<List<MealOrder>> getOrdersByPilgrim(String pilgrimID) async {
     final response = await http.get(
       Uri.parse('$baseUrl/orders/pilgrim/$pilgrimID'),
@@ -268,6 +299,7 @@ class MealService {
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
+
       final data = _extractList(
         decoded,
         key: 'orders',
@@ -285,7 +317,6 @@ class MealService {
     }
   }
 
-  // جلب حملات المزود
   Future<List<Map<String, dynamic>>> getProviderCampaigns(
     String providerID,
   ) async {
@@ -298,6 +329,7 @@ class MealService {
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
+
       final data = _extractList(
         decoded,
         key: 'campaigns',
@@ -312,7 +344,6 @@ class MealService {
     }
   }
 
-  // جلب طلبات المزود مع فلتر الحملة
   Future<List<MealOrder>> getOrdersByProvider(
     String providerID, {
     String? campaignID,
@@ -330,6 +361,7 @@ class MealService {
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
+
       final data = _extractList(
         decoded,
         key: 'orders',
@@ -344,7 +376,6 @@ class MealService {
     }
   }
 
-  // تقييم الطلب
   Future<void> createRate({
     required int orderID,
     required int stars,
@@ -370,7 +401,6 @@ class MealService {
     }
   }
 
-  // تحديث حالة الطلب
   Future<String> updateOrderStatus({
     required int orderID,
     required String status,
@@ -396,7 +426,6 @@ class MealService {
     }
   }
 
-  // جلب الإشعارات
   Future<List<AppNotification>> getNotifications(
     String userId,
     String userType,
@@ -411,6 +440,7 @@ class MealService {
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
+
         final data = _extractList(
           decoded,
           key: 'notifications',
@@ -430,7 +460,6 @@ class MealService {
     }
   }
 
-  // جلب الوجبات المقترحة بالذكاء الاصطناعي
   Future<List<Meal>> getAiRecommendedMeals(String pilgrimID) async {
     final response = await http.get(
       Uri.parse('$baseUrl/meals/ai-recommended/$pilgrimID'),
@@ -441,10 +470,21 @@ class MealService {
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
+
+      if (decoded is Map && decoded['needsProfile'] == true) {
+        return [];
+      }
+
       final data = _extractList(
         decoded,
         key: 'meals',
-        possibleKeys: const ['data', 'meals', 'recommendedMeals', 'results'],
+        possibleKeys: const [
+          'data',
+          'meals',
+          'recommendedMeals',
+          'recommendations',
+          'results',
+        ],
       );
 
       return data.map((item) => Meal.fromJson(_asMap(item))).toList();
@@ -458,7 +498,6 @@ class MealService {
     }
   }
 
-  // جلب وجبات المزود
   Future<List<Meal>> getMealsByProvider(String providerID) async {
     final response = await http.get(
       Uri.parse('$baseUrl/meals/provider/$providerID'),
@@ -469,6 +508,7 @@ class MealService {
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
+
       final data = _extractList(
         decoded,
         key: 'meals',
@@ -483,7 +523,6 @@ class MealService {
     }
   }
 
-  // جلب وجبات حملة الحاج
   Future<List<Meal>> getMealsByPilgrimCampaign(String pilgrimID) async {
     final response = await http.get(
       Uri.parse('$baseUrl/meals/pilgrim/$pilgrimID/campaign'),
@@ -494,6 +533,7 @@ class MealService {
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
+
       final data = _extractList(
         decoded,
         key: 'meals',

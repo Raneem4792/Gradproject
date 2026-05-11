@@ -5,14 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../l10n/app_localizations.dart';
-import 'pilgrim_meals_page.dart';
-import 'pilgrim_order_history_page.dart';
-import 'pilgrim_profile_page.dart';
-import 'pilgrim_ai_chat_page.dart';
-import '../widgets/pilgrim_bottom_nav.dart';
-import 'pilgrim_notifications_page.dart';
 import '../services/pilgrim_service.dart';
 import '../session/user_session.dart';
+import '../widgets/pilgrim_bottom_nav.dart';
+import 'pilgrim_ai_chat_page.dart';
+import 'pilgrim_meals_page.dart';
+import 'pilgrim_notifications_page.dart';
+import 'pilgrim_order_history_page.dart';
+import 'pilgrim_profile_page.dart';
 
 class PilgrimHomeScreen extends StatefulWidget {
   static const String routeName = '/pilgrim-home';
@@ -142,9 +142,38 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
     }
   }
 
+  String _localizedLatestMealName({
+    required dynamic latestOrder,
+    required String languageCode,
+    required AppLocalizations l10n,
+  }) {
+    if (latestOrder is! Map) {
+      return l10n.unknownMeal;
+    }
+
+    final isArabic = languageCode.toLowerCase().startsWith('ar');
+
+    final oldName = latestOrder['mealName']?.toString().trim() ?? '';
+    final arabicName = latestOrder['mealName_ar']?.toString().trim() ?? '';
+    final englishName = latestOrder['mealName_en']?.toString().trim() ?? '';
+
+    if (isArabic) {
+      if (arabicName.isNotEmpty) return arabicName;
+      if (oldName.isNotEmpty) return oldName;
+      if (englishName.isNotEmpty) return englishName;
+    } else {
+      if (englishName.isNotEmpty) return englishName;
+      if (oldName.isNotEmpty) return oldName;
+      if (arabicName.isNotEmpty) return arabicName;
+    }
+
+    return l10n.unknownMeal;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final languageCode = Localizations.localeOf(context).languageCode;
 
     return Scaffold(
       backgroundColor: bg,
@@ -176,6 +205,12 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
             final data = snapshot.data ?? {};
             final userName = data['fullName'] ?? l10n.pilgrim;
             final latestOrder = data['latestOrder'];
+
+            final latestMealName = _localizedLatestMealName(
+              latestOrder: latestOrder,
+              languageCode: languageCode,
+              l10n: l10n,
+            );
 
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 22),
@@ -218,7 +253,7 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
                     const _EmptyOrderHistoryCard()
                   else
                     _OrderHistoryCard(
-                      title: latestOrder['mealName'] ?? l10n.unknownMeal,
+                      title: latestMealName,
                       metaLine:
                           '${l10n.orderNumber} ${latestOrder['orderID']} · ${_localizedStatus(l10n, latestOrder['status']?.toString() ?? '')}',
                       kcalLine: latestOrder['kcalLine'] ?? '',
@@ -238,8 +273,6 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
       ),
     );
   }
-
-  static void _noop() {}
 }
 
 class _PilgrimMainAppBar extends StatelessWidget
@@ -644,7 +677,6 @@ class _OrderNowCard extends StatelessWidget {
                   ),
                 ),
               ),
-
               Positioned(
                 left: 16,
                 top: 16,
@@ -663,7 +695,6 @@ class _OrderNowCard extends StatelessWidget {
                   ),
                 ),
               ),
-
               Positioned(
                 left: 16,
                 top: 78,
@@ -686,7 +717,6 @@ class _OrderNowCard extends StatelessWidget {
                   ),
                 ),
               ),
-
               Positioned(
                 left: 16,
                 right: 120,
@@ -719,7 +749,6 @@ class _OrderNowCard extends StatelessWidget {
                   ],
                 ),
               ),
-
               Positioned(
                 right: 16,
                 bottom: 18,

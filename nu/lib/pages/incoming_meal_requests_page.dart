@@ -107,7 +107,7 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
     try {
       final message = await _mealService.updateOrderStatus(
         orderID: orderID,
-        status: 'cancelled',
+        status: 'rejected',
       );
 
       if (!mounted) return;
@@ -156,8 +156,6 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
   }
 
   Future<void> _showAcceptedStatusMenu(int orderID) async {
-    final l10n = AppLocalizations.of(context)!;
-
     final selectedStatus = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.white,
@@ -222,6 +220,7 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final languageCode = Localizations.localeOf(context).languageCode;
 
     return Scaffold(
       backgroundColor: bg,
@@ -258,8 +257,9 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
                 .toList();
 
             final isIncomingTab = _selectedTabIndex == 0;
-            final currentRequests =
-                isIncomingTab ? pendingRequests : acceptedRequests;
+            final currentRequests = isIncomingTab
+                ? pendingRequests
+                : acceptedRequests;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 22),
@@ -296,12 +296,14 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
                           : l10n.noAcceptedOrdersYet,
                     )
                   else
-                    ...currentRequests.map(
-                      (req) => Padding(
+                    ...currentRequests.map((req) {
+                      final mealName = req.localizedMealName(languageCode);
+
+                      return Padding(
                         padding: const EdgeInsets.only(bottom: 14),
                         child: isIncomingTab
                             ? _IncomingRequestCardGreen(
-                                mealName: req.mealName,
+                                mealName: mealName,
                                 campaignNo: req.campaignNumber.isEmpty
                                     ? req.campaignName
                                     : req.campaignNumber,
@@ -311,7 +313,7 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
                                 onReject: () => _rejectRequest(req.orderID),
                               )
                             : _AcceptedRequestCard(
-                                mealName: req.mealName,
+                                mealName: mealName,
                                 campaignNo: req.campaignNumber.isEmpty
                                     ? req.campaignName
                                     : req.campaignNumber,
@@ -320,8 +322,8 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
                                 onTapStatus: () =>
                                     _showAcceptedStatusMenu(req.orderID),
                               ),
-                      ),
-                    ),
+                      );
+                    }),
                 ],
               ),
             );
@@ -426,11 +428,7 @@ class _RequestsHeaderCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.white.withOpacity(0.16)),
             ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: 22,
-            ),
+            child: Icon(icon, color: Colors.white, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -591,10 +589,7 @@ class _TabOption extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 5,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? Colors.white.withOpacity(0.16)

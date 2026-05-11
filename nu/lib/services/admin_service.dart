@@ -22,27 +22,67 @@ class AdminService {
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
 
-      return data
-          .map((item) => AdminProviderAccount.fromJson(item))
-          .toList();
+      return data.map((item) => AdminProviderAccount.fromJson(item)).toList();
     } else {
       throw Exception('Failed to load accounts tree');
     }
   }
 
   Future<List<AdminOrdersCampaign>> getOrdersMonitor() async {
-  final url = Uri.parse('$baseUrl/admin/orders-monitor');
+    final url = Uri.parse('$baseUrl/admin/orders-monitor');
 
-  final response = await http.get(url);
+    final response = await http.get(url);
 
-  if (response.statusCode == 200) {
-    final List<dynamic> data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
 
-    return data
-        .map((item) => AdminOrdersCampaign.fromJson(item))
-        .toList();
-  } else {
-    throw Exception('Failed to load orders monitor');
+      return data.map((item) => AdminOrdersCampaign.fromJson(item)).toList();
+    } else {
+      throw Exception('Failed to load orders monitor');
+    }
   }
-}
+
+  Future<List<dynamic>> getSentNotifications() async {
+    final response = await http.get(Uri.parse('$baseUrl/admin/notifications'));
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load notifications');
+    }
+  }
+
+  Future<void> createNotification({
+    required String titleAr,
+    required String titleEn,
+    required String messageAr,
+    required String messageEn,
+    required String notificationType,
+    required String recipientType,
+    String? recipientUserID,
+    String? createdByAdminID,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/admin/notifications'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'title': titleEn.trim().isNotEmpty ? titleEn.trim() : titleAr.trim(),
+        'title_ar': titleAr.trim(),
+        'title_en': titleEn.trim(),
+        'notificationType': notificationType.trim(),
+        'messageContent': messageEn.trim().isNotEmpty
+            ? messageEn.trim()
+            : messageAr.trim(),
+        'messageContent_ar': messageAr.trim(),
+        'messageContent_en': messageEn.trim(),
+        'recipientType': recipientType.trim(),
+        'recipientUserID': recipientUserID?.trim() ?? '',
+        'createdByAdminID': createdByAdminID?.trim() ?? '',
+      }),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception('Failed to send notification');
+    }
+  }
 }

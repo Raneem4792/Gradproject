@@ -1,9 +1,6 @@
-import 'dart:convert';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
+import '../services/admin_service.dart';
 import '../session/user_session.dart';
 import '../widgets/admin_bottom_nav.dart';
 
@@ -13,15 +10,17 @@ class AdminNotificationsPage extends StatefulWidget {
   const AdminNotificationsPage({super.key});
 
   @override
-  State<AdminNotificationsPage> createState() =>
-      _AdminNotificationsPageState();
+  State<AdminNotificationsPage> createState() => _AdminNotificationsPageState();
 }
 
 class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
   final _formKey = GlobalKey<FormState>();
+  final AdminService _adminService = AdminService();
 
-  final titleController = TextEditingController();
-  final messageController = TextEditingController();
+  final titleArController = TextEditingController();
+  final titleEnController = TextEditingController();
+  final messageArController = TextEditingController();
+  final messageEnController = TextEditingController();
   final recipientIdController = TextEditingController();
 
   bool isLoading = false;
@@ -35,16 +34,8 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
   static const Color bg = Color(0xFFF3F6F5);
   static const Color primary = Color(0xFF0D4C4A);
 
-  String get baseUrl {
-    if (kIsWeb) {
-      return 'http://localhost:3000/api';
-    }
-    return 'http://10.0.2.2:3000/api';
-  }
-
   bool get requiresRecipientId =>
-      selectedRecipientType == 'pilgrim' ||
-      selectedRecipientType == 'provider';
+      selectedRecipientType == 'pilgrim' || selectedRecipientType == 'provider';
 
   @override
   void initState() {
@@ -54,22 +45,16 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
 
   @override
   void dispose() {
-    titleController.dispose();
-    messageController.dispose();
+    titleArController.dispose();
+    titleEnController.dispose();
+    messageArController.dispose();
+    messageEnController.dispose();
     recipientIdController.dispose();
     super.dispose();
   }
 
-  Future<List<dynamic>> fetchNotifications() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/admin/notifications'),
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    }
-
-    throw Exception('Failed to load notifications');
+  Future<List<dynamic>> fetchNotifications() {
+    return _adminService.getSentNotifications();
   }
 
   Future<void> _refreshNotifications() async {
@@ -86,55 +71,41 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
     setState(() => isLoading = true);
 
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/admin/notifications'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'title': titleController.text.trim(),
-          'notificationType': selectedNotificationType,
-          'messageContent': messageController.text.trim(),
-          'recipientType': selectedRecipientType,
-          'recipientUserID': recipientIdController.text.trim(),
-          'createdByAdminID': UserSession.userId,
-        }),
+      await _adminService.createNotification(
+        titleAr: titleArController.text,
+        titleEn: titleEnController.text,
+        messageAr: messageArController.text,
+        messageEn: messageEnController.text,
+        notificationType: selectedNotificationType,
+        recipientType: selectedRecipientType,
+        recipientUserID: recipientIdController.text,
+        createdByAdminID: UserSession.userId,
       );
 
-      if (response.statusCode == 201) {
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Notification sent successfully'),
-          ),
-        );
-
-        titleController.clear();
-        messageController.clear();
-        recipientIdController.clear();
-
-        setState(() {
-          selectedNotificationType = 'alert';
-          selectedRecipientType = 'all_pilgrims';
-          selectedTab = 1;
-          _notificationsFuture = fetchNotifications();
-        });
-      } else {
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to send notification'),
-          ),
-        );
-      }
-    } catch (e) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        const SnackBar(content: Text('Notification sent successfully')),
       );
+
+      titleArController.clear();
+      titleEnController.clear();
+      messageArController.clear();
+      messageEnController.clear();
+      recipientIdController.clear();
+
+      setState(() {
+        selectedNotificationType = 'alert';
+        selectedRecipientType = 'all_pilgrims';
+        selectedTab = 1;
+        _notificationsFuture = fetchNotifications();
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
       if (mounted) {
         setState(() => isLoading = false);
@@ -194,8 +165,10 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
                 children: [
                   _CreateNotificationTab(
                     formKey: _formKey,
-                    titleController: titleController,
-                    messageController: messageController,
+                    titleArController: titleArController,
+                    titleEnController: titleEnController,
+                    messageArController: messageArController,
+                    messageEnController: messageEnController,
                     recipientIdController: recipientIdController,
                     selectedNotificationType: selectedNotificationType,
                     selectedRecipientType: selectedRecipientType,
@@ -328,10 +301,7 @@ class _TabSwitch extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onChanged;
 
-  const _TabSwitch({
-    required this.selectedIndex,
-    required this.onChanged,
-  });
+  const _TabSwitch({required this.selectedIndex, required this.onChanged});
 
   static const Color primary = Color(0xFF0D4C4A);
 
@@ -402,11 +372,7 @@ class _TabButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 18,
-                color: selected ? Colors.white : primary,
-              ),
+              Icon(icon, size: 18, color: selected ? Colors.white : primary),
               const SizedBox(width: 7),
               Text(
                 title,
@@ -426,8 +392,10 @@ class _TabButton extends StatelessWidget {
 
 class _CreateNotificationTab extends StatelessWidget {
   final GlobalKey<FormState> formKey;
-  final TextEditingController titleController;
-  final TextEditingController messageController;
+  final TextEditingController titleArController;
+  final TextEditingController titleEnController;
+  final TextEditingController messageArController;
+  final TextEditingController messageEnController;
   final TextEditingController recipientIdController;
   final String selectedNotificationType;
   final String selectedRecipientType;
@@ -439,8 +407,10 @@ class _CreateNotificationTab extends StatelessWidget {
 
   const _CreateNotificationTab({
     required this.formKey,
-    required this.titleController,
-    required this.messageController,
+    required this.titleArController,
+    required this.titleEnController,
+    required this.messageArController,
+    required this.messageEnController,
     required this.recipientIdController,
     required this.selectedNotificationType,
     required this.selectedRecipientType,
@@ -465,12 +435,26 @@ class _CreateNotificationTab extends StatelessWidget {
             const _SectionLabel(title: 'Create Notification'),
             const SizedBox(height: 12),
             _InputField(
-              controller: titleController,
-              label: 'Title',
+              controller: titleArController,
+              label: 'Arabic Title',
               icon: Icons.title_rounded,
+              textDirection: TextDirection.rtl,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Enter notification title';
+                  return 'Enter Arabic title';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 14),
+            _InputField(
+              controller: titleEnController,
+              label: 'English Title',
+              icon: Icons.title_rounded,
+              textDirection: TextDirection.ltr,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Enter English title';
                 }
                 return null;
               },
@@ -480,18 +464,12 @@ class _CreateNotificationTab extends StatelessWidget {
               label: 'Notification Type',
               value: selectedNotificationType,
               items: const [
-                DropdownMenuItem(
-                  value: 'alert',
-                  child: Text('Alert'),
-                ),
+                DropdownMenuItem(value: 'alert', child: Text('Alert')),
                 DropdownMenuItem(
                   value: 'announcement',
                   child: Text('Announcement'),
                 ),
-                DropdownMenuItem(
-                  value: 'reminder',
-                  child: Text('Reminder'),
-                ),
+                DropdownMenuItem(value: 'reminder', child: Text('Reminder')),
               ],
               onChanged: onNotificationTypeChanged,
             ),
@@ -537,7 +515,19 @@ class _CreateNotificationTab extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 14),
-            _MessageField(controller: messageController),
+            _MessageField(
+              controller: messageArController,
+              label: 'Arabic Message',
+              textDirection: TextDirection.rtl,
+              validatorMessage: 'Enter Arabic message',
+            ),
+            const SizedBox(height: 14),
+            _MessageField(
+              controller: messageEnController,
+              label: 'English Message',
+              textDirection: TextDirection.ltr,
+              validatorMessage: 'Enter English message',
+            ),
             const SizedBox(height: 22),
             SizedBox(
               width: double.infinity,
@@ -585,6 +575,10 @@ class _SentNotificationsTab extends StatelessWidget {
 
   static const Color primary = Color(0xFF0D4C4A);
 
+  String _value(Map<String, dynamic> item, String key) {
+    return item[key]?.toString() ?? '';
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<dynamic>>(
@@ -594,9 +588,7 @@ class _SentNotificationsTab extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 80, 16, 24),
             children: const [
-              Center(
-                child: CircularProgressIndicator(color: primary),
-              ),
+              Center(child: CircularProgressIndicator(color: primary)),
             ],
           );
         }
@@ -643,13 +635,35 @@ class _SentNotificationsTab extends StatelessWidget {
             children: [
               const _SectionLabel(title: 'Sent Notifications'),
               const SizedBox(height: 12),
-              ...notifications.map((item) {
+              ...notifications.map((rawItem) {
+                final item = rawItem is Map<String, dynamic>
+                    ? rawItem
+                    : Map<String, dynamic>.from(rawItem as Map);
+
+                final titleAr = _value(item, 'title_ar').isNotEmpty
+                    ? _value(item, 'title_ar')
+                    : _value(item, 'title');
+
+                final titleEn = _value(item, 'title_en').isNotEmpty
+                    ? _value(item, 'title_en')
+                    : _value(item, 'title');
+
+                final messageAr = _value(item, 'messageContent_ar').isNotEmpty
+                    ? _value(item, 'messageContent_ar')
+                    : _value(item, 'messageContent');
+
+                final messageEn = _value(item, 'messageContent_en').isNotEmpty
+                    ? _value(item, 'messageContent_en')
+                    : _value(item, 'messageContent');
+
                 return _SentNotificationCard(
-                  title: item['title']?.toString() ?? 'No title',
-                  message: item['messageContent']?.toString() ?? '',
-                  type: item['notificationType']?.toString() ?? '',
-                  recipientType: item['recipientType']?.toString() ?? '',
-                  recipientUserID: item['recipientUserID']?.toString() ?? '',
+                  titleAr: titleAr,
+                  titleEn: titleEn,
+                  messageAr: messageAr,
+                  messageEn: messageEn,
+                  type: _value(item, 'notificationType'),
+                  recipientType: _value(item, 'recipientType'),
+                  recipientUserID: _value(item, 'recipientUserID'),
                   timestamp: formatDate(item['timestamp']),
                 );
               }),
@@ -664,9 +678,7 @@ class _SentNotificationsTab extends StatelessWidget {
 class _SectionLabel extends StatelessWidget {
   final String title;
 
-  const _SectionLabel({
-    required this.title,
-  });
+  const _SectionLabel({required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -686,12 +698,14 @@ class _InputField extends StatelessWidget {
   final String label;
   final IconData icon;
   final String? Function(String?)? validator;
+  final TextDirection? textDirection;
 
   const _InputField({
     required this.controller,
     required this.label,
     required this.icon,
     this.validator,
+    this.textDirection,
   });
 
   static const Color primary = Color(0xFF0D4C4A);
@@ -702,6 +716,7 @@ class _InputField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       validator: validator,
+      textDirection: textDirection,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: primary),
@@ -717,10 +732,7 @@ class _InputField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(
-            color: primary,
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: primary, width: 1.5),
         ),
       ),
     );
@@ -763,10 +775,7 @@ class _DropdownField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(
-            color: primary,
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: primary, width: 1.5),
         ),
       ),
     );
@@ -775,9 +784,15 @@ class _DropdownField extends StatelessWidget {
 
 class _MessageField extends StatelessWidget {
   final TextEditingController controller;
+  final String label;
+  final String validatorMessage;
+  final TextDirection textDirection;
 
   const _MessageField({
     required this.controller,
+    required this.label,
+    required this.validatorMessage,
+    required this.textDirection,
   });
 
   static const Color primary = Color(0xFF0D4C4A);
@@ -788,14 +803,15 @@ class _MessageField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       maxLines: 5,
+      textDirection: textDirection,
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
-          return 'Enter message content';
+          return validatorMessage;
         }
         return null;
       },
       decoration: InputDecoration(
-        labelText: 'Message',
+        labelText: label,
         alignLabelWithHint: true,
         filled: true,
         fillColor: Colors.white,
@@ -809,10 +825,7 @@ class _MessageField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(
-            color: primary,
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: primary, width: 1.5),
         ),
       ),
     );
@@ -820,16 +833,20 @@ class _MessageField extends StatelessWidget {
 }
 
 class _SentNotificationCard extends StatelessWidget {
-  final String title;
-  final String message;
+  final String titleAr;
+  final String titleEn;
+  final String messageAr;
+  final String messageEn;
   final String type;
   final String recipientType;
   final String recipientUserID;
   final String timestamp;
 
   const _SentNotificationCard({
-    required this.title,
-    required this.message,
+    required this.titleAr,
+    required this.titleEn,
+    required this.messageAr,
+    required this.messageEn,
     required this.type,
     required this.recipientType,
     required this.recipientUserID,
@@ -884,7 +901,7 @@ class _SentNotificationCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    _MiniChip(text: type),
+                    _MiniChip(text: type.isEmpty ? 'notification' : type),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -902,7 +919,8 @@ class _SentNotificationCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  title,
+                  titleAr.isEmpty ? 'No Arabic title' : titleAr,
+                  textDirection: TextDirection.rtl,
                   style: const TextStyle(
                     color: primaryDark,
                     fontWeight: FontWeight.w900,
@@ -911,8 +929,30 @@ class _SentNotificationCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  message,
-                  maxLines: 3,
+                  messageAr.isEmpty ? 'No Arabic message' : messageAr,
+                  textDirection: TextDirection.rtl,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.black.withOpacity(0.62),
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12.8,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  titleEn.isEmpty ? 'No English title' : titleEn,
+                  style: const TextStyle(
+                    color: primaryDark,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  messageEn.isEmpty ? 'No English message' : messageEn,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.black.withOpacity(0.62),
@@ -963,10 +1003,7 @@ class _MiniChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: softMint,
         borderRadius: BorderRadius.circular(999),
@@ -987,10 +1024,7 @@ class _MessageBox extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _MessageBox({
-    required this.icon,
-    required this.text,
-  });
+  const _MessageBox({required this.icon, required this.text});
 
   static const Color primary = Color(0xFF0D4C4A);
   static const Color softMint = Color(0xFFEAF5F2);

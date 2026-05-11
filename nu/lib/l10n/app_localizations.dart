@@ -2866,6 +2866,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Fish'**
   String get fish;
+
+  /// No description provided for @completeHealthProfileForAiMeals.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete your health profile to get AI recommended meals'**
+  String get completeHealthProfileForAiMeals;
+
+  /// No description provided for @completeHealthProfileFirstThenTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Please complete your health profile first, then try again.'**
+  String get completeHealthProfileFirstThenTryAgain;
+
+  /// No description provided for @mealsAreNotCurrentlyAvailableForYourCampaign.
+  ///
+  /// In en, this message translates to:
+  /// **'Meals are not currently available for your campaign'**
+  String get mealsAreNotCurrentlyAvailableForYourCampaign;
+
+  /// No description provided for @yourCampaignProviderHasNotAddedMealsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Your campaign provider has not added meals yet.'**
+  String get yourCampaignProviderHasNotAddedMealsYet;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

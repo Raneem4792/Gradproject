@@ -501,5 +501,9 @@
 "peanuts": "Peanuts",
 "nuts": "Nuts",
 "milk": "Milk",
-"fish": "Fish"
+"fish": "Fish",
+"completeHealthProfileForAiMeals": "Complete your health profile to get AI recommended meals",
+"completeHealthProfileFirstThenTryAgain": "Please complete your health profile first, then try again.",
+"mealsAreNotCurrentlyAvailableForYourCampaign": "Meals are not currently available for your campaign",
+"yourCampaignProviderHasNotAddedMealsYet": "Your campaign provider has not added meals yet."
 }

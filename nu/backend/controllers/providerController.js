@@ -5,9 +5,11 @@ const getProviderHomeData = async (req, res) => {
         const { providerID } = req.params;
 
         const [providerRows] = await db.query(
-            `SELECT providerID, fullName, email, phoneNumber
-       FROM provider
-       WHERE providerID = ?`,
+            `
+      SELECT providerID, fullName, email, phoneNumber
+      FROM provider
+      WHERE providerID = ?
+      `,
             [providerID]
         );
 
@@ -19,18 +21,22 @@ const getProviderHomeData = async (req, res) => {
 
         const provider = providerRows[0];
 
-        // ✅ آخر طلب pending فقط
         const [orderRows] = await db.query(
-            `SELECT 
-          mo.orderID,
-          mo.requestDate,
-          mo.status,
-          m.mealName
-       FROM meal_order mo
-       JOIN meal m ON mo.mealID = m.mealID
-       WHERE m.providerID = ? AND mo.status = 'pending'
-       ORDER BY mo.requestDate DESC
-       LIMIT 1`,
+            `
+      SELECT 
+        mo.orderID,
+        mo.requestDate,
+        mo.status,
+
+        m.mealName,
+        m.mealName_en,
+        m.mealName_ar
+      FROM meal_order mo
+      JOIN meal m ON mo.mealID = m.mealID
+      WHERE m.providerID = ? AND mo.status = 'pending'
+      ORDER BY mo.requestDate DESC
+      LIMIT 1
+      `,
             [providerID]
         );
 
@@ -38,20 +44,40 @@ const getProviderHomeData = async (req, res) => {
 
         if (orderRows.length > 0) {
             const order = orderRows[0];
+
             latestOrder = {
                 orderID: order.orderID,
-                mealName: order.mealName,
+
+                mealName:
+                    order.mealName ||
+                    order.mealName_en ||
+                    order.mealName_ar ||
+                    '',
+
+                mealName_en:
+                    order.mealName_en ||
+                    order.mealName ||
+                    order.mealName_ar ||
+                    '',
+
+                mealName_ar:
+                    order.mealName_ar ||
+                    order.mealName ||
+                    order.mealName_en ||
+                    '',
+
                 requestDate: order.requestDate,
                 status: order.status,
             };
         }
 
-        // ✅ عدد الطلبات pending فقط
         const [countRows] = await db.query(
-            `SELECT COUNT(*) AS newRequestsCount
-       FROM meal_order mo
-       JOIN meal m ON mo.mealID = m.mealID
-       WHERE m.providerID = ? AND mo.status = 'pending'`,
+            `
+      SELECT COUNT(*) AS newRequestsCount
+      FROM meal_order mo
+      JOIN meal m ON mo.mealID = m.mealID
+      WHERE m.providerID = ? AND mo.status = 'pending'
+      `,
             [providerID]
         );
 
@@ -68,7 +94,6 @@ const getProviderHomeData = async (req, res) => {
     }
 };
 
-// ✅ جلب البروفايل كامل
 const getProviderProfile = async (req, res) => {
     try {
         const { providerID } = req.params;
@@ -101,7 +126,6 @@ const getProviderProfile = async (req, res) => {
     }
 };
 
-// ✅ تحديث البروفايل
 const updateProviderProfile = async (req, res) => {
     try {
         const { providerID, fullName, email, phoneNumber } = req.body;
@@ -133,41 +157,41 @@ const updateProviderProfile = async (req, res) => {
 };
 
 const getProviderProfileSummary = async (req, res) => {
-  try {
-    const { providerID } = req.params;
+    try {
+        const { providerID } = req.params;
 
-    const [totalOrdersRows] = await db.query(
-      `
+        const [totalOrdersRows] = await db.query(
+            `
       SELECT COUNT(*) AS totalOrders
       FROM meal_order mo
       JOIN meal m ON mo.mealID = m.mealID
       WHERE m.providerID = ?
       `,
-      [providerID]
-    );
+            [providerID]
+        );
 
-    const [acceptedRows] = await db.query(
-      `
+        const [acceptedRows] = await db.query(
+            `
       SELECT COUNT(*) AS acceptedOrders
       FROM meal_order mo
       JOIN meal m ON mo.mealID = m.mealID
       WHERE m.providerID = ? AND mo.status = 'accepted'
       `,
-      [providerID]
-    );
+            [providerID]
+        );
 
-    const [rejectedRows] = await db.query(
-      `
+        const [rejectedRows] = await db.query(
+            `
       SELECT COUNT(*) AS rejectedOrders
       FROM meal_order mo
       JOIN meal m ON mo.mealID = m.mealID
       WHERE m.providerID = ? AND mo.status = 'rejected'
       `,
-      [providerID]
-    );
+            [providerID]
+        );
 
-    const [campaignRows] = await db.query(
-      `
+        const [campaignRows] = await db.query(
+            `
       SELECT
         campaignID,
         campaignName,
@@ -178,22 +202,22 @@ const getProviderProfileSummary = async (req, res) => {
       WHERE providerID = ?
       ORDER BY campaignID DESC
       `,
-      [providerID]
-    );
+            [providerID]
+        );
 
-    return res.status(200).json({
-      totalOrders: totalOrdersRows[0].totalOrders || 0,
-      acceptedOrders: acceptedRows[0].acceptedOrders || 0,
-      rejectedOrders: rejectedRows[0].rejectedOrders || 0,
-      campaignsCount: campaignRows.length,
-      campaigns: campaignRows,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: 'Failed to load provider profile summary',
-    });
-  }
+        return res.status(200).json({
+            totalOrders: totalOrdersRows[0].totalOrders || 0,
+            acceptedOrders: acceptedRows[0].acceptedOrders || 0,
+            rejectedOrders: rejectedRows[0].rejectedOrders || 0,
+            campaignsCount: campaignRows.length,
+            campaigns: campaignRows,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            message: 'Failed to load provider profile summary',
+        });
+    }
 };
 
 module.exports = {

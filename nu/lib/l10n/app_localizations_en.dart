@@ -1405,4 +1405,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fish => 'Fish';
+
+  @override
+  String get completeHealthProfileForAiMeals => 'Complete your health profile to get AI recommended meals';
+
+  @override
+  String get completeHealthProfileFirstThenTryAgain => 'Please complete your health profile first, then try again.';
+
+  @override
+  String get mealsAreNotCurrentlyAvailableForYourCampaign => 'Meals are not currently available for your campaign';
+
+  @override
+  String get yourCampaignProviderHasNotAddedMealsYet => 'Your campaign provider has not added meals yet.';
 }

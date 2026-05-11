@@ -18,9 +18,13 @@ class AdminOrdersCampaign {
       campaignID: int.tryParse(json['campaignID']?.toString() ?? '') ?? 0,
       campaignName: json['campaignName']?.toString() ?? '',
       campaignNumber: json['campaignNumber']?.toString(),
-      provider: AdminOrdersProvider.fromJson(json['provider'] ?? {}),
+      provider: AdminOrdersProvider.fromJson(
+        Map<String, dynamic>.from(json['provider'] ?? {}),
+      ),
       orders: (json['orders'] as List<dynamic>? ?? [])
-          .map((item) => AdminOrderItem.fromJson(item))
+          .map(
+            (item) => AdminOrderItem.fromJson(Map<String, dynamic>.from(item)),
+          )
           .toList(),
     );
   }
@@ -56,8 +60,17 @@ class AdminOrderItem {
   final String pilgrimEmail;
 
   final int mealID;
+
+  // Old fields
   final String mealName;
   final String mealType;
+
+  // New bilingual fields
+  final String mealNameAr;
+  final String mealNameEn;
+  final String mealTypeAr;
+  final String mealTypeEn;
+
   final int calories;
 
   AdminOrderItem({
@@ -70,10 +83,23 @@ class AdminOrderItem {
     required this.mealID,
     required this.mealName,
     required this.mealType,
+    this.mealNameAr = '',
+    this.mealNameEn = '',
+    this.mealTypeAr = '',
+    this.mealTypeEn = '',
     required this.calories,
   });
 
   factory AdminOrderItem.fromJson(Map<String, dynamic> json) {
+    final oldMealName = json['mealName']?.toString() ?? '';
+    final oldMealType = json['mealType']?.toString() ?? '';
+
+    final mealNameAr = json['mealName_ar']?.toString() ?? '';
+    final mealNameEn = json['mealName_en']?.toString() ?? '';
+
+    final mealTypeAr = json['mealType_ar']?.toString() ?? '';
+    final mealTypeEn = json['mealType_en']?.toString() ?? '';
+
     return AdminOrderItem(
       orderID: int.tryParse(json['orderID']?.toString() ?? '') ?? 0,
       requestDate: json['requestDate']?.toString(),
@@ -82,9 +108,53 @@ class AdminOrderItem {
       pilgrimName: json['pilgrimName']?.toString() ?? '',
       pilgrimEmail: json['pilgrimEmail']?.toString() ?? '',
       mealID: int.tryParse(json['mealID']?.toString() ?? '') ?? 0,
-      mealName: json['mealName']?.toString() ?? '',
-      mealType: json['mealType']?.toString() ?? '',
+
+      mealName: oldMealName.isNotEmpty
+          ? oldMealName
+          : mealNameEn.isNotEmpty
+          ? mealNameEn
+          : mealNameAr,
+
+      mealType: oldMealType.isNotEmpty
+          ? oldMealType
+          : mealTypeEn.isNotEmpty
+          ? mealTypeEn
+          : mealTypeAr,
+
+      mealNameAr: mealNameAr.isNotEmpty ? mealNameAr : oldMealName,
+      mealNameEn: mealNameEn.isNotEmpty ? mealNameEn : oldMealName,
+      mealTypeAr: mealTypeAr.isNotEmpty ? mealTypeAr : oldMealType,
+      mealTypeEn: mealTypeEn.isNotEmpty ? mealTypeEn : oldMealType,
+
       calories: int.tryParse(json['calories']?.toString() ?? '') ?? 0,
     );
+  }
+
+  String localizedMealName(String languageCode) {
+    final isArabic = languageCode.toLowerCase().startsWith('ar');
+
+    if (isArabic && mealNameAr.trim().isNotEmpty) {
+      return mealNameAr;
+    }
+
+    if (!isArabic && mealNameEn.trim().isNotEmpty) {
+      return mealNameEn;
+    }
+
+    return mealName;
+  }
+
+  String localizedMealType(String languageCode) {
+    final isArabic = languageCode.toLowerCase().startsWith('ar');
+
+    if (isArabic && mealTypeAr.trim().isNotEmpty) {
+      return mealTypeAr;
+    }
+
+    if (!isArabic && mealTypeEn.trim().isNotEmpty) {
+      return mealTypeEn;
+    }
+
+    return mealType;
   }
 }

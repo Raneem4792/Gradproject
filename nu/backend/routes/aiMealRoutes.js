@@ -7,33 +7,68 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+const pickMealName = (meal, isArabic) => {
+  if (isArabic) {
+    return meal.mealName_ar || meal.mealName || meal.mealName_en || '';
+  }
+
+  return meal.mealName_en || meal.mealName || meal.mealName_ar || '';
+};
+
+const pickMealType = (meal, isArabic) => {
+  if (isArabic) {
+    return meal.mealType_ar || meal.mealType || meal.mealType_en || '';
+  }
+
+  return meal.mealType_en || meal.mealType || meal.mealType_ar || '';
+};
+
+const pickMealDescription = (meal, isArabic) => {
+  if (isArabic) {
+    return meal.description_ar || meal.description || meal.description_en || '';
+  }
+
+  return meal.description_en || meal.description || meal.description_ar || '';
+};
+
 router.get('/ai-recommended/:pilgrimID', async (req, res) => {
   try {
     const { pilgrimID } = req.params;
+    const language = req.query.language || req.query.lang || 'en';
+    const isArabic = String(language).toLowerCase().startsWith('ar');
 
-    // 1. Get health profile
     const [healthRows] = await db.query(
       'SELECT * FROM health_profile WHERE pilgrimID = ?',
       [pilgrimID]
     );
 
-    // ✅ إذا ما فيه بروفايل
     if (healthRows.length === 0) {
       return res.json({
         needsProfile: true,
-        message: 'Please complete your health profile',
+        message: isArabic
+          ? 'يرجى إكمال الملف الصحي أولاً'
+          : 'Please complete your health profile',
         data: [],
       });
     }
 
-    // 2. Get meals from same campaign provider
     const [meals] = await db.query(
       `
       SELECT 
         m.mealID,
+
         m.mealName,
+        m.mealName_ar,
+        m.mealName_en,
+
         m.mealType,
+        m.mealType_ar,
+        m.mealType_en,
+
         m.description,
+        m.description_ar,
+        m.description_en,
+
         m.protein,
         m.carbohydrates,
         m.fat,
@@ -51,14 +86,23 @@ router.get('/ai-recommended/:pilgrimID', async (req, res) => {
       [pilgrimID]
     );
 
-    // ✅ إذا ما فيه وجبات
     if (meals.length === 0) {
       return res.json([]);
     }
 
     const healthProfile = healthRows[0];
 
-    // 3. AI Prompt
+    const mealsForAI = meals.map((meal) => ({
+      mealID: meal.mealID,
+      mealName: pickMealName(meal, isArabic),
+      mealType: pickMealType(meal, isArabic),
+      description: pickMealDescription(meal, isArabic),
+      protein: meal.protein,
+      carbohydrates: meal.carbohydrates,
+      fat: meal.fat,
+      calories: meal.calories,
+    }));
+
     const prompt = `
 You are a nutrition assistant for pilgrims.
 
@@ -66,7 +110,7 @@ Pilgrim health profile:
 ${JSON.stringify(healthProfile)}
 
 Available meals:
-${JSON.stringify(meals)}
+${JSON.stringify(mealsForAI)}
 
 Based on the health profile, recommend the most suitable meals only.
 Only recommend meals from the Available meals list.
@@ -81,9 +125,11 @@ Return JSON only in this exact format:
     }
   ]
 }
+
+Language rule:
+- Write the reason in ${isArabic ? 'Arabic' : 'English'}.
 `;
 
-    // 4. Call OpenAI
     const completion = await openai.chat.completions.create({
       model: 'gpt-4.1-mini',
       messages: [
@@ -93,10 +139,9 @@ Return JSON only in this exact format:
         },
       ],
       temperature: 0.2,
-      response_format: { type: 'json_object' }, // 🔥 مهم
+      response_format: { type: 'json_object' },
     });
 
-    // 5. تنظيف الرد + حل مشكلة JSON
     let aiResponse = completion.choices[0].message.content.trim();
 
     aiResponse = aiResponse
@@ -108,7 +153,6 @@ Return JSON only in this exact format:
 
     const recommendations = parsed.recommendations || [];
 
-    // 6. مطابقة الوجبات
     const recommendedMeals = recommendations
       .map((rec) => {
         const meal = meals.find(
@@ -119,6 +163,63 @@ Return JSON only in this exact format:
 
         return {
           ...meal,
+
+          // القديم نخليه عشان الفرونت القديم ما ينكسر
+          mealName:
+            meal.mealName ||
+            meal.mealName_en ||
+            meal.mealName_ar ||
+            '',
+
+          mealType:
+            meal.mealType ||
+            meal.mealType_en ||
+            meal.mealType_ar ||
+            '',
+
+          description:
+            meal.description ||
+            meal.description_en ||
+            meal.description_ar ||
+            '',
+
+          // الجديد
+          mealName_ar:
+            meal.mealName_ar ||
+            meal.mealName ||
+            meal.mealName_en ||
+            '',
+
+          mealName_en:
+            meal.mealName_en ||
+            meal.mealName ||
+            meal.mealName_ar ||
+            '',
+
+          mealType_ar:
+            meal.mealType_ar ||
+            meal.mealType ||
+            meal.mealType_en ||
+            '',
+
+          mealType_en:
+            meal.mealType_en ||
+            meal.mealType ||
+            meal.mealType_ar ||
+            '',
+
+          description_ar:
+            meal.description_ar ||
+            meal.description ||
+            meal.description_en ||
+            '',
+
+          description_en:
+            meal.description_en ||
+            meal.description ||
+            meal.description_ar ||
+            '',
+
           isHealthMatched: true,
           aiReason: rec.reason,
         };

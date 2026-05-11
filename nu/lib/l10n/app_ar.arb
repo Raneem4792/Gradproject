@@ -501,5 +501,9 @@
 "peanuts": "الفول السوداني",
 "nuts": "المكسرات",
 "milk": "الحليب",
-"fish": "السمك"
+"fish": "السمك",
+"completeHealthProfileForAiMeals": "أكمل ملفك الصحي للحصول على وجبات موصى بها بالذكاء الاصطناعي",
+"completeHealthProfileFirstThenTryAgain": "يرجى إكمال ملفك الصحي أولاً، ثم حاول مرة أخرى.",
+"mealsAreNotCurrentlyAvailableForYourCampaign": "الوجبات غير متاحة حاليًا لحملتك",
+"yourCampaignProviderHasNotAddedMealsYet": "مزود الحملة لم يضف وجبات بعد."
 }

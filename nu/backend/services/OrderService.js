@@ -25,8 +25,15 @@ class OrderService {
         mo.pilgrimID,
         p.fullName AS pilgrimName,
         mo.mealID,
+
         m.mealName,
+        m.mealName_ar,
+        m.mealName_en,
+
         m.mealType,
+        m.mealType_ar,
+        m.mealType_en,
+
         c.campaignID,
         c.campaignName,
         c.campaignNumber,
@@ -71,8 +78,15 @@ class OrderService {
         mo.pilgrimID,
         p.fullName AS pilgrimName,
         mo.mealID,
+
         m.mealName,
+        m.mealName_ar,
+        m.mealName_en,
+
         m.mealType,
+        m.mealType_ar,
+        m.mealType_en,
+
         c.campaignID,
         c.campaignName,
         c.campaignNumber,

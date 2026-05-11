@@ -44,144 +44,148 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
   String? _providerId;
   bool _didInitDashboard = false;
 
-@override
-void initState() {
-  super.initState();
+  @override
+  void initState() {
+    super.initState();
 
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (mounted) {
-      _initDashboard();
-    }
-  });
-}
-
-Future<void> _initDashboard() async {
-  try {
-    final providerId = UserSession.userId;
-
-    if (providerId == null || providerId.isEmpty) {
-      throw Exception('Provider ID not found in session');
-    }
-
-    _providerId = providerId;
-
-    await _loadDashboard();
-  } catch (e) {
-    if (!mounted) return;
-
-    setState(() {
-      _error = e.toString();
-      _isLoading = false;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _initDashboard();
+      }
     });
   }
-}
 
-Future<void> _loadDashboard() async {
-  try {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+  Future<void> _initDashboard() async {
+    try {
+      final providerId = UserSession.userId;
+
+      if (providerId == null || providerId.isEmpty) {
+        throw Exception('Provider ID not found in session');
+      }
+
+      _providerId = providerId;
+
+      await _loadDashboard();
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadDashboard() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final providerId = _providerId;
+
+      if (providerId == null || providerId.isEmpty) {
+        throw Exception('Provider ID is missing');
+      }
+
+      final language = Localizations.localeOf(context).languageCode;
+
+      final data = await _reportService.getProviderDashboard(
+        providerId,
+        language,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _report = data;
+        _isLoading = false;
+      });
+
+      // نخلي تحليل AI يشتغل بالخلفية بدون ما يعلّق الصفحة
+      _loadAiAnalysis();
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadAiAnalysis() async {
+    final l10n = AppLocalizations.of(context)!;
+
+    try {
+      final providerId = _providerId;
+
+      if (providerId == null || providerId.isEmpty) return;
+
+      setState(() {
+        _isAiLoading = true;
+        _aiAnalysis = null;
+      });
+
+      final result = await _aiDashboardService
+          .getProviderAnalysis(
+            providerID: providerId,
+            language: Localizations.localeOf(context).languageCode,
+          )
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () {
+              throw Exception('AI analysis timed out');
+            },
+          );
+
+      if (!mounted) return;
+
+      setState(() {
+        _aiAnalysis = result;
+        _isAiLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _aiAnalysis = l10n.aiAnalysisUnavailable;
+        _isAiLoading = false;
+      });
+    }
+  }
+
+  Future<void> _openPdfReport() async {
+    final l10n = AppLocalizations.of(context)!;
 
     final providerId = _providerId;
 
     if (providerId == null || providerId.isEmpty) {
-      throw Exception('Provider ID is missing');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.providerIdIsMissing)));
+      return;
     }
 
     final language = Localizations.localeOf(context).languageCode;
 
-    final data = await _reportService.getProviderDashboard(
+    final pdfUrl = _reportService.getProviderDashboardPdfUrl(
       providerId,
       language,
     );
 
-    if (!mounted) return;
+    final uri = Uri.parse(pdfUrl);
 
-    setState(() {
-      _report = data;
-      _isLoading = false;
-    });
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
 
-    // نخلي تحليل AI يشتغل بالخلفية بدون ما يعلّق الصفحة
-    _loadAiAnalysis();
-  } catch (e) {
-    if (!mounted) return;
-
-    setState(() {
-      _error = e.toString();
-      _isLoading = false;
-    });
-  }
-}
-
-Future<void> _loadAiAnalysis() async {
-  final l10n = AppLocalizations.of(context)!;
-
-  try {
-    final providerId = _providerId;
-
-    if (providerId == null || providerId.isEmpty) return;
-
-    setState(() {
-      _isAiLoading = true;
-      _aiAnalysis = null;
-    });
-
-    final result = await _aiDashboardService
-        .getProviderAnalysis(providerId)
-        .timeout(
-          const Duration(seconds: 15),
-          onTimeout: () {
-            throw Exception('AI analysis timed out');
-          },
-        );
-
-    if (!mounted) return;
-
-    setState(() {
-      _aiAnalysis = result;
-      _isAiLoading = false;
-    });
-  } catch (e) {
-    if (!mounted) return;
-
-    setState(() {
-      _aiAnalysis = l10n.aiAnalysisUnavailable;
-      _isAiLoading = false;
-    });
-  }
-}
-
-Future<void> _openPdfReport() async {
-  final l10n = AppLocalizations.of(context)!;
-
-  final providerId = _providerId;
-
-  if (providerId == null || providerId.isEmpty) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.providerIdIsMissing)));
-    return;
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.couldNotOpenPdfReport)));
+    }
   }
 
-  final language = Localizations.localeOf(context).languageCode;
-
-  final pdfUrl = _reportService.getProviderDashboardPdfUrl(
-    providerId,
-    language,
-  );
-
-  final uri = Uri.parse(pdfUrl);
-
-  final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-
-  if (!opened && mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.couldNotOpenPdfReport)),
-    );
-  }
-}
   void _openNotificationsPage() {
     Navigator.push(
       context,
@@ -342,31 +346,29 @@ Future<void> _openPdfReport() async {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.error_outline_rounded, size: 40),
-                          const SizedBox(height: 12),
-                          Text(
-                            _error!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          ElevatedButton(
-                            onPressed: _loadDashboard,
-                            child: Text(l10n.retry),
-                          ),
-                        ],
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline_rounded, size: 40),
+                      const SizedBox(height: 12),
+                      Text(
+                        _error!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
-                    ),
-                  )
-                : _buildContent(),
+                      const SizedBox(height: 14),
+                      ElevatedButton(
+                        onPressed: _loadDashboard,
+                        child: Text(l10n.retry),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : _buildContent(),
       ),
       bottomNavigationBar: ProviderBottomNav(
         currentIndex: _navIndex,
@@ -1009,7 +1011,10 @@ class _FeedbackCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.feedback, style: const TextStyle(fontWeight: FontWeight.w900)),
+          Text(
+            l10n.feedback,
+            style: const TextStyle(fontWeight: FontWeight.w900),
+          ),
           const SizedBox(height: 10),
           Container(
             width: 44,
@@ -1033,7 +1038,10 @@ class _FeedbackCard extends StatelessWidget {
           const SizedBox(height: 12),
           _FeedbackInfoRow(label: l10n.reviews, value: "$totalReviews"),
           const SizedBox(height: 6),
-          _FeedbackInfoRow(label: l10n.average, value: rating.toStringAsFixed(1)),
+          _FeedbackInfoRow(
+            label: l10n.average,
+            value: rating.toStringAsFixed(1),
+          ),
           const SizedBox(height: 6),
           _FeedbackInfoRow(label: l10n.highest, value: "$highestScore/5"),
           const SizedBox(height: 10),
@@ -1383,7 +1391,15 @@ class _TopMealsList extends StatelessWidget {
     return Column(
       children: List.generate(items.length, (i) {
         final item = items[i];
-        final name = (item['name'] ?? '').toString();
+        final languageCode = Localizations.localeOf(context).languageCode;
+        final isArabic = languageCode.toLowerCase().startsWith('ar');
+
+        final name = isArabic
+            ? ((item['name_ar'] ?? item['name'] ?? item['name_en'] ?? '')
+                  .toString())
+            : ((item['name_en'] ?? item['name'] ?? item['name_ar'] ?? '')
+                  .toString());
+
         final count = (item['orders'] ?? 0).toString();
 
         return Padding(
@@ -1448,17 +1464,18 @@ class _GenerateReportButton extends StatelessWidget {
       height: 54,
       child: ElevatedButton(
         onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          elevation: 0,
-          backgroundColor: primaryDark,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-        ).copyWith(
-          overlayColor: WidgetStateProperty.all(
-            Colors.white.withOpacity(0.08),
-          ),
-        ),
+        style:
+            ElevatedButton.styleFrom(
+              elevation: 0,
+              backgroundColor: primaryDark,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+            ).copyWith(
+              overlayColor: WidgetStateProperty.all(
+                Colors.white.withOpacity(0.08),
+              ),
+            ),
         child: Text(
           l10n.generateReport.toUpperCase(),
           style: const TextStyle(
@@ -1654,20 +1671,16 @@ class _AiDashboardSection extends StatelessWidget {
       ['Recommendations', 'Smart Recommendations'],
     );
 
-    final recommendations = _extractSection(
-      cleaned,
-      ['Recommendations', 'Smart Recommendations'],
-      [],
-    );
+    final recommendations = _extractSection(cleaned, [
+      'Recommendations',
+      'Smart Recommendations',
+    ], []);
 
     return _ParsedAiAnalysis(
-      summary: _joinNonEmpty(
-        [
-          summary,
-          if (meals.isNotEmpty) '${l10n.mostRequestedMeals}:\n$meals',
-        ],
-        fallback: l10n.noAiSummaryAvailableYet,
-      ),
+      summary: _joinNonEmpty([
+        summary,
+        if (meals.isNotEmpty) '${l10n.mostRequestedMeals}:\n$meals',
+      ], fallback: l10n.noAiSummaryAvailableYet),
       risks: risks.isEmpty ? l10n.noFeedbackRiskAnalysisAvailableYet : risks,
       recommendations: recommendations.isEmpty
           ? l10n.noSmartRecommendationsAvailableYet

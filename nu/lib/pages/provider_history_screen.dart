@@ -169,7 +169,8 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
 
       final okMealType = selectedMealTypeValue == null
           ? true
-          : order.mealType.toLowerCase() ==
+          : (order.mealTypeEn.isNotEmpty ? order.mealTypeEn : order.mealType)
+                    .toLowerCase() ==
                 selectedMealTypeValue!.toLowerCase();
 
       final okStatus = selectedStatusValue == null
@@ -280,12 +281,16 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
   Future<void> pickMealTypeFilter() async {
     final l10n = AppLocalizations.of(context)!;
 
-    final mealTypes = _allOrders
-        .map((e) => e.mealType.trim())
-        .where((e) => e.isNotEmpty)
-        .toSet()
-        .toList()
-      ..sort();
+    final mealTypes =
+        _allOrders
+            .map(
+              (e) =>
+                  (e.mealTypeEn.isNotEmpty ? e.mealTypeEn : e.mealType).trim(),
+            )
+            .where((e) => e.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
 
     final picked = await showModalBottomSheet<String?>(
       context: context,
@@ -332,12 +337,13 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
   Future<void> pickStatusFilter() async {
     final l10n = AppLocalizations.of(context)!;
 
-    final statuses = _allOrders
-        .map((e) => e.status.trim())
-        .where((e) => e.isNotEmpty)
-        .toSet()
-        .toList()
-      ..sort();
+    final statuses =
+        _allOrders
+            .map((e) => e.status.trim())
+            .where((e) => e.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
 
     final picked = await showModalBottomSheet<String?>(
       context: context,
@@ -841,6 +847,9 @@ class _HistoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final pill = _StatusPill.from(context, order.status);
+    final languageCode = Localizations.localeOf(context).languageCode;
+    final mealName = order.localizedMealName(languageCode);
+    final mealType = order.localizedMealType(languageCode);
 
     return Container(
       decoration: BoxDecoration(
@@ -893,7 +902,7 @@ class _HistoryCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          order.mealName,
+                          mealName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -963,7 +972,7 @@ class _HistoryCard extends StatelessWidget {
                                 ),
                               ),
                               child: Text(
-                                _localizedMealType(context, order.mealType),
+                                _localizedMealType(context, mealType),
                                 style: TextStyle(
                                   fontSize: 11.8,
                                   color: primary.withOpacity(0.85),
@@ -1123,10 +1132,7 @@ class _Stars extends StatelessWidget {
 }
 
 class _ReviewViewSheet extends StatelessWidget {
-  const _ReviewViewSheet({
-    required this.order,
-    required this.rate,
-  });
+  const _ReviewViewSheet({required this.order, required this.rate});
 
   final MealOrder order;
   final Rate rate;
@@ -1200,6 +1206,8 @@ class _ReviewViewSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final hasReply = rate.providerReply.trim().isNotEmpty;
+    final languageCode = Localizations.localeOf(context).languageCode;
+    final mealName = order.localizedMealName(languageCode);
 
     return SafeArea(
       child: Padding(
@@ -1230,7 +1238,7 @@ class _ReviewViewSheet extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                order.mealName,
+                mealName,
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   color: Colors.black.withOpacity(0.72),
@@ -1367,8 +1375,8 @@ class _ProviderAllReviewsScreenState extends State<ProviderAllReviewsScreen> {
       final okDate = selectedReviewDate == null
           ? true
           : order.requestDate.year == selectedReviewDate!.year &&
-              order.requestDate.month == selectedReviewDate!.month &&
-              order.requestDate.day == selectedReviewDate!.day;
+                order.requestDate.month == selectedReviewDate!.month &&
+                order.requestDate.day == selectedReviewDate!.day;
 
       final okCampaign = selectedCampaignKey == null
           ? true
@@ -1431,10 +1439,7 @@ class _ProviderAllReviewsScreenState extends State<ProviderAllReviewsScreen> {
               padding: EdgeInsets.all(16),
               child: Text(
                 'Select Campaign',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
               ),
             ),
             ListTile(
@@ -1477,6 +1482,7 @@ class _ProviderAllReviewsScreenState extends State<ProviderAllReviewsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final languageCode = Localizations.localeOf(context).languageCode;
     final reviewedOrders = _filteredReviews;
 
     final dateLabel = selectedReviewDate == null
@@ -1583,6 +1589,7 @@ class _ProviderAllReviewsScreenState extends State<ProviderAllReviewsScreen> {
                     itemCount: reviewedOrders.length,
                     itemBuilder: (context, i) {
                       final order = reviewedOrders[i];
+                      final mealName = order.localizedMealName(languageCode);
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
@@ -1636,7 +1643,7 @@ class _ProviderAllReviewsScreenState extends State<ProviderAllReviewsScreen> {
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
-                                      order.mealName,
+                                      mealName,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(

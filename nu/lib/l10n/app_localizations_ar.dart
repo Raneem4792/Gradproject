@@ -1405,4 +1405,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get fish => 'السمك';
+
+  @override
+  String get completeHealthProfileForAiMeals => 'أكمل ملفك الصحي للحصول على وجبات موصى بها بالذكاء الاصطناعي';
+
+  @override
+  String get completeHealthProfileFirstThenTryAgain => 'يرجى إكمال ملفك الصحي أولاً، ثم حاول مرة أخرى.';
+
+  @override
+  String get mealsAreNotCurrentlyAvailableForYourCampaign => 'الوجبات غير متاحة حاليًا لحملتك';
+
+  @override
+  String get yourCampaignProviderHasNotAddedMealsYet => 'مزود الحملة لم يضف وجبات بعد.';
 }

@@ -34,10 +34,7 @@ class _PilgrimNotificationsPageState extends State<PilgrimNotificationsPage> {
   }
 
   Future<List<AppNotification>> _loadNotificationsAndMarkRead() async {
-    final notifications = await _mealService.getNotifications(
-      _userId,
-      _userType,
-    );
+    await _mealService.getNotifications(_userId, _userType);
 
     await _markNotificationsAsRead();
 
@@ -47,7 +44,6 @@ class _PilgrimNotificationsPageState extends State<PilgrimNotificationsPage> {
   @override
   void initState() {
     super.initState();
-
     _notificationsFuture = _loadNotificationsAndMarkRead();
   }
 
@@ -70,6 +66,7 @@ class _PilgrimNotificationsPageState extends State<PilgrimNotificationsPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final languageCode = Localizations.localeOf(context).languageCode;
 
     return Scaffold(
       backgroundColor: bg,
@@ -112,8 +109,8 @@ class _PilgrimNotificationsPageState extends State<PilgrimNotificationsPage> {
                       (item) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _NotificationCard(
-                          title: item.title,
-                          message: item.message,
+                          title: item.localizedTitle(languageCode),
+                          message: item.localizedMessage(languageCode),
                           time: DateFormat(
                             'MMM dd · hh:mm a',
                           ).format(item.timestamp),
@@ -341,6 +338,8 @@ class _NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -387,51 +386,60 @@ class _NotificationCard extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14,
+            child: Directionality(
+              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+              child: Column(
+                crossAxisAlignment: isArabic
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          textAlign: isArabic
+                              ? TextAlign.right
+                              : TextAlign.left,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
+                      if (isUnread)
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF9FE5C9),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    message,
+                    textAlign: isArabic ? TextAlign.right : TextAlign.left,
+                    style: TextStyle(
+                      fontSize: 12.3,
+                      height: 1.45,
+                      color: Colors.black.withOpacity(0.65),
+                      fontWeight: FontWeight.w600,
                     ),
-                    if (isUnread)
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF9FE5C9),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  message,
-                  style: TextStyle(
-                    fontSize: 12.3,
-                    height: 1.45,
-                    color: Colors.black.withOpacity(0.65),
-                    fontWeight: FontWeight.w600,
                   ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  time,
-                  style: TextStyle(
-                    fontSize: 11.8,
-                    color: Colors.black.withOpacity(0.50),
-                    fontWeight: FontWeight.w700,
+                  const SizedBox(height: 10),
+                  Text(
+                    time,
+                    style: TextStyle(
+                      fontSize: 11.8,
+                      color: Colors.black.withOpacity(0.50),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

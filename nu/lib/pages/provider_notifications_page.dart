@@ -1,8 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart';
-
+import 'package:intl/intl.dart' hide TextDirection;
 import '../l10n/app_localizations.dart';
 import '../services/meal_service.dart';
 import '../models/notification_model.dart';
@@ -71,6 +70,7 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final languageCode = Localizations.localeOf(context).languageCode;
 
     return Scaffold(
       backgroundColor: bg,
@@ -113,8 +113,8 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage> {
                       (item) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _ProviderNotificationCard(
-                          title: item.title,
-                          message: item.message,
+                          title: item.localizedTitle(languageCode),
+                          message: item.localizedMessage(languageCode),
                           time: DateFormat(
                             'MMM dd · hh:mm a',
                           ).format(item.timestamp),
@@ -330,6 +330,8 @@ class _ProviderNotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -376,51 +378,60 @@ class _ProviderNotificationCard extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
+            child: Directionality(
+              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+              child: Column(
+                crossAxisAlignment: isArabic
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          textAlign: isArabic
+                              ? TextAlign.right
+                              : TextAlign.left,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ),
+                      if (isUnread)
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF9FE5C9),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    message,
+                    textAlign: isArabic ? TextAlign.right : TextAlign.left,
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.4,
+                      color: Colors.black.withOpacity(0.62),
+                      fontWeight: FontWeight.w600,
                     ),
-                    if (isUnread)
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF9FE5C9),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  message,
-                  style: TextStyle(
-                    fontSize: 13,
-                    height: 1.4,
-                    color: Colors.black.withOpacity(0.62),
-                    fontWeight: FontWeight.w600,
                   ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  time,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.black.withOpacity(0.52),
-                    fontWeight: FontWeight.w700,
+                  const SizedBox(height: 10),
+                  Text(
+                    time,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.black.withOpacity(0.52),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

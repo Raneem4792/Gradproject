@@ -10,8 +10,7 @@ class AdminMonitorOrdersPage extends StatefulWidget {
   const AdminMonitorOrdersPage({super.key});
 
   @override
-  State<AdminMonitorOrdersPage> createState() =>
-      _AdminMonitorOrdersPageState();
+  State<AdminMonitorOrdersPage> createState() => _AdminMonitorOrdersPageState();
 }
 
 class _AdminMonitorOrdersPageState extends State<AdminMonitorOrdersPage> {
@@ -20,10 +19,7 @@ class _AdminMonitorOrdersPageState extends State<AdminMonitorOrdersPage> {
   late Future<List<AdminOrdersCampaign>> _ordersFuture;
 
   static const Color bg = Color(0xFFF3F6F5);
-  static const Color primaryDark = Color(0xFF062C26);
   static const Color primary = Color(0xFF0D4C4A);
-  static const Color primaryMid = Color(0xFF1A6B66);
-  static const Color mint = Color(0xFF9FE5C9);
 
   @override
   void initState() {
@@ -114,7 +110,8 @@ class _AdminMonitorOrdersPageState extends State<AdminMonitorOrdersPage> {
   }
 }
 
-class _AdminOrdersAppBar extends StatelessWidget implements PreferredSizeWidget {
+class _AdminOrdersAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
   const _AdminOrdersAppBar();
 
   @override
@@ -447,9 +444,7 @@ class _CampaignOrdersCard extends StatelessWidget {
                 text: 'No orders found under this campaign.',
               )
             else
-              ...campaign.orders.map(
-                (order) => _OrderCard(order: order),
-              ),
+              ...campaign.orders.map((order) => _OrderCard(order: order)),
           ],
         ),
       ),
@@ -529,6 +524,10 @@ class _OrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = _statusColor(order.status);
+    final languageCode = Localizations.localeOf(context).languageCode;
+
+    final mealName = order.localizedMealName(languageCode);
+    final mealType = order.localizedMealType(languageCode);
 
     return Container(
       margin: const EdgeInsets.only(top: 9),
@@ -561,7 +560,7 @@ class _OrderCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      order.mealName,
+                      mealName,
                       style: const TextStyle(
                         color: primaryDark,
                         fontWeight: FontWeight.w900,
@@ -570,7 +569,7 @@ class _OrderCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '${order.mealType} • ${order.calories} calories',
+                      '$mealType • ${order.calories} calories',
                       style: TextStyle(
                         color: Colors.black.withOpacity(0.55),
                         fontWeight: FontWeight.w600,
@@ -581,8 +580,7 @@ class _OrderCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                 decoration: BoxDecoration(
                   color: statusColor.withOpacity(0.10),
                   borderRadius: BorderRadius.circular(999),
@@ -599,14 +597,8 @@ class _OrderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          _InfoLine(
-            icon: Icons.person_rounded,
-            text: order.pilgrimName,
-          ),
-          _InfoLine(
-            icon: Icons.email_rounded,
-            text: order.pilgrimEmail,
-          ),
+          _InfoLine(icon: Icons.person_rounded, text: order.pilgrimName),
+          _InfoLine(icon: Icons.email_rounded, text: order.pilgrimEmail),
           _InfoLine(
             icon: Icons.calendar_month_rounded,
             text: _formatDate(order.requestDate),
@@ -621,10 +613,7 @@ class _InfoLine extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _InfoLine({
-    required this.icon,
-    required this.text,
-  });
+  const _InfoLine({required this.icon, required this.text});
 
   static const Color primary = Color(0xFF0D4C4A);
 
@@ -657,10 +646,7 @@ class _SmallChip extends StatelessWidget {
   final String text;
   final IconData icon;
 
-  const _SmallChip({
-    required this.text,
-    required this.icon,
-  });
+  const _SmallChip({required this.text, required this.icon});
 
   static const Color primary = Color(0xFF0D4C4A);
   static const Color softMint = Color(0xFFF0F6F4);
@@ -762,10 +748,7 @@ class _ErrorState extends StatelessWidget {
   final String message;
   final Future<void> Function() onRetry;
 
-  const _ErrorState({
-    required this.message,
-    required this.onRetry,
-  });
+  const _ErrorState({required this.message, required this.onRetry});
 
   static const Color primary = Color(0xFF0D4C4A);
 

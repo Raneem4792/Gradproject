@@ -5,12 +5,24 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+const pickByLanguage = (arValue, enValue, oldValue, isArabic) => {
+  if (isArabic) {
+    return arValue || oldValue || enValue || '';
+  }
+
+  return enValue || oldValue || arValue || '';
+};
+
 exports.getProviderAnalysis = async (req, res) => {
   try {
-    const { providerID } = req.body;
+    const { providerID, language } = req.body;
+
+    const isArabic = String(language || 'en').toLowerCase().startsWith('ar');
 
     if (!providerID) {
-      return res.status(400).json({ error: 'Provider ID is required' });
+      return res.status(400).json({
+        error: isArabic ? 'رقم المزود مطلوب' : 'Provider ID is required',
+      });
     }
 
     const [orders] = await db.query(
@@ -19,9 +31,17 @@ exports.getProviderAnalysis = async (req, res) => {
         mo.orderID,
         mo.requestDate,
         mo.status,
+
         m.mealID,
+
         m.mealName,
+        m.mealName_en,
+        m.mealName_ar,
+
         m.mealType,
+        m.mealType_en,
+        m.mealType_ar,
+
         m.calories,
         m.protein,
         m.carbohydrates,
@@ -43,7 +63,10 @@ exports.getProviderAnalysis = async (req, res) => {
         r.comment,
         r.providerReply,
         r.reviewDateTime,
-        m.mealName
+
+        m.mealName,
+        m.mealName_en,
+        m.mealName_ar
       FROM rate r
       JOIN meal_order mo ON r.orderID = mo.orderID
       JOIN meal m ON mo.mealID = m.mealID
@@ -53,30 +76,55 @@ exports.getProviderAnalysis = async (req, res) => {
       [providerID]
     );
 
-    const ordersText = orders.map((order) => {
-      return `
+    const ordersText = orders
+      .map((order) => {
+        const mealName = pickByLanguage(
+          order.mealName_ar,
+          order.mealName_en,
+          order.mealName,
+          isArabic
+        );
+
+        const mealType = pickByLanguage(
+          order.mealType_ar,
+          order.mealType_en,
+          order.mealType,
+          isArabic
+        );
+
+        return `
 Order ID: ${order.orderID}
 Date: ${order.requestDate}
 Status: ${order.status}
-Meal: ${order.mealName}
-Type: ${order.mealType}
+Meal: ${mealName}
+Type: ${mealType}
 Calories: ${order.calories}
 Protein: ${order.protein}
 Carbohydrates: ${order.carbohydrates}
 Fat: ${order.fat}
 `;
-    }).join('\n');
+      })
+      .join('\n');
 
-    const ratingsText = ratings.map((rate) => {
-      return `
+    const ratingsText = ratings
+      .map((rate) => {
+        const mealName = pickByLanguage(
+          rate.mealName_ar,
+          rate.mealName_en,
+          rate.mealName,
+          isArabic
+        );
+
+        return `
 Rating ID: ${rate.ratingID}
-Meal: ${rate.mealName}
+Meal: ${mealName}
 Stars: ${rate.stars}
-Comment: ${rate.comment || 'No comment'}
-Provider Reply: ${rate.providerReply || 'No reply'}
+Comment: ${rate.comment || (isArabic ? 'لا يوجد تعليق' : 'No comment')}
+Provider Reply: ${rate.providerReply || (isArabic ? 'لا يوجد رد' : 'No reply')}
 Review Date: ${rate.reviewDateTime}
 `;
-    }).join('\n');
+      })
+      .join('\n');
 
     const response = await openai.responses.create({
       model: 'gpt-4.1-mini',
@@ -85,20 +133,28 @@ You are an AI analytics assistant for NUSUQ provider dashboard.
 
 Analyze the provider meals, orders, statuses, and ratings.
 
+Language rule:
+- Return the analysis in ${isArabic ? 'Arabic' : 'English'}.
+- Keep the section headers exactly as written below in English:
+  AI Summary:
+  Problems or Risks:
+  Recommendations:
+- The bullet content must be in ${isArabic ? 'Arabic' : 'English'}.
+
 Provider orders:
-${ordersText || 'No orders found'}
+${ordersText || (isArabic ? 'لا توجد طلبات' : 'No orders found')}
 
 Provider ratings:
-${ratingsText || 'No ratings found'}
+${ratingsText || (isArabic ? 'لا توجد تقييمات' : 'No ratings found')}
 
 Return the analysis in SHORT bullet points.
 
 Rules:
 - Each section must have 3-4 bullet points only
-- Each bullet point must be VERY SHORT (max 1 line)
+- Each bullet point must be VERY SHORT, max 1 line
 - No paragraphs at all
 - No long explanations
-- Use this format:
+- Use this format exactly:
 
 AI Summary:
 • ...
@@ -116,6 +172,8 @@ Recommendations:
     });
   } catch (error) {
     console.error('AI Dashboard Error:', error);
-    res.status(500).json({ error: 'AI dashboard analysis failed' });
+    res.status(500).json({
+      error: 'AI dashboard analysis failed',
+    });
   }
 };
