@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
+import '../services/admin_service.dart';
 import '../session/user_session.dart';
 import '../widgets/admin_bottom_nav.dart';
 import 'admin_manage_accounts_page.dart';
@@ -17,7 +17,33 @@ class AdminDashboardPage extends StatefulWidget {
 }
 
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
+  final AdminService _adminService = AdminService();
+
+  int _unreadCount = 0;
+
   static const Color bg = Color(0xFFF3F6F5);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUnreadCount();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    try {
+      final count = await _adminService.getAdminUnreadCount(
+        UserSession.userId!,
+      );
+
+      if (mounted) {
+        setState(() {
+          _unreadCount = count;
+        });
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
 
   void _openManageAccounts() {
     Navigator.pushNamed(context, AdminManageAccountsPage.routeName);
@@ -27,8 +53,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     Navigator.pushNamed(context, AdminMonitorOrdersPage.routeName);
   }
 
-  void _openNotifications() {
-    Navigator.pushNamed(context, AdminNotificationsPage.routeName);
+  void _openNotifications() async {
+    await Navigator.pushNamed(context, AdminNotificationsPage.routeName);
+    _loadUnreadCount();
   }
 
   @override
@@ -39,6 +66,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       backgroundColor: bg,
       appBar: _AdminMainAppBar(
         onTapNotifications: _openNotifications,
+        unreadCount: _unreadCount,
       ),
       body: SafeArea(
         top: false,
@@ -82,9 +110,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
 class _AdminMainAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onTapNotifications;
+  final int unreadCount;
 
   const _AdminMainAppBar({
     required this.onTapNotifications,
+    required this.unreadCount,
   });
 
   @override
@@ -116,13 +146,44 @@ class _AdminMainAppBar extends StatelessWidget implements PreferredSizeWidget {
           ],
         ),
         actions: [
-          IconButton(
-            onPressed: onTapNotifications,
-            icon: const Icon(
-              Icons.notifications,
-              color: Colors.black87,
-              size: 20,
-            ),
+          Stack(
+            children: [
+              IconButton(
+                onPressed: onTapNotifications,
+                icon: const Icon(
+                  Icons.notifications,
+                  color: Colors.black87,
+                  size: 20,
+                ),
+              ),
+
+              if (unreadCount > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
+                    child: Center(
+                      child: Text(
+                        unreadCount > 99 ? '99+' : '$unreadCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(width: 6),
         ],

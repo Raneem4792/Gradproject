@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../models/admin_account_tree.dart';
 import '../services/admin_service.dart';
+import '../session/user_session.dart';
 import '../widgets/admin_bottom_nav.dart';
 
 class AdminManageAccountsPage extends StatefulWidget {
@@ -34,6 +35,392 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
       _accountsFuture = _adminService.getAccountsTree();
     });
     await _accountsFuture;
+  }
+
+  Future<void> _changeAccountStatus({
+    required String accountType,
+    required String accountID,
+    required String currentStatus,
+  }) async {
+    final isActive = currentStatus.toLowerCase() == 'active';
+    final newStatus = isActive ? 'inactive' : 'active';
+
+    try {
+      await _adminService.updateAccountStatus(
+        accountType: accountType,
+        accountID: accountID,
+        status: newStatus,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            newStatus == 'active'
+                ? 'Account activated successfully'
+                : 'Account deactivated successfully',
+          ),
+          backgroundColor: primary,
+        ),
+      );
+
+      await _refreshAccounts();
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to update account status'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _editAccountInfo({
+    required String accountType,
+    required String accountID,
+    required String currentName,
+    required String currentEmail,
+    required String currentPhone,
+  }) async {
+    final nameController = TextEditingController(text: currentName);
+    final emailController = TextEditingController(text: currentEmail);
+    final phoneController = TextEditingController(text: currentPhone);
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Edit Account',
+            style: TextStyle(
+              color: primary,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: 'Full Name',
+                    prefixIcon: const Icon(Icons.person_rounded),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: const Icon(Icons.email_rounded),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: 'Phone Number',
+                    prefixIcon: const Icon(Icons.phone_rounded),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.pop(context, true),
+              icon: const Icon(Icons.save_rounded, size: 17),
+              label: const Text('Save'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 11,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(13),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (saved != true) return;
+
+    final newName = nameController.text.trim();
+    final newEmail = emailController.text.trim();
+    final newPhone = phoneController.text.trim();
+
+    if (newName.isEmpty || newEmail.isEmpty || newPhone.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill all fields'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      await _adminService.updateAccountInfo(
+        accountType: accountType,
+        accountID: accountID,
+        fullName: newName,
+        email: newEmail,
+        phoneNumber: newPhone,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account information updated successfully'),
+          backgroundColor: primary,
+        ),
+      );
+
+      await _refreshAccounts();
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to update account information'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+
+  Future<void> _sendSpecificNotification({
+    required String recipientType,
+    required String recipientUserID,
+    required String recipientName,
+  }) async {
+    final titleArController = TextEditingController();
+    final titleEnController = TextEditingController();
+    final messageArController = TextEditingController();
+    final messageEnController = TextEditingController();
+    String notificationType = 'alert';
+
+    final sent = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Text(
+                'Send Notification to $recipientName',
+                style: const TextStyle(
+                  color: primary,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      value: notificationType,
+                      decoration: InputDecoration(
+                        labelText: 'Notification Type',
+                        prefixIcon: const Icon(Icons.notifications_rounded),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'alert', child: Text('Alert')),
+                        DropdownMenuItem(
+                          value: 'announcement',
+                          child: Text('Announcement'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'reminder',
+                          child: Text('Reminder'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setDialogState(() {
+                          notificationType = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: titleArController,
+                      textDirection: TextDirection.rtl,
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        labelText: 'Arabic Title',
+                        prefixIcon: const Icon(Icons.title_rounded),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: titleEnController,
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        labelText: 'English Title',
+                        prefixIcon: const Icon(Icons.title_rounded),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: messageArController,
+                      textDirection: TextDirection.rtl,
+                      minLines: 3,
+                      maxLines: 4,
+                      decoration: InputDecoration(
+                        labelText: 'Arabic Message',
+                        prefixIcon: const Icon(Icons.message_rounded),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: messageEnController,
+                      minLines: 3,
+                      maxLines: 4,
+                      decoration: InputDecoration(
+                        labelText: 'English Message',
+                        prefixIcon: const Icon(Icons.message_rounded),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.pop(context, true),
+                  icon: const Icon(Icons.send_rounded, size: 17),
+                  label: const Text('Send'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 11,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (sent != true) return;
+
+    final titleAr = titleArController.text.trim();
+    final titleEn = titleEnController.text.trim();
+    final messageAr = messageArController.text.trim();
+    final messageEn = messageEnController.text.trim();
+
+    if (titleAr.isEmpty ||
+        titleEn.isEmpty ||
+        messageAr.isEmpty ||
+        messageEn.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill all notification fields'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      await _adminService.createNotification(
+        titleAr: titleAr,
+        titleEn: titleEn,
+        messageAr: messageAr,
+        messageEn: messageEn,
+        notificationType: notificationType,
+        recipientType: recipientType,
+        recipientUserID: recipientUserID,
+        createdByAdminID: UserSession.userId,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Notification sent successfully'),
+          backgroundColor: primary,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to send notification'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -97,7 +484,12 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                   const _SectionLabel(title: 'Registered Providers'),
                   const SizedBox(height: 12),
                   ...providers.map(
-                    (provider) => _ProviderCard(provider: provider),
+                    (provider) => _ProviderCard(
+                      provider: provider,
+                      onStatusChanged: _changeAccountStatus,
+                      onEditAccount: _editAccountInfo,
+                      onSendSpecificNotification: _sendSpecificNotification,
+                    ),
                   ),
                 ],
               );
@@ -372,8 +764,30 @@ class _SectionLabel extends StatelessWidget {
 
 class _ProviderCard extends StatelessWidget {
   final AdminProviderAccount provider;
+  final Future<void> Function({
+    required String accountType,
+    required String accountID,
+    required String currentStatus,
+  }) onStatusChanged;
+  final Future<void> Function({
+    required String accountType,
+    required String accountID,
+    required String currentName,
+    required String currentEmail,
+    required String currentPhone,
+  }) onEditAccount;
+  final Future<void> Function({
+    required String recipientType,
+    required String recipientUserID,
+    required String recipientName,
+  }) onSendSpecificNotification;
 
-  const _ProviderCard({required this.provider});
+  const _ProviderCard({
+    required this.provider,
+    required this.onStatusChanged,
+    required this.onEditAccount,
+    required this.onSendSpecificNotification,
+  });
 
   static const Color primaryDark = Color(0xFF062C26);
   static const Color primary = Color(0xFF0D4C4A);
@@ -387,6 +801,8 @@ class _ProviderCard extends StatelessWidget {
       0,
       (sum, campaign) => sum + campaign.pilgrims.length,
     );
+
+    final providerStatus = provider.providerStatus;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -422,13 +838,20 @@ class _ProviderCard extends StatelessWidget {
               ),
             ),
           ),
-          title: Text(
-            provider.providerName,
-            style: const TextStyle(
-              color: primaryDark,
-              fontSize: 15.5,
-              fontWeight: FontWeight.w800,
-            ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  provider.providerName,
+                  style: const TextStyle(
+                    color: primaryDark,
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              _StatusChip(status: providerStatus),
+            ],
           ),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 5),
@@ -460,6 +883,67 @@ class _ProviderCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _AccountActionButton(
+                      label: 'Edit',
+                      icon: Icons.edit_rounded,
+                      foregroundColor: primary,
+                      backgroundColor: softMint,
+                      borderColor: softMint,
+                      onPressed: () {
+                        onEditAccount(
+                          accountType: 'provider',
+                          accountID: provider.providerID,
+                          currentName: provider.providerName,
+                          currentEmail: provider.providerEmail,
+                          currentPhone: provider.providerPhone ?? '',
+                        );
+                      },
+                    ),
+                    _AccountActionButton(
+                      label: 'Notify',
+                      icon: Icons.notifications_active_rounded,
+                      foregroundColor: primary,
+                      backgroundColor: const Color(0xFFE8F6EF),
+                      borderColor: const Color(0xFFCFEEDF),
+                      onPressed: () {
+                        onSendSpecificNotification(
+                          recipientType: 'provider',
+                          recipientUserID: provider.providerID,
+                          recipientName: provider.providerName,
+                        );
+                      },
+                    ),
+                    _AccountActionButton(
+                      label: providerStatus == 'active'
+                          ? 'Deactivate'
+                          : 'Activate',
+                      icon: providerStatus == 'active'
+                          ? Icons.block_rounded
+                          : Icons.check_circle_rounded,
+                      foregroundColor: providerStatus == 'active'
+                          ? Colors.red
+                          : primary,
+                      backgroundColor: providerStatus == 'active'
+                          ? const Color(0xFFFFEEEE)
+                          : const Color(0xFFE8F6EF),
+                      borderColor: providerStatus == 'active'
+                          ? const Color(0xFFFFD6D6)
+                          : const Color(0xFFCFEEDF),
+                      onPressed: () {
+                        onStatusChanged(
+                          accountType: 'provider',
+                          accountID: provider.providerID,
+                          currentStatus: providerStatus,
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -470,7 +954,12 @@ class _ProviderCard extends StatelessWidget {
               )
             else
               ...provider.campaigns.map(
-                (campaign) => _CampaignTile(campaign: campaign),
+                (campaign) => _CampaignTile(
+                  campaign: campaign,
+                  onStatusChanged: onStatusChanged,
+                  onEditAccount: onEditAccount,
+                  onSendSpecificNotification: onSendSpecificNotification,
+                ),
               ),
           ],
         ),
@@ -481,8 +970,30 @@ class _ProviderCard extends StatelessWidget {
 
 class _CampaignTile extends StatelessWidget {
   final AdminCampaign campaign;
+  final Future<void> Function({
+    required String accountType,
+    required String accountID,
+    required String currentStatus,
+  }) onStatusChanged;
+  final Future<void> Function({
+    required String accountType,
+    required String accountID,
+    required String currentName,
+    required String currentEmail,
+    required String currentPhone,
+  }) onEditAccount;
+  final Future<void> Function({
+    required String recipientType,
+    required String recipientUserID,
+    required String recipientName,
+  }) onSendSpecificNotification;
 
-  const _CampaignTile({required this.campaign});
+  const _CampaignTile({
+    required this.campaign,
+    required this.onStatusChanged,
+    required this.onEditAccount,
+    required this.onSendSpecificNotification,
+  });
 
   static const Color primaryDark = Color(0xFF062C26);
   static const Color primary = Color(0xFF0D4C4A);
@@ -553,7 +1064,12 @@ class _CampaignTile extends StatelessWidget {
               )
             else
               ...campaign.pilgrims.map(
-                (pilgrim) => _PilgrimCard(pilgrim: pilgrim),
+                (pilgrim) => _PilgrimCard(
+                  pilgrim: pilgrim,
+                  onStatusChanged: onStatusChanged,
+                  onEditAccount: onEditAccount,
+                  onSendSpecificNotification: onSendSpecificNotification,
+                ),
               ),
           ],
         ),
@@ -564,8 +1080,30 @@ class _CampaignTile extends StatelessWidget {
 
 class _PilgrimCard extends StatelessWidget {
   final AdminPilgrim pilgrim;
+  final Future<void> Function({
+    required String accountType,
+    required String accountID,
+    required String currentStatus,
+  }) onStatusChanged;
+  final Future<void> Function({
+    required String accountType,
+    required String accountID,
+    required String currentName,
+    required String currentEmail,
+    required String currentPhone,
+  }) onEditAccount;
+  final Future<void> Function({
+    required String recipientType,
+    required String recipientUserID,
+    required String recipientName,
+  }) onSendSpecificNotification;
 
-  const _PilgrimCard({required this.pilgrim});
+  const _PilgrimCard({
+    required this.pilgrim,
+    required this.onStatusChanged,
+    required this.onEditAccount,
+    required this.onSendSpecificNotification,
+  });
 
   static const Color primaryDark = Color(0xFF062C26);
   static const Color primary = Color(0xFF0D4C4A);
@@ -573,6 +1111,8 @@ class _PilgrimCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final pilgrimStatus = pilgrim.pilgrimStatus;
+
     return Container(
       margin: const EdgeInsets.only(top: 9),
       padding: const EdgeInsets.all(12),
@@ -601,13 +1141,20 @@ class _PilgrimCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  pilgrim.pilgrimName,
-                  style: const TextStyle(
-                    color: primaryDark,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14.2,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        pilgrim.pilgrimName,
+                        style: const TextStyle(
+                          color: primaryDark,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14.2,
+                        ),
+                      ),
+                    ),
+                    _StatusChip(status: pilgrimStatus),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 _InfoLine(
@@ -620,10 +1167,144 @@ class _PilgrimCard extends StatelessWidget {
                     icon: Icons.phone_rounded,
                     text: pilgrim.pilgrimPhone!,
                   ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _AccountActionButton(
+                      label: 'Edit',
+                      icon: Icons.edit_rounded,
+                      foregroundColor: primary,
+                      backgroundColor: softMint,
+                      borderColor: softMint,
+                      onPressed: () {
+                        onEditAccount(
+                          accountType: 'pilgrim',
+                          accountID: pilgrim.pilgrimID,
+                          currentName: pilgrim.pilgrimName,
+                          currentEmail: pilgrim.pilgrimEmail,
+                          currentPhone: pilgrim.pilgrimPhone ?? '',
+                        );
+                      },
+                    ),
+                    _AccountActionButton(
+                      label: 'Notify',
+                      icon: Icons.notifications_active_rounded,
+                      foregroundColor: primary,
+                      backgroundColor: const Color(0xFFE8F6EF),
+                      borderColor: const Color(0xFFCFEEDF),
+                      onPressed: () {
+                        onSendSpecificNotification(
+                          recipientType: 'pilgrim',
+                          recipientUserID: pilgrim.pilgrimID,
+                          recipientName: pilgrim.pilgrimName,
+                        );
+                      },
+                    ),
+                    _AccountActionButton(
+                      label: pilgrimStatus == 'active'
+                          ? 'Deactivate'
+                          : 'Activate',
+                      icon: pilgrimStatus == 'active'
+                          ? Icons.block_rounded
+                          : Icons.check_circle_rounded,
+                      foregroundColor: pilgrimStatus == 'active'
+                          ? Colors.red
+                          : primary,
+                      backgroundColor: pilgrimStatus == 'active'
+                          ? const Color(0xFFFFEEEE)
+                          : const Color(0xFFE8F6EF),
+                      borderColor: pilgrimStatus == 'active'
+                          ? const Color(0xFFFFD6D6)
+                          : const Color(0xFFCFEEDF),
+                      onPressed: () {
+                        onStatusChanged(
+                          accountType: 'pilgrim',
+                          accountID: pilgrim.pilgrimID,
+                          currentStatus: pilgrimStatus,
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AccountActionButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color foregroundColor;
+  final Color backgroundColor;
+  final Color borderColor;
+  final VoidCallback onPressed;
+
+  const _AccountActionButton({
+    required this.label,
+    required this.icon,
+    required this.foregroundColor,
+    required this.backgroundColor,
+    required this.borderColor,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 34,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 15),
+        label: Text(label),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: foregroundColor,
+          backgroundColor: backgroundColor,
+          side: BorderSide(color: borderColor),
+          elevation: 0,
+          visualDensity: VisualDensity.compact,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 0),
+          textStyle: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(999),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  final String status;
+
+  const _StatusChip({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = status.toLowerCase() == 'active';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: isActive ? const Color(0xFFE8F6EF) : const Color(0xFFFFEEEE),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        isActive ? 'Active' : 'Inactive',
+        style: TextStyle(
+          color: isActive ? const Color(0xFF0D4C4A) : Colors.red,
+          fontSize: 11.2,
+          fontWeight: FontWeight.w900,
+        ),
       ),
     );
   }

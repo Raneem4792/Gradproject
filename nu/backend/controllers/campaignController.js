@@ -1,4 +1,7 @@
 const CampaignService = require('../services/CampaignService');
+const {
+  createAdminNotification,
+} = require('../services/adminService');
 
 exports.getCampaignsByProvider = async (req, res) => {
   try {
@@ -32,6 +35,18 @@ exports.createCampaign = async (req, res) => {
     }
 
     const result = await CampaignService.createCampaign(req.body);
+
+    await createAdminNotification({
+      title: 'New Campaign',
+      title_ar: 'حملة جديدة',
+      title_en: 'New Campaign',
+
+      notificationType: 'campaign_created',
+
+      messageContent: `Campaign ${campaignName} created`,
+      messageContent_ar: `تم إنشاء حملة جديدة: ${campaignName}`,
+      messageContent_en: `New campaign created: ${campaignName}`,
+    });
 
     return res.status(201).json({
       message: 'Campaign created successfully',

@@ -85,4 +85,100 @@ class AdminService {
       throw Exception('Failed to send notification');
     }
   }
+
+  Future<void> updateAccountStatus({
+  required String accountType,
+  required String accountID,
+  required String status,
+}) async {
+  final response = await http.patch(
+    Uri.parse(
+      '$baseUrl/admin/accounts/$accountType/$accountID/status',
+    ),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'status': status,
+    }),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception('Failed to update account status');
+  }
+}
+
+Future<void> updateAccountInfo({
+  required String accountType,
+  required String accountID,
+  required String fullName,
+  required String email,
+  required String phoneNumber,
+}) async {
+  final response = await http.patch(
+    Uri.parse('$baseUrl/admin/accounts/$accountType/$accountID'),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'fullName': fullName,
+      'email': email,
+      'phoneNumber': phoneNumber,
+    }),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception('Failed to update account information');
+  }
+}
+
+Future<List<dynamic>> getAdminReceivedNotifications(
+  String adminID,
+) async {
+  final response = await http.get(
+    Uri.parse(
+      '$baseUrl/admin/notifications/received/$adminID',
+    ),
+  );
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception('Failed to load admin notifications');
+  }
+}
+
+Future<int> getAdminUnreadCount(String adminID) async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/admin/notifications/unread-count/$adminID'),
+  );
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    return data['count'] ?? 0;
+  } else {
+    throw Exception('Failed to load unread count');
+  }
+}
+
+Future<void> markAdminNotificationAsRead(int notificationID) async {
+  final response = await http.put(
+    Uri.parse('$baseUrl/admin/notifications/$notificationID/read'),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception('Failed to mark notification as read');
+  }
+}
+
+Future<void> markAllAdminNotificationsAsRead(String adminID) async {
+  final response = await http.put(
+    Uri.parse('$baseUrl/admin/notifications/mark-all-read/$adminID'),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception('Failed to mark all notifications as read');
+  }
+}
+
 }

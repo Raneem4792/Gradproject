@@ -1,4 +1,7 @@
 const authService = require('../services/AuthService');
+const {
+  createAdminNotification,
+} = require('../services/adminService');
 
 function normalizeSpaces(value) {
   return String(value || '').trim().replace(/\s+/g, ' ');
@@ -294,6 +297,12 @@ class AuthController {
         });
       }
 
+      if (result.status === 'inactive') {
+        return res.status(403).json({
+          message: 'Your account has been deactivated by the admin',
+        });
+      }
+
       return res.status(200).json(result);
     } catch (error) {
       console.error('Login error:', error);
@@ -324,6 +333,18 @@ class AuthController {
           message: 'Invalid credentials',
         });
       }
+
+      await createAdminNotification({
+        title: 'New Login',
+        title_ar: 'تسجيل دخول جديد',
+        title_en: 'New Login',
+
+        notificationType: 'login',
+
+        messageContent: `${result.fullName} logged in`,
+        messageContent_ar: `قام ${result.fullName} بتسجيل الدخول`,
+        messageContent_en: `${result.fullName} has logged in`,
+      });
 
       return res.status(200).json(result);
 
@@ -408,6 +429,18 @@ class AuthController {
         campaignID: Number(campaignID),
       });
 
+      await createAdminNotification({
+        title: 'New Pilgrim Account',
+        title_ar: 'تسجيل حاج جديد',
+        title_en: 'New Pilgrim Account',
+
+        notificationType: 'pilgrim_registered',
+
+        messageContent: `${normalizedFullName} registered`,
+        messageContent_ar: `تم تسجيل حاج جديد: ${normalizedFullName}`,
+        messageContent_en: `New pilgrim registered: ${normalizedFullName}`,
+      });
+
       return res.status(201).json(result);
     } catch (error) {
       return this._handleSignupError(error, res, 'pilgrim');
@@ -473,6 +506,18 @@ class AuthController {
         email: normalizedEmail,
         phoneNumber: String(phoneNumber).trim(),
         password: String(password),
+      });
+
+      await createAdminNotification({
+        title: 'New Provider Account',
+        title_ar: 'تسجيل مزود خدمة جديد',
+        title_en: 'New Provider Account',
+
+        notificationType: 'provider_registered',
+
+        messageContent: `${normalizedFullName} registered`,
+        messageContent_ar: `تم تسجيل مزود خدمة جديد: ${normalizedFullName}`,
+        messageContent_en: `New provider registered: ${normalizedFullName}`,
       });
 
       return res.status(201).json(result);

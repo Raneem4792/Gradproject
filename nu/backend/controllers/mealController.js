@@ -1,5 +1,8 @@
 const db = require('../config/db');
 const mealService = require('../services/MealService');
+const {
+  createAdminNotification,
+} = require('../services/adminService');
 
 const cleanText = (value) => {
   if (value === undefined || value === null) return '';
@@ -185,6 +188,18 @@ class MealController {
       }
 
       const result = await mealService.createMeal(mealData);
+
+      await createAdminNotification({
+        title: 'New Meal',
+        title_ar: 'وجبة جديدة',
+        title_en: 'New Meal',
+
+        notificationType: 'meal_created',
+
+        messageContent: `New meal added: ${mealNameEn}`,
+        messageContent_ar: `تمت إضافة وجبة جديدة: ${mealNameAr}`,
+        messageContent_en: `New meal added: ${mealNameEn}`,
+      });
 
       const mealNameAr =
         mealData.mealName_ar || mealData.mealName || mealData.mealName_en || '';

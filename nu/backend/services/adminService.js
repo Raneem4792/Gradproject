@@ -83,6 +83,7 @@ exports.getAccountsTree = async () => {
       p.fullName AS providerName,
       p.email AS providerEmail,
       p.phoneNumber AS providerPhone,
+      p.status AS providerStatus,
 
       c.campaignID,
       c.campaignName,
@@ -93,7 +94,8 @@ exports.getAccountsTree = async () => {
       pg.pilgrimID,
       pg.fullName AS pilgrimName,
       pg.email AS pilgrimEmail,
-      pg.phoneNumber AS pilgrimPhone
+      pg.phoneNumber AS pilgrimPhone,
+      pg.status AS pilgrimStatus
 
     FROM provider p
 
@@ -118,6 +120,7 @@ exports.getAccountsTree = async () => {
         providerName: row.providerName,
         providerEmail: row.providerEmail,
         providerPhone: row.providerPhone,
+        providerStatus: row.providerStatus,
         campaigns: [],
       };
     }
@@ -146,12 +149,40 @@ exports.getAccountsTree = async () => {
           pilgrimName: row.pilgrimName,
           pilgrimEmail: row.pilgrimEmail,
           pilgrimPhone: row.pilgrimPhone,
+          pilgrimStatus: row.pilgrimStatus,
         });
       }
     }
   });
 
   return Object.values(providersMap);
+};
+
+exports.updateAccountStatus = async ({
+  accountType,
+  accountID,
+  status,
+}) => {
+  const table =
+    accountType === 'provider'
+      ? 'provider'
+      : 'pilgrim';
+
+  const idColumn =
+    accountType === 'provider'
+      ? 'providerID'
+      : 'pilgrimID';
+
+  const [result] = await db.query(
+    `
+    UPDATE ${table}
+    SET status = ?
+    WHERE ${idColumn} = ?
+    `,
+    [status, accountID]
+  );
+
+  return result.affectedRows > 0;
 };
 
 exports.getOrdersMonitor = async () => {
@@ -378,4 +409,101 @@ exports.getAdminProfile = async (adminID) => {
   const [rows] = await db.query(sql, [adminID]);
 
   return rows[0];
+};
+
+exports.updateAccountInfo = async ({
+  accountType,
+  accountID,
+  fullName,
+  email,
+  phoneNumber,
+}) => {
+  const table = accountType === 'provider' ? 'provider' : 'pilgrim';
+  const idColumn = accountType === 'provider' ? 'providerID' : 'pilgrimID';
+
+  const [result] = await db.query(
+    `
+    UPDATE ${table}
+    SET fullName = ?, email = ?, phoneNumber = ?
+    WHERE ${idColumn} = ?
+    `,
+    [fullName, email, phoneNumber, accountID]
+  );
+
+  return result.affectedRows > 0;
+};
+
+const createAdminNotification = async ({
+  title,
+  title_ar,
+  title_en,
+  notificationType,
+  messageContent,
+  messageContent_ar,
+  messageContent_en,
+}) => {
+  const [admins] = await db.query(`
+    SELECT adminID
+    FROM admin
+  `);
+
+  for (const admin of admins) {
+    await insertNotification({
+      title,
+      title_ar,
+      title_en,
+      notificationType,
+      messageContent,
+      messageContent_ar,
+      messageContent_en,
+      recipientUserID: admin.adminID,
+      recipientType: 'admin',
+      createdByAdminID: null,
+    });
+  }
+};
+
+exports.createAdminNotification = createAdminNotification;
+
+exports.getAdminUnreadCount = async (adminID) => {
+  const [rows] = await db.query(`
+    SELECT COUNT(*) AS count
+    FROM notification
+    WHERE recipientType = 'admin'
+    AND recipientUserID = ?
+    AND isRead = 0
+  `, [adminID]);
+
+  return rows[0];
+};
+
+exports.markAdminNotificationAsRead = async (notificationID) => {
+  await db.query(`
+    UPDATE notification
+    SET isRead = 1
+    WHERE notificationID = ?
+    AND recipientType = 'admin'
+  `, [notificationID]);
+};
+
+exports.markAllAdminNotificationsAsRead = async (adminID) => {
+  await db.query(`
+    UPDATE notification
+    SET isRead = 1
+    WHERE recipientType = 'admin'
+    AND recipientUserID = ?
+    AND isRead = 0
+  `, [adminID]);
+};
+
+exports.getAdminReceivedNotifications = async (adminID) => {
+  const [rows] = await db.query(`
+    SELECT *
+    FROM notification
+    WHERE recipientType = 'admin'
+    AND recipientUserID = ?
+    ORDER BY timestamp DESC
+  `, [adminID]);
+
+  return rows;
 };

@@ -220,3 +220,167 @@ exports.getAdminProfile = async (req, res) => {
     });
   }
 };
+
+exports.updateAccountStatus = async (req, res) => {
+  try {
+    const { accountType, accountID } = req.params;
+    const { status } = req.body;
+
+    const validTypes = ['provider', 'pilgrim'];
+    const validStatuses = ['active', 'inactive'];
+
+    if (!validTypes.includes(accountType)) {
+      return res.status(400).json({
+        message: 'Invalid account type',
+      });
+    }
+
+    if (!accountID) {
+      return res.status(400).json({
+        message: 'Account ID is required',
+      });
+    }
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        message: 'Invalid status',
+      });
+    }
+
+    const updated = await adminService.updateAccountStatus({
+      accountType,
+      accountID,
+      status,
+    });
+
+    if (!updated) {
+      return res.status(404).json({
+        message: 'Account not found',
+      });
+    }
+
+    res.json({
+      message: 'Account status updated successfully',
+    });
+  } catch (error) {
+    console.error('Update account status error:', error);
+
+    res.status(500).json({
+      message: 'Failed to update account status',
+      error: error.message,
+    });
+  }
+};
+
+exports.updateAccountInfo = async (req, res) => {
+  try {
+    const { accountType, accountID } = req.params;
+    const { fullName, email, phoneNumber } = req.body;
+
+    const validTypes = ['provider', 'pilgrim'];
+
+    if (!validTypes.includes(accountType)) {
+      return res.status(400).json({
+        message: 'Invalid account type',
+      });
+    }
+
+    if (!fullName || !email || !phoneNumber) {
+      return res.status(400).json({
+        message: 'Full name, email, and phone number are required',
+      });
+    }
+
+    const updated = await adminService.updateAccountInfo({
+      accountType,
+      accountID,
+      fullName: cleanText(fullName),
+      email: cleanText(email).toLowerCase(),
+      phoneNumber: cleanText(phoneNumber),
+    });
+
+    if (!updated) {
+      return res.status(404).json({
+        message: 'Account not found',
+      });
+    }
+
+    res.json({
+      message: 'Account information updated successfully',
+    });
+  } catch (error) {
+    console.error('Update account info error:', error);
+
+    res.status(500).json({
+      message: 'Failed to update account information',
+      error: error.message,
+    });
+  }
+};
+
+exports.getAdminReceivedNotifications = async (req, res) => {
+  try {
+    const { adminID } = req.params;
+
+    const data = await adminService.getAdminReceivedNotifications(
+      adminID
+    );
+
+    res.json(data);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: 'Failed to fetch admin notifications',
+    });
+  }
+};
+
+exports.getAdminUnreadCount = async (req, res) => {
+  try {
+    const { adminID } = req.params;
+
+    const data = await adminService.getAdminUnreadCount(adminID);
+
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Failed to fetch unread count',
+      error: error.message,
+    });
+  }
+};
+
+exports.markAdminNotificationAsRead = async (req, res) => {
+  try {
+    const { notificationID } = req.params;
+
+    await adminService.markAdminNotificationAsRead(notificationID);
+
+    res.json({
+      message: 'Notification marked as read',
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Failed to mark notification as read',
+      error: error.message,
+    });
+  }
+};
+
+exports.markAllAdminNotificationsAsRead = async (req, res) => {
+  try {
+    const { adminID } = req.params;
+
+    await adminService.markAllAdminNotificationsAsRead(adminID);
+
+    res.json({
+      message: 'All notifications marked as read',
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Failed to mark all notifications as read',
+      error: error.message,
+    });
+  }
+};

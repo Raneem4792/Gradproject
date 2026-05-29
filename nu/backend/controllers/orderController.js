@@ -1,5 +1,8 @@
 const db = require('../config/db');
 const orderService = require('../services/OrderService');
+const {
+  createAdminNotification,
+} = require('../services/adminService');
 
 class OrderController {
   async createOrder(req, res) {
@@ -13,6 +16,18 @@ class OrderController {
       }
 
       const result = await orderService.createOrder(mealID, pilgrimID);
+
+      await createAdminNotification({
+        title: 'New Meal Order',
+        title_ar: 'طلب وجبة جديد',
+        title_en: 'New Meal Order',
+
+        notificationType: 'meal_order_created',
+
+        messageContent: `New meal order submitted`,
+        messageContent_ar: `تم تقديم طلب وجبة جديد`,
+        messageContent_en: `A new meal order has been submitted`,
+      });
 
       return res.status(201).json(result);
     } catch (error) {
@@ -87,6 +102,18 @@ class OrderController {
         `UPDATE meal_order SET status = ? WHERE orderID = ?`,
         [normalizedStatus, orderID]
       );
+
+      await createAdminNotification({
+        title: 'Order Status Updated',
+        title_ar: 'تم تحديث حالة الطلب',
+        title_en: 'Order Status Updated',
+
+        notificationType: 'meal_order_status_updated',
+
+        messageContent: `Order #${orderID} status changed to ${normalizedStatus}`,
+        messageContent_ar: `تم تغيير حالة الطلب رقم ${orderID} إلى ${normalizedStatus}`,
+        messageContent_en: `Order #${orderID} status changed to ${normalizedStatus}`,
+      });
 
       const [orderRows] = await db.query(
         `

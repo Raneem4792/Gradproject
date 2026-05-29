@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../services/admin_service.dart';
 import '../session/user_session.dart';
 import '../widgets/admin_bottom_nav.dart';
@@ -37,11 +36,13 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
   bool get requiresRecipientId =>
       selectedRecipientType == 'pilgrim' || selectedRecipientType == 'provider';
 
-  @override
-  void initState() {
-    super.initState();
-    _notificationsFuture = fetchNotifications();
-  }
+@override
+void initState() {
+  super.initState();
+
+  _markNotificationsAsRead();
+  _notificationsFuture = fetchNotifications();
+}
 
   @override
   void dispose() {
@@ -53,9 +54,21 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
     super.dispose();
   }
 
-  Future<List<dynamic>> fetchNotifications() {
-    return _adminService.getSentNotifications();
+Future<List<dynamic>> fetchNotifications() {
+  return _adminService.getAdminReceivedNotifications(
+    UserSession.userId!,
+  );
+}
+
+Future<void> _markNotificationsAsRead() async {
+  try {
+    await _adminService.markAllAdminNotificationsAsRead(
+      UserSession.userId!,
+    );
+  } catch (e) {
+    debugPrint(e.toString());
   }
+}
 
   Future<void> _refreshNotifications() async {
     setState(() {
@@ -97,7 +110,7 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
       setState(() {
         selectedNotificationType = 'alert';
         selectedRecipientType = 'all_pilgrims';
-        selectedTab = 1;
+        selectedTab = 0;
         _notificationsFuture = fetchNotifications();
       });
     } catch (e) {
@@ -162,37 +175,38 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
             Expanded(
               child: IndexedStack(
                 index: selectedTab,
-                children: [
-                  _CreateNotificationTab(
-                    formKey: _formKey,
-                    titleArController: titleArController,
-                    titleEnController: titleEnController,
-                    messageArController: messageArController,
-                    messageEnController: messageEnController,
-                    recipientIdController: recipientIdController,
-                    selectedNotificationType: selectedNotificationType,
-                    selectedRecipientType: selectedRecipientType,
-                    requiresRecipientId: requiresRecipientId,
-                    isLoading: isLoading,
-                    onNotificationTypeChanged: (value) {
-                      setState(() {
-                        selectedNotificationType = value!;
-                      });
-                    },
-                    onRecipientTypeChanged: (value) {
-                      setState(() {
-                        selectedRecipientType = value!;
-                        recipientIdController.clear();
-                      });
-                    },
-                    onSend: sendNotification,
-                  ),
-                  _SentNotificationsTab(
-                    notificationsFuture: _notificationsFuture,
-                    onRefresh: _refreshNotifications,
-                    formatDate: _formatDate,
-                  ),
-                ],
+children: [
+  _SentNotificationsTab(
+    notificationsFuture: _notificationsFuture,
+    onRefresh: _refreshNotifications,
+    formatDate: _formatDate,
+  ),
+
+  _CreateNotificationTab(
+    formKey: _formKey,
+    titleArController: titleArController,
+    titleEnController: titleEnController,
+    messageArController: messageArController,
+    messageEnController: messageEnController,
+    recipientIdController: recipientIdController,
+    selectedNotificationType: selectedNotificationType,
+    selectedRecipientType: selectedRecipientType,
+    requiresRecipientId: requiresRecipientId,
+    isLoading: isLoading,
+    onNotificationTypeChanged: (value) {
+      setState(() {
+        selectedNotificationType = value!;
+      });
+    },
+    onRecipientTypeChanged: (value) {
+      setState(() {
+        selectedRecipientType = value!;
+        recipientIdController.clear();
+      });
+    },
+    onSend: sendNotification,
+  ),
+],
               ),
             ),
           ],
@@ -323,15 +337,15 @@ class _TabSwitch extends StatelessWidget {
       child: Row(
         children: [
           _TabButton(
-            title: 'Create',
-            icon: Icons.add_alert_rounded,
+            title: 'Admin Alerts',
+            icon: Icons.notifications_active_rounded,
             selected: selectedIndex == 0,
             onTap: () => onChanged(0),
           ),
           const SizedBox(width: 6),
           _TabButton(
-            title: 'Sent',
-            icon: Icons.mark_email_read_rounded,
+            title: 'Send Notifications',
+            icon: Icons.send_rounded,
             selected: selectedIndex == 1,
             onTap: () => onChanged(1),
           ),
@@ -432,7 +446,7 @@ class _CreateNotificationTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _SectionLabel(title: 'Create Notification'),
+            const _SectionLabel(title: 'Create Bulk Notification'),
             const SizedBox(height: 12),
             _InputField(
               controller: titleArController,
@@ -486,34 +500,14 @@ class _CreateNotificationTab extends StatelessWidget {
                   value: 'all_providers',
                   child: Text('All Providers'),
                 ),
-                DropdownMenuItem(
-                  value: 'pilgrim',
-                  child: Text('Specific Pilgrim'),
-                ),
-                DropdownMenuItem(
-                  value: 'provider',
-                  child: Text('Specific Provider'),
-                ),
               ],
               onChanged: onRecipientTypeChanged,
             ),
-            if (requiresRecipientId) ...[
-              const SizedBox(height: 14),
-              _InputField(
-                controller: recipientIdController,
-                label: 'Recipient ID',
-                icon: Icons.badge_rounded,
-                validator: (value) {
-                  if (!requiresRecipientId) return null;
-
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Enter recipient ID';
-                  }
-
-                  return null;
-                },
-              ),
-            ],
+            const SizedBox(height: 8),
+            const _FormHint(
+              text:
+                  'For a specific pilgrim or provider, send the notification directly from Manage Accounts.',
+            ),
             const SizedBox(height: 14),
             _MessageField(
               controller: messageArController,
@@ -543,7 +537,9 @@ class _CreateNotificationTab extends StatelessWidget {
                         ),
                       )
                     : const Icon(Icons.send_rounded),
-                label: Text(isLoading ? 'Sending...' : 'Send Notification'),
+                label: Text(
+                  isLoading ? 'Sending...' : 'Send Bulk Notification',
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primary,
                   foregroundColor: Colors.white,
@@ -557,6 +553,44 @@ class _CreateNotificationTab extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _FormHint extends StatelessWidget {
+  final String text;
+
+  const _FormHint({required this.text});
+
+  static const Color primary = Color(0xFF0D4C4A);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F6F4),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline_rounded, color: primary, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: primary,
+                fontSize: 12.3,
+                fontWeight: FontWeight.w700,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -633,7 +667,7 @@ class _SentNotificationsTab extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
-              const _SectionLabel(title: 'Sent Notifications'),
+              const _SectionLabel(title: 'Admin Alerts'),
               const SizedBox(height: 12),
               ...notifications.map((rawItem) {
                 final item = rawItem is Map<String, dynamic>

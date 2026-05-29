@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 class AuthService {
   async login(id, password) {
     const [pilgrimRows] = await db.query(
-      `SELECT pilgrimID, fullName, email, phoneNumber, password, campaignID
+      `SELECT pilgrimID, fullName, email, phoneNumber, password, campaignID, status
        FROM Pilgrim
        WHERE pilgrimID = ?`,
       [id]
@@ -15,6 +15,12 @@ class AuthService {
       const isMatch = await bcrypt.compare(password, user.password);
 
       if (!isMatch) return null;
+
+      if (user.status === 'inactive') {
+        return {
+          status: 'inactive',
+        };
+      }
 
       return {
         message: 'Login successful',
@@ -30,7 +36,7 @@ class AuthService {
     }
 
     const [providerRows] = await db.query(
-      `SELECT providerID, fullName, email, phoneNumber, password
+      `SELECT providerID, fullName, email, phoneNumber, password, status
        FROM Provider
        WHERE providerID = ?`,
       [id]
@@ -41,6 +47,12 @@ class AuthService {
       const isMatch = await bcrypt.compare(password, user.password);
 
       if (!isMatch) return null;
+
+      if (user.status === 'inactive') {
+        return {
+          status: 'inactive',
+        };
+      }
 
       return {
         message: 'Login successful',
