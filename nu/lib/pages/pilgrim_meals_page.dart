@@ -238,10 +238,10 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
                   if (visibleMeals.isEmpty)
                     _EmptyMealsState(
                       title: showRecommendedOnly
-                          ? l10n.completeHealthProfileForAiMeals
+                          ? 'No suitable meals found'
                           : l10n.mealsAreNotCurrentlyAvailableForYourCampaign,
                       subtitle: showRecommendedOnly
-                          ? l10n.completeHealthProfileFirstThenTryAgain
+                          ? 'Your health profile is complete, but the available meals do not match your health needs.'
                           : l10n.yourCampaignProviderHasNotAddedMealsYet,
                     )
                   else
@@ -274,6 +274,7 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
                                 ? meal.mealTypeEn
                                 : meal.mealType,
                           ),
+                          imagePath: meal.image,
                           onSelectMeal: () {
                             _openSubmitMealRequestPage(
                               mealID: meal.mealID,
@@ -329,7 +330,10 @@ class _PilgrimMealsAppBar extends StatelessWidget
           children: [
             IconButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PilgrimHomeScreen()),
+                );
               },
               icon: const Icon(
                 Icons.arrow_back_ios_new_rounded,
@@ -578,6 +582,7 @@ class _MealRequestCard extends StatelessWidget {
   final String nutritionLine;
   final bool isHealthMatched;
   final IconData icon;
+  final String imagePath;
   final VoidCallback onSelectMeal;
 
   const _MealRequestCard({
@@ -588,6 +593,7 @@ class _MealRequestCard extends StatelessWidget {
     required this.nutritionLine,
     required this.isHealthMatched,
     required this.icon,
+    required this.imagePath,
     required this.onSelectMeal,
   });
 
@@ -647,22 +653,10 @@ class _MealRequestCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Center(
-                    child: Container(
-                      width: 82,
-                      height: 82,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.75),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: Colors.black.withOpacity(0.04),
-                        ),
-                      ),
-                      child: Icon(
-                        icon,
-                        size: 42,
-                        color: primary.withOpacity(0.9),
-                      ),
+                  Positioned.fill(
+                    child: _MealImage(
+                      imagePath: imagePath,
+                      icon: icon,
                     ),
                   ),
                   Positioned(
@@ -806,6 +800,85 @@ class _MealRequestCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MealImage extends StatelessWidget {
+  final String imagePath;
+  final IconData icon;
+
+  const _MealImage({
+    required this.imagePath,
+    required this.icon,
+  });
+
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color softBg = Color(0xFFEAF4F2);
+  static const Color mint = Color(0xFF9FE5C9);
+
+  bool get _hasImage => imagePath.trim().isNotEmpty;
+
+  String get _fixedImagePath {
+    final path = imagePath.trim();
+
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
+
+    // لو الباك إند يرجع المسار كذا: /uploads/name.jpg
+    // اكتبي نفس رابط السيرفر المستخدم عندك في الخدمات.
+    if (path.startsWith('/uploads/')) {
+      return 'http://localhost:3000$path';
+    }
+
+    return path;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_hasImage) return _placeholder();
+
+    return Image.network(
+      _fixedImagePath,
+      width: double.infinity,
+      height: 150,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return _placeholder();
+      },
+      errorBuilder: (_, __, ___) => _placeholder(),
+    );
+  }
+
+  Widget _placeholder() {
+    return Container(
+      width: double.infinity,
+      height: 150,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [softBg, mint.withOpacity(0.35)],
+        ),
+      ),
+      child: Center(
+        child: Container(
+          width: 82,
+          height: 82,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.75),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.black.withOpacity(0.04)),
+          ),
+          child: Icon(
+            icon,
+            size: 42,
+            color: primary.withOpacity(0.9),
+          ),
+        ),
       ),
     );
   }

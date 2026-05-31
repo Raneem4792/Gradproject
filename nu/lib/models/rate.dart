@@ -4,8 +4,6 @@ class Rate {
   final int stars;
   final String comment;
   final String reviewDateTime;
-  final String providerReply;
-  final String replyDateTime;
 
   Rate({
     required this.ratingID,
@@ -13,8 +11,6 @@ class Rate {
     required this.stars,
     required this.comment,
     required this.reviewDateTime,
-    required this.providerReply,
-    required this.replyDateTime,
   });
 
   static int _toInt(dynamic value) {
@@ -31,8 +27,6 @@ class Rate {
       stars: _toInt(json['stars']),
       comment: json['comment'] ?? '',
       reviewDateTime: json['reviewDateTime']?.toString() ?? '',
-      providerReply: json['providerReply'] ?? '',
-      replyDateTime: json['replyDateTime']?.toString() ?? '',
     );
   }
 }

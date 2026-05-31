@@ -7,6 +7,7 @@ import '../l10n/app_localizations.dart';
 import '../services/meal_service.dart';
 import '../models/notification_model.dart';
 import '../session/user_session.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PilgrimNotificationsPage extends StatefulWidget {
   static const String routeName = '/pilgrim-notifications';
@@ -34,6 +35,14 @@ class _PilgrimNotificationsPageState extends State<PilgrimNotificationsPage> {
   }
 
   Future<List<AppNotification>> _loadNotificationsAndMarkRead() async {
+    final prefs = await SharedPreferences.getInstance();
+    final notificationsEnabled =
+        prefs.getBool('pilgrim_notifications_enabled') ?? true;
+
+    if (!notificationsEnabled) {
+      return [];
+    }
+
     await _mealService.getNotifications(_userId, _userType);
 
     await _markNotificationsAsRead();

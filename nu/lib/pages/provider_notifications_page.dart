@@ -6,6 +6,7 @@ import '../l10n/app_localizations.dart';
 import '../services/meal_service.dart';
 import '../models/notification_model.dart';
 import '../session/user_session.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProviderNotificationsPage extends StatefulWidget {
   static const String routeName = '/provider-notifications';
@@ -39,6 +40,14 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage> {
   }
 
   Future<List<AppNotification>> _loadNotificationsAndMarkRead() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final enabled = prefs.getBool('provider_notifications_enabled') ?? true;
+
+    if (!enabled) {
+      return [];
+    }
+
     final notifications = await _mealService.getNotifications(
       _userId,
       _userType,

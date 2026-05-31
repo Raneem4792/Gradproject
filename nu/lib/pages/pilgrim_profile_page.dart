@@ -10,6 +10,7 @@ import '../models/health_profile.dart';
 import '../models/pilgrim_profile.dart';
 import '../services/pilgrim_service.dart';
 import 'login_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PilgrimProfilePage extends StatefulWidget {
   static const String routeName = '/pilgrim-profile';
@@ -60,6 +61,29 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
 
   bool notificationsEnabled = true;
 
+  Future<void> _loadNotificationSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (!mounted) return;
+
+    setState(() {
+      notificationsEnabled =
+          prefs.getBool('pilgrim_notifications_enabled') ?? true;
+    });
+  }
+
+  Future<void> _saveNotificationSetting(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setBool('pilgrim_notifications_enabled', value);
+
+    if (!mounted) return;
+
+    setState(() {
+      notificationsEnabled = value;
+    });
+  }
+
   late final TextEditingController fullNameController;
   late final TextEditingController emailController;
   late final TextEditingController phoneController;
@@ -81,7 +105,6 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
     "Arthritis",
     "Epilepsy",
     "Mobility Issue",
-
   ];
 
   final List<String> dietaryPreferenceOptions = const [
@@ -117,6 +140,7 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
     _rebuildHealthTags();
     _loadPersonalProfile();
     _loadHealthProfile();
+    _loadNotificationSetting();
   }
 
   @override
@@ -150,7 +174,9 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
             ? profile.dietaryPreferences
             : "Regular";
 
-        final loadedAllergies = _splitKnownAndOtherAllergies(profile.allergyList);
+        final loadedAllergies = _splitKnownAndOtherAllergies(
+          profile.allergyList,
+        );
         selectedAllergies = loadedAllergies.knownAllergies;
         otherAllergyText = loadedAllergies.otherAllergyText;
         otherAllergyController.text = otherAllergyText;
@@ -202,7 +228,7 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
   }
 
   ({List<String> knownAllergies, String otherAllergyText})
-      _splitKnownAndOtherAllergies(List<String> allergies) {
+  _splitKnownAndOtherAllergies(List<String> allergies) {
     final known = <String>[];
     final custom = <String>[];
 
@@ -260,191 +286,189 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
     tags = result;
   }
 
-  
-String? _validateProfileFullName(String? value) {
-  final l10n = AppLocalizations.of(context)!;
-  final text = (value ?? '').trim().replaceAll(RegExp(r'\s+'), ' ');
+  String? _validateProfileFullName(String? value) {
+    final l10n = AppLocalizations.of(context)!;
+    final text = (value ?? '').trim().replaceAll(RegExp(r'\s+'), ' ');
 
-  if (text.isEmpty) return l10n.pleaseEnterFullName;
-  if (text.length < 3) return l10n.fullNameTooShort;
-  if (text.length > 50) return l10n.fullNameTooLong;
-  if (RegExp(r'[0-9]').hasMatch(text)) return l10n.fullNameNoNumbers;
+    if (text.isEmpty) return l10n.pleaseEnterFullName;
+    if (text.length < 3) return l10n.fullNameTooShort;
+    if (text.length > 50) return l10n.fullNameTooLong;
+    if (RegExp(r'[0-9]').hasMatch(text)) return l10n.fullNameNoNumbers;
 
-  final isArabicOnly = RegExp(r'^[\u0600-\u06FF ]+$').hasMatch(text);
-  final isEnglishOnly = RegExp(r'^[A-Za-z ]+$').hasMatch(text);
+    final isArabicOnly = RegExp(r'^[\u0600-\u06FF ]+$').hasMatch(text);
+    final isEnglishOnly = RegExp(r'^[A-Za-z ]+$').hasMatch(text);
 
-  if (!isArabicOnly && !isEnglishOnly) {
-    return l10n.fullNameArabicOrEnglishOnly;
-  }
-
-  return null;
-}
-
-String? _validateProfileEmail(String? value) {
-  final l10n = AppLocalizations.of(context)!;
-  final text = (value ?? '').trim();
-
-  if (text.isEmpty) return l10n.pleaseEnterEmail;
-  if (text.contains(' ')) return l10n.emailNoSpaces;
-  if (text.length > 100) return l10n.emailTooLong;
-
-  final emailRegex = RegExp(
-    r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$',
-  );
-
-  if (!emailRegex.hasMatch(text)) {
-    return l10n.pleaseEnterValidEmail;
-  }
-
-  return null;
-}
-
-String? _validateProfilePhone(String? value) {
-  final l10n = AppLocalizations.of(context)!;
-  final text = (value ?? '').trim();
-
-  if (text.isEmpty) return l10n.pleaseEnterPhoneNumber;
-  if (text.contains(' ')) return l10n.phoneNoSpaces;
-
-  if (!RegExp(r'^\+?[0-9]+$').hasMatch(text)) {
-    return l10n.phoneDigitsOnly;
-  }
-
-  final digitsOnly = text.replaceAll('+', '');
-
-  if (digitsOnly.length < 8) {
-    return l10n.phoneTooShort;
-  }
-
-  if (digitsOnly.length > 15) {
-    return l10n.phoneTooLong;
-  }
-
-  return null;
-}
-
-Future<void> _togglePersonalEdit() async {
-  final l10n = AppLocalizations.of(context)!;
-
-  if (isEditingPersonal) {
-    final pilgrimId = UserSession.userId;
-
-    if (pilgrimId == null || pilgrimId.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.userSessionNotFound)));
-      return;
+    if (!isArabicOnly && !isEnglishOnly) {
+      return l10n.fullNameArabicOrEnglishOnly;
     }
 
-    if (!(_personalFormKey.currentState?.validate() ?? false)) {
-      return;
+    return null;
+  }
+
+  String? _validateProfileEmail(String? value) {
+    final l10n = AppLocalizations.of(context)!;
+    final text = (value ?? '').trim();
+
+    if (text.isEmpty) return l10n.pleaseEnterEmail;
+    if (text.contains(' ')) return l10n.emailNoSpaces;
+    if (text.length > 100) return l10n.emailTooLong;
+
+    final emailRegex = RegExp(
+      r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$',
+    );
+
+    if (!emailRegex.hasMatch(text)) {
+      return l10n.pleaseEnterValidEmail;
     }
 
-    try {
-      final profile = PilgrimProfile(
-        pilgrimID: pilgrimId,
-        fullName: fullNameController.text.trim(),
-        email: emailController.text.trim(),
-        phoneNumber: phoneController.text.trim(),
-        campaignID: 0,
-        campaignName: campaignName,
-      );
+    return null;
+  }
 
-      await _pilgrimService.updateProfile(profile);
+  String? _validateProfilePhone(String? value) {
+    final l10n = AppLocalizations.of(context)!;
+    final text = (value ?? '').trim();
+
+    if (text.isEmpty) return l10n.pleaseEnterPhoneNumber;
+    if (text.contains(' ')) return l10n.phoneNoSpaces;
+
+    if (!RegExp(r'^\+?[0-9]+$').hasMatch(text)) {
+      return l10n.phoneDigitsOnly;
+    }
+
+    final digitsOnly = text.replaceAll('+', '');
+
+    if (digitsOnly.length < 8) {
+      return l10n.phoneTooShort;
+    }
+
+    if (digitsOnly.length > 15) {
+      return l10n.phoneTooLong;
+    }
+
+    return null;
+  }
+
+  Future<void> _togglePersonalEdit() async {
+    final l10n = AppLocalizations.of(context)!;
+
+    if (isEditingPersonal) {
+      final pilgrimId = UserSession.userId;
+
+      if (pilgrimId == null || pilgrimId.isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.userSessionNotFound)));
+        return;
+      }
+
+      if (!(_personalFormKey.currentState?.validate() ?? false)) {
+        return;
+      }
+
+      try {
+        final profile = PilgrimProfile(
+          pilgrimID: pilgrimId,
+          fullName: fullNameController.text.trim(),
+          email: emailController.text.trim(),
+          phoneNumber: phoneController.text.trim(),
+          campaignID: 0,
+          campaignName: campaignName,
+        );
+
+        await _pilgrimService.updateProfile(profile);
+
+        setState(() {
+          fullName = fullNameController.text.trim();
+          email = emailController.text.trim();
+          phone = phoneController.text.trim();
+          isEditingPersonal = false;
+        });
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.personalDetailsUpdated)));
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("${l10n.failedToUpdateProfile}: $e")),
+        );
+      }
+    } else {
+      fullNameController.text = fullName;
+      emailController.text = email;
+      phoneController.text = phone;
 
       setState(() {
-        fullName = fullNameController.text.trim();
-        email = emailController.text.trim();
-        phone = phoneController.text.trim();
-        isEditingPersonal = false;
+        isEditingPersonal = true;
       });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.personalDetailsUpdated)),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("${l10n.failedToUpdateProfile}: $e")),
-      );
     }
-  } else {
-    fullNameController.text = fullName;
-    emailController.text = email;
-    phoneController.text = phone;
+  }
 
+  void _cancelPersonalEdit() {
     setState(() {
-      isEditingPersonal = true;
+      fullNameController.text = fullName;
+      emailController.text = email;
+      phoneController.text = phone;
+      isEditingPersonal = false;
     });
   }
-}
 
-void _cancelPersonalEdit() {
-  setState(() {
-    fullNameController.text = fullName;
-    emailController.text = email;
-    phoneController.text = phone;
-    isEditingPersonal = false;
-  });
-}
+  Future<void> _toggleHealthEdit() async {
+    final l10n = AppLocalizations.of(context)!;
 
+    if (isEditingHealth) {
+      final pilgrimId = UserSession.userId;
 
- Future<void> _toggleHealthEdit() async {
-  final l10n = AppLocalizations.of(context)!;
+      if (pilgrimId == null || pilgrimId.isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.userSessionNotFound)));
+        return;
+      }
 
-  if (isEditingHealth) {
-    final pilgrimId = UserSession.userId;
+      try {
+        final profile = HealthProfile(
+          pilgrimID: pilgrimId,
+          age: int.tryParse(selectedAge) ?? 0,
+          healthConditions: selectedHealthCondition,
+          dietaryPreferences: selectedDietaryPreference,
+          allergies: _finalAllergiesForSaving().join(", "),
+        );
 
-    if (pilgrimId == null || pilgrimId.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.userSessionNotFound)));
-      return;
-    }
+        await _healthService.saveProfile(profile);
 
-    try {
-      final profile = HealthProfile(
-        pilgrimID: pilgrimId,
-        age: int.tryParse(selectedAge) ?? 0,
-        healthConditions: selectedHealthCondition,
-        dietaryPreferences: selectedDietaryPreference,
-        allergies: _finalAllergiesForSaving().join(", "),
-      );
+        setState(() {
+          selectedAllergies = List<String>.from(_finalAllergiesForSaving());
+          otherAllergyText = "";
+          otherAllergyController.clear();
+          _rebuildHealthTags();
+          isEditingHealth = false;
+        });
 
-      await _healthService.saveProfile(profile);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.healthInformationUpdated)));
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("${l10n.failedToSaveHealthProfile}: $e")),
+        );
+      }
+    } else {
+      tempSelectedAge = selectedAge;
+      tempSelectedHealthCondition = selectedHealthCondition;
+      tempSelectedDietaryPreference = selectedDietaryPreference;
+      tempSelectedAllergies = List<String>.from(selectedAllergies);
+      tempOtherAllergyText = otherAllergyText;
+
+      final editableAllergies = _splitKnownAndOtherAllergies(selectedAllergies);
 
       setState(() {
-        selectedAllergies = List<String>.from(_finalAllergiesForSaving());
-        otherAllergyText = "";
-        otherAllergyController.clear();
-        _rebuildHealthTags();
-        isEditingHealth = false;
+        selectedAllergies = editableAllergies.knownAllergies;
+        otherAllergyText = editableAllergies.otherAllergyText;
+        otherAllergyController.text = otherAllergyText;
+        isEditingHealth = true;
       });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.healthInformationUpdated)),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("${l10n.failedToSaveHealthProfile}: $e")),
-      );
     }
-  } else {
-    tempSelectedAge = selectedAge;
-    tempSelectedHealthCondition = selectedHealthCondition;
-    tempSelectedDietaryPreference = selectedDietaryPreference;
-    tempSelectedAllergies = List<String>.from(selectedAllergies);
-    tempOtherAllergyText = otherAllergyText;
-
-    final editableAllergies = _splitKnownAndOtherAllergies(selectedAllergies);
-
-    setState(() {
-      selectedAllergies = editableAllergies.knownAllergies;
-      otherAllergyText = editableAllergies.otherAllergyText;
-      otherAllergyController.text = otherAllergyText;
-      isEditingHealth = true;
-    });
   }
-}
 
   void _cancelHealthEdit() {
     setState(() {
@@ -638,11 +662,14 @@ void _cancelPersonalEdit() {
   String _localizedAllergy(AppLocalizations l10n, String value) {
     switch (value) {
       case "Peanuts":
-        return l10n.peanuts;;
+        return l10n.peanuts;
+        ;
       case "Nuts":
-        return l10n.nuts;;
+        return l10n.nuts;
+        ;
       case "Milk":
-        return l10n.milk;;
+        return l10n.milk;
+        ;
       case "Eggs":
         return l10n.eggs;
       case "Gluten":
@@ -652,7 +679,8 @@ void _cancelPersonalEdit() {
       case "Sesame":
         return l10n.sesame;
       case "Fish":
-        return l10n.fish;;
+        return l10n.fish;
+        ;
       case "Shellfish":
         return l10n.shellfish;
       case "Wheat":
@@ -714,20 +742,20 @@ void _cancelPersonalEdit() {
               const Center(child: CircularProgressIndicator())
             else
               _PersonalInfoCard(
-  formKey: _personalFormKey,
-  isEditing: isEditingPersonal,
-  fullName: fullName,
-  email: email,
-  phone: phone,
-  fullNameController: fullNameController,
-  emailController: emailController,
-  phoneController: phoneController,
-  fullNameValidator: _validateProfileFullName,
-  emailValidator: _validateProfileEmail,
-  phoneValidator: _validateProfilePhone,
-  onEditTap: _togglePersonalEdit,
-  onCancelTap: _cancelPersonalEdit,
-),
+                formKey: _personalFormKey,
+                isEditing: isEditingPersonal,
+                fullName: fullName,
+                email: email,
+                phone: phone,
+                fullNameController: fullNameController,
+                emailController: emailController,
+                phoneController: phoneController,
+                fullNameValidator: _validateProfileFullName,
+                emailValidator: _validateProfileEmail,
+                phoneValidator: _validateProfilePhone,
+                onEditTap: _togglePersonalEdit,
+                onCancelTap: _cancelPersonalEdit,
+              ),
             const SizedBox(height: 16),
 
             _SectionTitle(title: l10n.healthProfile),
@@ -795,10 +823,8 @@ void _cancelPersonalEdit() {
             _SettingsCard(
               notificationsEnabled: notificationsEnabled,
               language: _currentLanguageName(l10n),
-              onNotificationsChanged: (value) {
-                setState(() {
-                  notificationsEnabled = value;
-                });
+              onNotificationsChanged: (value) async {
+                await _saveNotificationSetting(value);
               },
               onLanguageTap: _changeLanguage,
             ),
@@ -1023,9 +1049,9 @@ class _PersonalInfoCard extends StatelessWidget {
   final VoidCallback onEditTap;
   final VoidCallback onCancelTap;
   final GlobalKey<FormState> formKey;
-final String? Function(String?) fullNameValidator;
-final String? Function(String?) emailValidator;
-final String? Function(String?) phoneValidator;
+  final String? Function(String?) fullNameValidator;
+  final String? Function(String?) emailValidator;
+  final String? Function(String?) phoneValidator;
 
   const _PersonalInfoCard({
     required this.isEditing,
@@ -1038,9 +1064,9 @@ final String? Function(String?) phoneValidator;
     required this.onEditTap,
     required this.onCancelTap,
     required this.formKey,
-required this.fullNameValidator,
-required this.emailValidator,
-required this.phoneValidator,
+    required this.fullNameValidator,
+    required this.emailValidator,
+    required this.phoneValidator,
   });
 
   @override
@@ -1059,45 +1085,49 @@ required this.phoneValidator,
           ),
           const SizedBox(height: 10),
           if (isEditing) ...[
-  Form(
-    key: formKey,
-    autovalidateMode: AutovalidateMode.onUserInteraction,
-    child: Column(
-      children: [
-        _EditableField(
-  icon: Icons.person_outline_rounded,
-  label: l10n.fullName,
-  controller: fullNameController,
-  keyboardType: TextInputType.name,
-  validator: fullNameValidator,
-),
-        const SizedBox(height: 14),
-        _EditableField(
-          icon: Icons.email_outlined,
-          label: l10n.email,
-          controller: emailController,
-          keyboardType: TextInputType.emailAddress,
-          validator: emailValidator,
-        ),
-        const SizedBox(height: 14),
-        _EditableField(
-  icon: Icons.phone_outlined,
-  label: l10n.phoneNumber,
-  controller: phoneController,
-  keyboardType: TextInputType.phone,
-  validator: phoneValidator,
-),
-      ],
-    ),
-  ),
-] else ...[
+            Form(
+              key: formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: Column(
+                children: [
+                  _EditableField(
+                    icon: Icons.person_outline_rounded,
+                    label: l10n.fullName,
+                    controller: fullNameController,
+                    keyboardType: TextInputType.name,
+                    validator: fullNameValidator,
+                  ),
+                  const SizedBox(height: 14),
+                  _EditableField(
+                    icon: Icons.email_outlined,
+                    label: l10n.email,
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: emailValidator,
+                  ),
+                  const SizedBox(height: 14),
+                  _EditableField(
+                    icon: Icons.phone_outlined,
+                    label: l10n.phoneNumber,
+                    controller: phoneController,
+                    keyboardType: TextInputType.phone,
+                    validator: phoneValidator,
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
             _InfoRow(
               icon: Icons.person_outline_rounded,
               title: l10n.fullName,
               value: fullName,
             ),
             const Divider(height: 22),
-            _InfoRow(icon: Icons.email_outlined, title: l10n.email, value: email),
+            _InfoRow(
+              icon: Icons.email_outlined,
+              title: l10n.email,
+              value: email,
+            ),
             const Divider(height: 22),
             _InfoRow(
               icon: Icons.phone_outlined,
@@ -1126,9 +1156,9 @@ class _HealthProfileCard extends StatelessWidget {
   final List<String> allergyOptions;
 
   final String Function(AppLocalizations l10n, String value)
-      localizedHealthCondition;
+  localizedHealthCondition;
   final String Function(AppLocalizations l10n, String value)
-      localizedDietaryPreference;
+  localizedDietaryPreference;
   final String Function(AppLocalizations l10n, String value) localizedAllergy;
 
   final ValueChanged<String?> onAgeChanged;
@@ -1467,17 +1497,11 @@ class _EditableField extends StatelessWidget {
               ),
               errorBorder: const OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(14)),
-                borderSide: BorderSide(
-                  color: Colors.redAccent,
-                  width: 1.3,
-                ),
+                borderSide: BorderSide(color: Colors.redAccent, width: 1.3),
               ),
               focusedErrorBorder: const OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(14)),
-                borderSide: BorderSide(
-                  color: Colors.redAccent,
-                  width: 1.5,
-                ),
+                borderSide: BorderSide(color: Colors.redAccent, width: 1.5),
               ),
             ),
           ),

@@ -126,7 +126,16 @@ class _AdminOrdersAppBar extends StatelessWidget
         elevation: 0.6,
         shadowColor: Colors.black.withOpacity(0.08),
         surfaceTintColor: Colors.white,
-        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.black87,
+            size: 20,
+          ),
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/admin-dashboard');
+          },
+        ),
         titleSpacing: 8,
         title: const Row(
           children: [

@@ -13,6 +13,7 @@ import 'pilgrim_meals_page.dart';
 import 'pilgrim_notifications_page.dart';
 import 'pilgrim_order_history_page.dart';
 import 'pilgrim_profile_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PilgrimHomeScreen extends StatefulWidget {
   static const String routeName = '/pilgrim-home';
@@ -49,6 +50,20 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
   }
 
   Future<void> _loadUnreadCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final notificationsEnabled =
+        prefs.getBool('pilgrim_notifications_enabled') ?? true;
+
+    if (!notificationsEnabled) {
+      if (!mounted) return;
+
+      setState(() {
+        unreadCount = 0;
+      });
+
+      return;
+    }
+
     try {
       final response = await http.get(
         Uri.parse(
@@ -224,28 +239,26 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
                   const SizedBox(height: 18),
                   _SectionHeader(title: l10n.orderNow),
                   const SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 520),
-                        child: _OrderNowCard(
-                          title: l10n.meals,
-                          subtitle: l10n.browseDailyMeals,
-                          chipText: l10n.recommended,
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [Color(0xFFF3FAF7), Color(0xFFE8F4EF)],
-                          ),
-                          onEnter: _openMealsPage,
-                          icon: Icons.restaurant_menu_rounded,
-                          chipColor: mint,
-                          buttonText: l10n.startOrder,
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 520),
+                      child: _OrderNowCard(
+                        title: l10n.meals,
+                        subtitle: l10n.browseDailyMeals,
+                        chipText: l10n.recommended,
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFFF3FAF7), Color(0xFFE8F4EF)],
                         ),
+                        onEnter: _openMealsPage,
+                        icon: Icons.restaurant_menu_rounded,
+                        chipColor: mint,
+                        buttonText: l10n.startOrder,
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 18),
                   _SectionHeader(title: l10n.orderHistory),
                   const SizedBox(height: 10),
@@ -521,16 +534,6 @@ class _TopCombinedBlock extends StatelessWidget {
                 _mealLine(l10n.lunch, "1:00 PM"),
                 const SizedBox(height: 8),
                 _mealLine(l10n.dinner, "8:00 PM"),
-                const SizedBox(height: 10),
-                Text(
-                  l10n.mealTimesScheduledByCampaign,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: Colors.black.withOpacity(0.45),
-                    fontStyle: FontStyle.italic,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
               ],
             ),
           ),
@@ -648,138 +651,153 @@ class _OrderNowCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onEnter,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(28),
         child: Ink(
-          height: 175,
+          height: 150,
           decoration: BoxDecoration(
-            gradient: gradient,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: Colors.black.withOpacity(0.05)),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFFFFFFF), Color(0xFFEAF7F2)],
+            ),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: const Color(0xFFDCEBE5)),
             boxShadow: [
               BoxShadow(
-                blurRadius: 22,
-                offset: const Offset(0, 12),
-                color: Colors.black.withOpacity(0.06),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+                color: Colors.black.withOpacity(0.05),
               ),
             ],
           ),
           child: Stack(
             children: [
               Positioned(
-                right: -22,
-                top: -18,
+                right: -30,
+                top: -30,
                 child: Container(
-                  width: 92,
-                  height: 92,
+                  width: 110,
+                  height: 110,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.18),
                     shape: BoxShape.circle,
+                    color: primary.withOpacity(0.05),
                   ),
                 ),
               ),
+
               Positioned(
-                left: 16,
-                top: 16,
-                child: Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.76),
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: Colors.black.withOpacity(0.05)),
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 23,
-                    color: primaryDark.withOpacity(0.92),
-                  ),
+                right: 20,
+                top: 18,
+                child: Icon(
+                  Icons.restaurant_menu_rounded,
+                  size: 52,
+                  color: primary.withOpacity(0.08),
                 ),
               ),
-              Positioned(
-                left: 16,
-                top: 78,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: chipColor.withOpacity(0.28),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    chipText,
-                    style: TextStyle(
-                      fontSize: 11.2,
-                      fontWeight: FontWeight.w800,
-                      color: primaryDark.withOpacity(0.85),
-                    ),
-                  ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 16,
                 ),
-              ),
-              Positioned(
-                left: 16,
-                right: 120,
-                bottom: 22,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 18,
-                        color: primaryDark.withOpacity(0.96),
+                    Container(
+                      width: 58,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            blurRadius: 12,
+                            offset: const Offset(0, 5),
+                            color: Colors.black.withOpacity(0.06),
+                          ),
+                        ],
+                      ),
+                      child: Icon(icon, size: 28, color: primaryDark),
+                    ),
+
+                    const SizedBox(width: 16),
+
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: chipColor.withOpacity(0.25),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              chipText,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: primaryDark,
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              color: primaryDark,
+                            ),
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: primaryDark.withOpacity(0.65),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        height: 1.3,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: primaryDark.withOpacity(0.67),
+
+                    const SizedBox(width: 10),
+
+                    Container(
+                      height: 44,
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      decoration: BoxDecoration(
+                        color: primary,
+                        borderRadius: BorderRadius.circular(999),
+                        boxShadow: [
+                          BoxShadow(
+                            blurRadius: 12,
+                            offset: const Offset(0, 5),
+                            color: primary.withOpacity(0.18),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          buttonText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                       ),
                     ),
                   ],
-                ),
-              ),
-              Positioned(
-                right: 16,
-                bottom: 18,
-                child: Container(
-                  height: 40,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: primary,
-                    borderRadius: BorderRadius.circular(999),
-                    boxShadow: [
-                      BoxShadow(
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                        color: primary.withOpacity(0.18),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        buttonText,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 12.5,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                    ],
-                  ),
                 ),
               ),
             ],

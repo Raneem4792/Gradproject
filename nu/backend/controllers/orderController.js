@@ -144,7 +144,7 @@ class OrderController {
         let messageContentEn = '';
 
         if (normalizedStatus === 'accepted') {
-          notificationType = 'success';
+          notificationType = 'order_accepted';
 
           messageContentAr = mealNameAr
             ? `تم قبول طلب وجبة "${mealNameAr}" بنجاح!`
@@ -158,7 +158,7 @@ class OrderController {
         }
 
         if (normalizedStatus === 'rejected') {
-          notificationType = 'highlight';
+          notificationType = 'order_rejected';
 
           messageContentAr = mealNameAr
             ? `نعتذر، تم رفض طلب وجبة "${mealNameAr}" من قبل المزود.`

@@ -18,6 +18,7 @@ import 'pages/admin_dashboard_page.dart';
 import 'pages/admin_monitor_orders_page.dart';
 import 'pages/admin_notifications_page.dart';
 import 'pages/admin_profile_page.dart';
+import 'pages/admin_alerts_page.dart';
 void main() {
   runApp(const NusuqApp());
 }
@@ -92,6 +93,8 @@ class _NusuqAppState extends State<NusuqApp> {
         AdminMonitorOrdersPage.routeName: (context) => const AdminMonitorOrdersPage(),
         AdminNotificationsPage.routeName: (context) => const AdminNotificationsPage(),
         AdminProfilePage.routeName: (context) => const AdminProfilePage(),
+        AdminAlertsPage.routeName: (_) => const AdminAlertsPage(),
+
       },
     );
   }

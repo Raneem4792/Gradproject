@@ -35,7 +35,7 @@ class RateService {
 
   async getRateByOrder(orderID) {
     const [rows] = await db.query(
-      `SELECT ratingID, orderID, stars, comment, reviewDateTime, providerReply, replyDateTime
+      `SELECT ratingID, orderID, stars, comment, reviewDateTime
        FROM Rate
        WHERE orderID = ?`,
       [orderID]

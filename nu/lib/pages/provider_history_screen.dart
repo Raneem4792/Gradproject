@@ -625,10 +625,11 @@ class _HistoryHeaderCard extends StatelessWidget {
     required this.onAllReviews,
   });
 
-  static const Color primaryDark = Color(0xFF052720);
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color primaryMid = Color(0xFF167062);
-  static const Color mint = Color(0xFFA8E7CF);
+  static const Color bg = Color(0xFFF3F6F5);
+  static const Color primaryDark = Color(0xFF062C26);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color primaryMid = Color(0xFF1A6B66);
+  static const Color mint = Color(0xFF9FE5C9);
 
   @override
   Widget build(BuildContext context) {
@@ -637,17 +638,17 @@ class _HistoryHeaderCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [primaryDark, primary, primaryMid],
         ),
-        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             blurRadius: 24,
             offset: const Offset(0, 14),
-            color: primary.withOpacity(0.24),
+            color: Colors.black.withOpacity(0.08),
           ),
         ],
       ),
@@ -1205,7 +1206,6 @@ class _ReviewViewSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final hasReply = rate.providerReply.trim().isNotEmpty;
     final languageCode = Localizations.localeOf(context).languageCode;
     final mealName = order.localizedMealName(languageCode);
 
@@ -1295,20 +1295,6 @@ class _ReviewViewSheet extends StatelessWidget {
               _infoBox(
                 title: l10n.reviewDate,
                 value: _formatDateTime(rate.reviewDateTime, l10n),
-                emptyText: l10n.notAvailable,
-              ),
-              const SizedBox(height: 12),
-              _infoBox(
-                title: l10n.providerReply,
-                value: hasReply ? rate.providerReply : l10n.noReplyYet,
-                emptyText: l10n.noReplyYet,
-              ),
-              const SizedBox(height: 12),
-              _infoBox(
-                title: l10n.replyDate,
-                value: hasReply
-                    ? _formatDateTime(rate.replyDateTime, l10n)
-                    : l10n.notAvailable,
                 emptyText: l10n.notAvailable,
               ),
               const SizedBox(height: 16),

@@ -290,13 +290,6 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
                       latestReview: report.latestReview,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _AISuggestionsCard(
-                      headline: l10n.smartSuggestions,
-                      suggestions: report.aiSuggestions,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -1138,102 +1131,6 @@ class _FeedbackInfoRow extends StatelessWidget {
   }
 }
 
-class _AISuggestionsCard extends StatelessWidget {
-  final String headline;
-  final List<String> suggestions;
-
-  const _AISuggestionsCard({required this.headline, required this.suggestions});
-
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color mint = Color(0xFFA8E7CF);
-  static const Color softMint = Color(0xFFE8F7F1);
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    final visibleSuggestions = suggestions.isEmpty
-        ? [l10n.noSuggestionsAvailableYet]
-        : suggestions;
-
-    return Container(
-      height: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFFFFFFF), Color(0xFFF6FCF9)],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: primary.withOpacity(0.08)),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 16,
-            offset: const Offset(0, 10),
-            color: primary.withOpacity(0.05),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(headline, style: const TextStyle(fontWeight: FontWeight.w900)),
-          const SizedBox(height: 8),
-          Container(
-            width: 44,
-            height: 6,
-            decoration: BoxDecoration(
-              color: mint.withOpacity(0.75),
-              borderRadius: BorderRadius.circular(99),
-            ),
-          ),
-          const SizedBox(height: 12),
-          ...List.generate(visibleSuggestions.length, (i) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: i == visibleSuggestions.length - 1 ? 0 : 8,
-              ),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 9,
-                ),
-                decoration: BoxDecoration(
-                  color: softMint,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: mint.withOpacity(0.55)),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 16,
-                      color: primary.withOpacity(0.82),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        visibleSuggestions[i],
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black.withOpacity(0.70),
-                          height: 1.25,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-}
 
 class _HealthInsightsGrid extends StatelessWidget {
   final int diabetes;

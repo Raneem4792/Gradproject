@@ -8,6 +8,7 @@ import '../services/provider_service.dart';
 import '../session/user_session.dart';
 import '../models/provider_profile.dart';
 import 'login_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProviderProfilePage extends StatefulWidget {
   static const String routeName = '/provider-profile';
@@ -35,12 +36,33 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
   bool isEditingBasicInfo = false;
   bool notificationsEnabled = true;
 
+  Future<void> _loadNotificationSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (!mounted) return;
+
+    setState(() {
+      notificationsEnabled =
+          prefs.getBool('provider_notifications_enabled') ?? true;
+    });
+  }
+
+  Future<void> _saveNotificationSetting(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setBool('provider_notifications_enabled', value);
+
+    if (!mounted) return;
+
+    setState(() {
+      notificationsEnabled = value;
+    });
+  }
+
   String providerName = "";
   String providerId = "";
   String email = "";
   String phone = "";
-  String location = "Makkah";
-  String serviceType = "Meal Provider";
 
   late final TextEditingController nameController;
   late final TextEditingController emailController;
@@ -56,6 +78,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     phoneController = TextEditingController(text: phone);
 
     _loadProviderProfile();
+    _loadNotificationSetting();
   }
 
   @override
@@ -110,73 +133,73 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
   }
 
   String? _validateProviderName(String? value) {
-  final l10n = AppLocalizations.of(context)!;
-  final text = (value ?? '').trim().replaceAll(RegExp(r'\s+'), ' ');
+    final l10n = AppLocalizations.of(context)!;
+    final text = (value ?? '').trim().replaceAll(RegExp(r'\s+'), ' ');
 
-  if (text.isEmpty) return l10n.pleaseEnterFullName;
-  if (text.length < 3) return l10n.fullNameTooShort;
-  if (text.length > 50) return l10n.fullNameTooLong;
+    if (text.isEmpty) return l10n.pleaseEnterFullName;
+    if (text.length < 3) return l10n.fullNameTooShort;
+    if (text.length > 50) return l10n.fullNameTooLong;
 
-  if (RegExp(r'[0-9]').hasMatch(text)) {
-    return l10n.fullNameNoNumbers;
+    if (RegExp(r'[0-9]').hasMatch(text)) {
+      return l10n.fullNameNoNumbers;
+    }
+
+    if (RegExp(r'[^A-Za-z\u0600-\u06FF ]').hasMatch(text)) {
+      return l10n.fullNameNoSymbols;
+    }
+
+    final isArabicOnly = RegExp(r'^[\u0600-\u06FF ]+$').hasMatch(text);
+    final isEnglishOnly = RegExp(r'^[A-Za-z ]+$').hasMatch(text);
+
+    if (!isArabicOnly && !isEnglishOnly) {
+      return l10n.fullNameArabicOrEnglishOnly;
+    }
+
+    return null;
   }
 
-  if (RegExp(r'[^A-Za-z\u0600-\u06FF ]').hasMatch(text)) {
-    return l10n.fullNameNoSymbols;
+  String? _validateProviderEmail(String? value) {
+    final l10n = AppLocalizations.of(context)!;
+    final text = (value ?? '').trim();
+
+    if (text.isEmpty) return l10n.pleaseEnterEmail;
+    if (text.contains(' ')) return l10n.emailNoSpaces;
+    if (text.length > 100) return l10n.emailTooLong;
+
+    final emailRegex = RegExp(
+      r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$',
+    );
+
+    if (!emailRegex.hasMatch(text)) {
+      return l10n.pleaseEnterValidEmail;
+    }
+
+    return null;
   }
 
-  final isArabicOnly = RegExp(r'^[\u0600-\u06FF ]+$').hasMatch(text);
-  final isEnglishOnly = RegExp(r'^[A-Za-z ]+$').hasMatch(text);
+  String? _validateProviderPhone(String? value) {
+    final l10n = AppLocalizations.of(context)!;
+    final text = (value ?? '').trim();
 
-  if (!isArabicOnly && !isEnglishOnly) {
-    return l10n.fullNameArabicOrEnglishOnly;
+    if (text.isEmpty) return l10n.pleaseEnterPhoneNumber;
+    if (text.contains(' ')) return l10n.phoneNoSpaces;
+
+    if (!RegExp(r'^\+?[0-9]+$').hasMatch(text)) {
+      return l10n.phoneDigitsOnly;
+    }
+
+    final digitsOnly = text.replaceAll('+', '');
+
+    if (digitsOnly.length < 8) {
+      return l10n.phoneTooShort;
+    }
+
+    if (digitsOnly.length > 15) {
+      return l10n.phoneTooLong;
+    }
+
+    return null;
   }
-
-  return null;
-}
-
-String? _validateProviderEmail(String? value) {
-  final l10n = AppLocalizations.of(context)!;
-  final text = (value ?? '').trim();
-
-  if (text.isEmpty) return l10n.pleaseEnterEmail;
-  if (text.contains(' ')) return l10n.emailNoSpaces;
-  if (text.length > 100) return l10n.emailTooLong;
-
-  final emailRegex = RegExp(
-    r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$',
-  );
-
-  if (!emailRegex.hasMatch(text)) {
-    return l10n.pleaseEnterValidEmail;
-  }
-
-  return null;
-}
-
-String? _validateProviderPhone(String? value) {
-  final l10n = AppLocalizations.of(context)!;
-  final text = (value ?? '').trim();
-
-  if (text.isEmpty) return l10n.pleaseEnterPhoneNumber;
-  if (text.contains(' ')) return l10n.phoneNoSpaces;
-
-  if (!RegExp(r'^\+?[0-9]+$').hasMatch(text)) {
-    return l10n.phoneDigitsOnly;
-  }
-
-  final digitsOnly = text.replaceAll('+', '');
-
-  if (digitsOnly.length < 8) {
-    return l10n.phoneTooShort;
-  }
-
-  if (digitsOnly.length > 15) {
-    return l10n.phoneTooLong;
-  }
-
-  return null;
-}
 
   Future<void> _toggleBasicInfoEdit() async {
     final l10n = AppLocalizations.of(context)!;
@@ -190,10 +213,10 @@ String? _validateProviderPhone(String? value) {
         ).showSnackBar(SnackBar(content: Text(l10n.userSessionNotFound)));
         return;
       }
-      
-if (!(_providerFormKey.currentState?.validate() ?? false)) {
-  return;
-}
+
+      if (!(_providerFormKey.currentState?.validate() ?? false)) {
+        return;
+      }
       try {
         final profile = ProviderProfile(
           providerID: providerId,
@@ -211,9 +234,9 @@ if (!(_providerFormKey.currentState?.validate() ?? false)) {
           isEditingBasicInfo = false;
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.basicInformationUpdated)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.basicInformationUpdated)));
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("${l10n.failedToUpdateProfile}: $e")),
@@ -362,16 +385,6 @@ if (!(_providerFormKey.currentState?.validate() ?? false)) {
     }
   }
 
-  String _localizedLocation(AppLocalizations l10n) {
-    if (location == "Makkah") return l10n.makkah;
-    return location;
-  }
-
-  String _localizedServiceType(AppLocalizations l10n) {
-    if (serviceType == "Meal Provider") return l10n.mealProvider;
-    return serviceType;
-  }
-
   String _currentLanguageName(AppLocalizations l10n) {
     final code = Localizations.localeOf(context).languageCode;
     return code == "ar" ? l10n.arabic : l10n.english;
@@ -381,9 +394,6 @@ if (!(_providerFormKey.currentState?.validate() ?? false)) {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    final displayLocation = _localizedLocation(l10n);
-    final displayServiceType = _localizedServiceType(l10n);
-
     return Scaffold(
       backgroundColor: ProviderProfilePage.bg,
       appBar: AppBar(
@@ -391,7 +401,7 @@ if (!(_providerFormKey.currentState?.validate() ?? false)) {
         elevation: 0.6,
         shadowColor: Colors.black.withOpacity(0.08),
         surfaceTintColor: Colors.white,
-        centerTitle: true,
+        centerTitle: false,
         title: Text(
           l10n.providerProfile,
           style: const TextStyle(
@@ -422,7 +432,6 @@ if (!(_providerFormKey.currentState?.validate() ?? false)) {
             _ProfileHeaderCard(
               providerName: providerName,
               providerId: providerId,
-              serviceType: displayServiceType,
             ),
             const SizedBox(height: 16),
 
@@ -431,24 +440,22 @@ if (!(_providerFormKey.currentState?.validate() ?? false)) {
             if (_isProfileLoading)
               const Center(child: CircularProgressIndicator())
             else
-            _InfoCard(
-  formKey: _providerFormKey,
-  isEditing: isEditingBasicInfo,
-  providerName: providerName,
-  providerId: providerId,
-  email: email,
-  phone: phone,
-  location: displayLocation,
-  serviceType: displayServiceType,
-  nameController: nameController,
-  emailController: emailController,
-  phoneController: phoneController,
-  nameValidator: _validateProviderName,
-  emailValidator: _validateProviderEmail,
-  phoneValidator: _validateProviderPhone,
-  onEditTap: _toggleBasicInfoEdit,
-  onCancelTap: _cancelBasicInfoEdit,
-),
+              _InfoCard(
+                formKey: _providerFormKey,
+                isEditing: isEditingBasicInfo,
+                providerName: providerName,
+                providerId: providerId,
+                email: email,
+                phone: phone,
+                nameController: nameController,
+                emailController: emailController,
+                phoneController: phoneController,
+                nameValidator: _validateProviderName,
+                emailValidator: _validateProviderEmail,
+                phoneValidator: _validateProviderPhone,
+                onEditTap: _toggleBasicInfoEdit,
+                onCancelTap: _cancelBasicInfoEdit,
+              ),
             const SizedBox(height: 16),
 
             _SectionTitle(title: l10n.ordersSummary),
@@ -472,10 +479,8 @@ if (!(_providerFormKey.currentState?.validate() ?? false)) {
             _SettingsCard(
               notificationsEnabled: notificationsEnabled,
               language: _currentLanguageName(l10n),
-              onNotificationsChanged: (value) {
-                setState(() {
-                  notificationsEnabled = value;
-                });
+              onNotificationsChanged: (value) async {
+                await _saveNotificationSetting(value);
               },
               onLanguageTap: _changeLanguage,
             ),
@@ -510,12 +515,10 @@ class _SectionTitle extends StatelessWidget {
 class _ProfileHeaderCard extends StatelessWidget {
   final String providerName;
   final String providerId;
-  final String serviceType;
 
   const _ProfileHeaderCard({
     required this.providerName,
     required this.providerId,
-    required this.serviceType,
   });
 
   @override
@@ -572,15 +575,6 @@ class _ProfileHeaderCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         "${l10n.providerId}: ${providerId.isEmpty ? l10n.notAvailable : providerId}",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.82),
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "${l10n.service}: ${serviceType.isEmpty ? l10n.notAvailable : serviceType}",
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.82),
                           fontSize: 12.5,
@@ -648,8 +642,6 @@ class _InfoCard extends StatelessWidget {
   final String providerId;
   final String email;
   final String phone;
-  final String location;
-  final String serviceType;
 
   final TextEditingController nameController;
   final TextEditingController emailController;
@@ -659,9 +651,9 @@ class _InfoCard extends StatelessWidget {
   final VoidCallback onCancelTap;
 
   final GlobalKey<FormState> formKey;
-final String? Function(String?) nameValidator;
-final String? Function(String?) emailValidator;
-final String? Function(String?) phoneValidator;
+  final String? Function(String?) nameValidator;
+  final String? Function(String?) emailValidator;
+  final String? Function(String?) phoneValidator;
 
   const _InfoCard({
     required this.isEditing,
@@ -669,17 +661,15 @@ final String? Function(String?) phoneValidator;
     required this.providerId,
     required this.email,
     required this.phone,
-    required this.location,
-    required this.serviceType,
     required this.nameController,
     required this.emailController,
     required this.phoneController,
     required this.onEditTap,
     required this.onCancelTap,
     required this.formKey,
-required this.nameValidator,
-required this.emailValidator,
-required this.phoneValidator,
+    required this.nameValidator,
+    required this.emailValidator,
+    required this.phoneValidator,
   });
 
   @override
@@ -698,38 +688,38 @@ required this.phoneValidator,
           ),
           const SizedBox(height: 10),
           if (isEditing) ...[
-  Form(
-    key: formKey,
-    autovalidateMode: AutovalidateMode.onUserInteraction,
-    child: Column(
-      children: [
-        _EditableField(
-          icon: Icons.storefront_outlined,
-          label: l10n.providerName,
-          controller: nameController,
-          keyboardType: TextInputType.name,
-          validator: nameValidator,
-        ),
-        const SizedBox(height: 14),
-        _EditableField(
-          icon: Icons.email_outlined,
-          label: l10n.email,
-          controller: emailController,
-          keyboardType: TextInputType.emailAddress,
-          validator: emailValidator,
-        ),
-        const SizedBox(height: 14),
-        _EditableField(
-          icon: Icons.phone_outlined,
-          label: l10n.phone,
-          controller: phoneController,
-          keyboardType: TextInputType.phone,
-          validator: phoneValidator,
-        ),
-      ],
-    ),
-  ),
-] else ...[
+            Form(
+              key: formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: Column(
+                children: [
+                  _EditableField(
+                    icon: Icons.storefront_outlined,
+                    label: l10n.providerName,
+                    controller: nameController,
+                    keyboardType: TextInputType.name,
+                    validator: nameValidator,
+                  ),
+                  const SizedBox(height: 14),
+                  _EditableField(
+                    icon: Icons.email_outlined,
+                    label: l10n.email,
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: emailValidator,
+                  ),
+                  const SizedBox(height: 14),
+                  _EditableField(
+                    icon: Icons.phone_outlined,
+                    label: l10n.phone,
+                    controller: phoneController,
+                    keyboardType: TextInputType.phone,
+                    validator: phoneValidator,
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
             _InfoRow(
               icon: Icons.storefront_outlined,
               title: l10n.providerName,
@@ -742,20 +732,16 @@ required this.phoneValidator,
               value: providerId,
             ),
             const Divider(height: 22),
-            _InfoRow(icon: Icons.email_outlined, title: l10n.email, value: email),
-            const Divider(height: 22),
-            _InfoRow(icon: Icons.phone_outlined, title: l10n.phone, value: phone),
-            const Divider(height: 22),
             _InfoRow(
-              icon: Icons.location_on_outlined,
-              title: l10n.location,
-              value: location,
+              icon: Icons.email_outlined,
+              title: l10n.email,
+              value: email,
             ),
             const Divider(height: 22),
             _InfoRow(
-              icon: Icons.room_service_outlined,
-              title: l10n.serviceType,
-              value: serviceType,
+              icon: Icons.phone_outlined,
+              title: l10n.phone,
+              value: phone,
             ),
           ],
         ],
@@ -903,17 +889,11 @@ class _EditableField extends StatelessWidget {
               ),
               errorBorder: const OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(14)),
-                borderSide: BorderSide(
-                  color: Colors.redAccent,
-                  width: 1.3,
-                ),
+                borderSide: BorderSide(color: Colors.redAccent, width: 1.3),
               ),
               focusedErrorBorder: const OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(14)),
-                borderSide: BorderSide(
-                  color: Colors.redAccent,
-                  width: 1.5,
-                ),
+                borderSide: BorderSide(color: Colors.redAccent, width: 1.5),
               ),
             ),
           ),
@@ -1126,10 +1106,12 @@ class _CampaignsCard extends StatelessWidget {
               bottom: i == campaigns.length - 1 ? 0 : 12,
             ),
             child: _CampaignTile(
-              title: c['campaignName'] ?? '',
-              campaignId: c['campaignNumber'] ?? '',
-              pilgrimsCount: "${c['numberOfPilgrims'] ?? 0} ${l10n.pilgrims}",
-              arrivalDetails: c['arrivalDetails'] ?? '',
+              campaignID: "${c['campaignID'] ?? ''}",
+              title: "${c['campaignName'] ?? ''}",
+              campaignNumber: "${c['campaignNumber'] ?? ''}",
+              pilgrimsCount: "${c['numberOfPilgrims'] ?? 0}",
+              arrivalDetails: "${c['arrivalDetails'] ?? ''}",
+              providerID: "${c['providerID'] ?? ''}",
             ),
           );
         }),
@@ -1139,169 +1121,135 @@ class _CampaignsCard extends StatelessWidget {
 }
 
 class _CampaignTile extends StatelessWidget {
+  final String campaignID;
   final String title;
-  final String campaignId;
+  final String campaignNumber;
   final String pilgrimsCount;
   final String arrivalDetails;
+  final String providerID;
 
   const _CampaignTile({
+    required this.campaignID,
     required this.title,
-    required this.campaignId,
+    required this.campaignNumber,
     required this.pilgrimsCount,
     required this.arrivalDetails,
+    required this.providerID,
   });
 
-  String _extractLine(String source, String prefix) {
-    final lines = source.split('\n');
-    for (final line in lines) {
-      if (line.startsWith(prefix)) {
-        return line.replaceFirst(prefix, '').trim();
-      }
-    }
-    return '';
-  }
-
-  String _formatArrivalDate(String raw, AppLocalizations l10n) {
-    if (raw.isEmpty) return l10n.notAvailable;
-
-    final parsed = DateTime.tryParse(raw);
-    if (parsed == null) return raw;
-
-    String two(int n) => n.toString().padLeft(2, '0');
-    return '${parsed.year}-${two(parsed.month)}-${two(parsed.day)}';
-  }
-
-  String _formatArrivalTime(String raw, AppLocalizations l10n) {
-    if (raw.isEmpty) return l10n.notAvailable;
-
-    final parsed = DateTime.tryParse(raw);
-    if (parsed == null) return raw;
-
-    String two(int n) => n.toString().padLeft(2, '0');
-    int hour = parsed.hour;
-    final minute = two(parsed.minute);
-    final amPm = hour >= 12 ? 'PM' : 'AM';
-    hour = hour % 12;
-    if (hour == 0) hour = 12;
-
-    return '$hour:$minute $amPm';
+  String _safe(String value, AppLocalizations l10n) {
+    final text = value.trim();
+    return text.isEmpty || text == 'null' ? l10n.notAvailable : text;
   }
 
   void _showCampaignDialog(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-
-    final fromText = _extractLine(arrivalDetails, 'From:');
-    final rawArrivalTime = _extractLine(arrivalDetails, 'Arrival Time:');
-
-    final formattedDate = _formatArrivalDate(rawArrivalTime, l10n);
-    final formattedTime = _formatArrivalTime(rawArrivalTime, l10n);
 
     showDialog(
       context: context,
       builder: (_) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 18),
           child: Container(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7FAF8),
-              borderRadius: BorderRadius.circular(28),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  blurRadius: 30,
+                  offset: const Offset(0, 18),
+                  color: Colors.black.withOpacity(0.18),
+                ),
+              ],
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 8,
-                  height: 170,
+                  width: 64,
+                  height: 64,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF8ED8C0),
-                    borderRadius: BorderRadius.circular(999),
+                    color: ProviderProfilePage.softMint,
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: const Icon(
+                    Icons.campaign_rounded,
+                    color: ProviderProfilePage.primary,
+                    size: 34,
                   ),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
+                const SizedBox(height: 12),
+
+                Text(
+                  _safe(title, l10n),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: ProviderProfilePage.primaryDark,
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    _DialogBadge(text: _safe(campaignNumber, l10n)),
+                    _DialogBadge(text: "$pilgrimsCount ${l10n.pilgrims}"),
+                  ],
+                ),
+
+                const SizedBox(height: 18),
+
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF7FAF8),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: ProviderProfilePage.softMint),
+                  ),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Center(
-                        child: Text(
-                          title,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF133B33),
-                          ),
-                        ),
+                      _DialogDetailRow(
+                        icon: Icons.confirmation_number_outlined,
+                        text: "Campaign ID: ${_safe(campaignID, l10n)}",
                       ),
-                      const SizedBox(height: 14),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 70,
-                            height: 70,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE3F4EE),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Icon(
-                              Icons.campaign_rounded,
-                              color: Color(0xFF2D6B5F),
-                              size: 32,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Wrap(
-                                  spacing: 10,
-                                  runSpacing: 10,
-                                  children: [
-                                    _DialogBadge(text: campaignId),
-                                    _DialogBadge(text: pilgrimsCount),
-                                  ],
-                                ),
-                                const SizedBox(height: 14),
-                                _DialogDetailRow(
-                                  icon: Icons.calendar_today_outlined,
-                                  text: "${l10n.arrivalDate}: $formattedDate",
-                                ),
-                                const SizedBox(height: 10),
-                                _DialogDetailRow(
-                                  icon: Icons.access_time_rounded,
-                                  text: "${l10n.arrivalTime}: $formattedTime",
-                                ),
-                                const SizedBox(height: 10),
-                                _DialogDetailRow(
-                                  icon: Icons.place_outlined,
-                                  text:
-                                      "${l10n.from}: ${fromText.isEmpty ? l10n.notAvailable : fromText}",
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      Center(
-                        child: TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text(
-                            l10n.close,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                              color: ProviderProfilePage.primary,
-                            ),
-                          ),
-                        ),
+                      const SizedBox(height: 12),
+                      _DialogDetailRow(
+                        icon: Icons.info_outline_rounded,
+                        text: "Arrival Details: ${_safe(arrivalDetails, l10n)}",
                       ),
                     ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      backgroundColor: ProviderProfilePage.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      l10n.close,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -1314,6 +1262,8 @@ class _CampaignTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return InkWell(
       onTap: () => _showCampaignDialog(context),
       borderRadius: BorderRadius.circular(18),
@@ -1341,7 +1291,7 @@ class _CampaignTile extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                title,
+                _safe(title, l10n),
                 style: const TextStyle(
                   fontSize: 14.5,
                   fontWeight: FontWeight.w900,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/admin_service.dart';
 import '../session/user_session.dart';
 import '../widgets/admin_bottom_nav.dart';
+import 'admin_dashboard_page.dart';
 
 class AdminNotificationsPage extends StatefulWidget {
   static const String routeName = '/admin-notifications';
@@ -23,26 +24,11 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
   final recipientIdController = TextEditingController();
 
   bool isLoading = false;
-  int selectedTab = 0;
 
-  late Future<List<dynamic>> _notificationsFuture;
+  static const Color bg = Color(0xFFF3F6F5);
 
   String selectedNotificationType = 'alert';
   String selectedRecipientType = 'all_pilgrims';
-
-  static const Color bg = Color(0xFFF3F6F5);
-  static const Color primary = Color(0xFF0D4C4A);
-
-  bool get requiresRecipientId =>
-      selectedRecipientType == 'pilgrim' || selectedRecipientType == 'provider';
-
-@override
-void initState() {
-  super.initState();
-
-  _markNotificationsAsRead();
-  _notificationsFuture = fetchNotifications();
-}
 
   @override
   void dispose() {
@@ -54,30 +40,6 @@ void initState() {
     super.dispose();
   }
 
-Future<List<dynamic>> fetchNotifications() {
-  return _adminService.getAdminReceivedNotifications(
-    UserSession.userId!,
-  );
-}
-
-Future<void> _markNotificationsAsRead() async {
-  try {
-    await _adminService.markAllAdminNotificationsAsRead(
-      UserSession.userId!,
-    );
-  } catch (e) {
-    debugPrint(e.toString());
-  }
-}
-
-  Future<void> _refreshNotifications() async {
-    setState(() {
-      _notificationsFuture = fetchNotifications();
-    });
-
-    await _notificationsFuture;
-  }
-
   Future<void> sendNotification() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -85,13 +47,13 @@ Future<void> _markNotificationsAsRead() async {
 
     try {
       await _adminService.createNotification(
-        titleAr: titleArController.text,
-        titleEn: titleEnController.text,
-        messageAr: messageArController.text,
-        messageEn: messageEnController.text,
+        titleAr: titleArController.text.trim(),
+        titleEn: titleEnController.text.trim(),
+        messageAr: messageArController.text.trim(),
+        messageEn: messageEnController.text.trim(),
         notificationType: selectedNotificationType,
         recipientType: selectedRecipientType,
-        recipientUserID: recipientIdController.text,
+        recipientUserID: '',
         createdByAdminID: UserSession.userId,
       );
 
@@ -105,42 +67,19 @@ Future<void> _markNotificationsAsRead() async {
       titleEnController.clear();
       messageArController.clear();
       messageEnController.clear();
-      recipientIdController.clear();
 
       setState(() {
         selectedNotificationType = 'alert';
         selectedRecipientType = 'all_pilgrims';
-        selectedTab = 0;
-        _notificationsFuture = fetchNotifications();
       });
     } catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
+      if (mounted) setState(() => isLoading = false);
     }
-  }
-
-  String _formatDate(dynamic value) {
-    if (value == null) return 'No date';
-
-    final text = value.toString();
-    final date = DateTime.tryParse(text);
-
-    if (date == null) return text;
-
-    final year = date.year.toString();
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    final hour = date.hour.toString().padLeft(2, '0');
-    final minute = date.minute.toString().padLeft(2, '0');
-
-    return '$year-$month-$day  $hour:$minute';
   }
 
   @override
@@ -151,65 +90,34 @@ Future<void> _markNotificationsAsRead() async {
       bottomNavigationBar: const AdminBottomNav(currentIndex: 3),
       body: SafeArea(
         top: false,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const _TopBlock(),
-                  const SizedBox(height: 16),
-                  _TabSwitch(
-                    selectedIndex: selectedTab,
-                    onChanged: (index) {
-                      setState(() {
-                        selectedTab = index;
-                      });
-                    },
-                  ),
-                ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _TopBlock(),
+              const SizedBox(height: 18),
+              const _SectionLabel(title: 'Create Notification'),
+              const SizedBox(height: 12),
+              _FormCard(
+                formKey: _formKey,
+                titleArController: titleArController,
+                titleEnController: titleEnController,
+                messageArController: messageArController,
+                messageEnController: messageEnController,
+                selectedNotificationType: selectedNotificationType,
+                selectedRecipientType: selectedRecipientType,
+                isLoading: isLoading,
+                onNotificationTypeChanged: (value) {
+                  setState(() => selectedNotificationType = value!);
+                },
+                onRecipientTypeChanged: (value) {
+                  setState(() => selectedRecipientType = value!);
+                },
+                onSend: sendNotification,
               ),
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: IndexedStack(
-                index: selectedTab,
-children: [
-  _SentNotificationsTab(
-    notificationsFuture: _notificationsFuture,
-    onRefresh: _refreshNotifications,
-    formatDate: _formatDate,
-  ),
-
-  _CreateNotificationTab(
-    formKey: _formKey,
-    titleArController: titleArController,
-    titleEnController: titleEnController,
-    messageArController: messageArController,
-    messageEnController: messageEnController,
-    recipientIdController: recipientIdController,
-    selectedNotificationType: selectedNotificationType,
-    selectedRecipientType: selectedRecipientType,
-    requiresRecipientId: requiresRecipientId,
-    isLoading: isLoading,
-    onNotificationTypeChanged: (value) {
-      setState(() {
-        selectedNotificationType = value!;
-      });
-    },
-    onRecipientTypeChanged: (value) {
-      setState(() {
-        selectedRecipientType = value!;
-        recipientIdController.clear();
-      });
-    },
-    onSend: sendNotification,
-  ),
-],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -234,6 +142,20 @@ class _NotificationsAppBar extends StatelessWidget
         surfaceTintColor: Colors.white,
         automaticallyImplyLeading: false,
         titleSpacing: 8,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.black87,
+            size: 20,
+          ),
+          onPressed: () {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AdminDashboardPage.routeName,
+              (route) => false,
+            );
+          },
+        ),
         title: const Text(
           'NUSUQ',
           style: TextStyle(
@@ -255,180 +177,130 @@ class _TopBlock extends StatelessWidget {
   static const Color primary = Color(0xFF0D4C4A);
   static const Color primaryMid = Color(0xFF1A6B66);
   static const Color mint = Color(0xFF9FE5C9);
+  static const Color gold = Color(0xFFF0E0C0);
 
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
-      child: Stack(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [primaryDark, primary, primaryMid],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              blurRadius: 24,
+              offset: const Offset(0, 14),
+              color: Colors.black.withOpacity(0.07),
             ),
-            child: const Row(
-              children: [
-                Icon(
-                  Icons.notifications_active_rounded,
-                  color: Colors.white,
-                  size: 28,
+          ],
+        ),
+        child: Stack(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [primaryDark, primary, primaryMid],
                 ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Notifications',
-                    style: TextStyle(
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.12),
+                      border: Border.all(color: Colors.white.withOpacity(0.26)),
+                    ),
+                    child: const Icon(
+                      Icons.notifications_active_rounded,
                       color: Colors.white,
-                      fontSize: 21,
-                      fontWeight: FontWeight.w900,
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            right: -30,
-            top: -40,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: mint.withOpacity(0.12),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Send Notifications',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Create alerts for pilgrims and providers',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.86),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TabSwitch extends StatelessWidget {
-  final int selectedIndex;
-  final ValueChanged<int> onChanged;
-
-  const _TabSwitch({required this.selectedIndex, required this.onChanged});
-
-  static const Color primary = Color(0xFF0D4C4A);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-            color: Colors.black.withOpacity(0.04),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          _TabButton(
-            title: 'Admin Alerts',
-            icon: Icons.notifications_active_rounded,
-            selected: selectedIndex == 0,
-            onTap: () => onChanged(0),
-          ),
-          const SizedBox(width: 6),
-          _TabButton(
-            title: 'Send Notifications',
-            icon: Icons.send_rounded,
-            selected: selectedIndex == 1,
-            onTap: () => onChanged(1),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TabButton extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _TabButton({
-    required this.title,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  static const Color primary = Color(0xFF0D4C4A);
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: selected ? primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 18, color: selected ? Colors.white : primary),
-              const SizedBox(width: 7),
-              Text(
-                title,
-                style: TextStyle(
-                  color: selected ? Colors.white : primary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
+            Positioned(
+              right: -30,
+              top: -40,
+              child: Container(
+                width: 130,
+                height: 130,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: mint.withOpacity(0.12),
                 ),
               ),
-            ],
-          ),
+            ),
+            Positioned(
+              left: -40,
+              bottom: -50,
+              child: Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: gold.withOpacity(0.10),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _CreateNotificationTab extends StatelessWidget {
+class _FormCard extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController titleArController;
   final TextEditingController titleEnController;
   final TextEditingController messageArController;
   final TextEditingController messageEnController;
-  final TextEditingController recipientIdController;
   final String selectedNotificationType;
   final String selectedRecipientType;
-  final bool requiresRecipientId;
   final bool isLoading;
   final void Function(String?) onNotificationTypeChanged;
   final void Function(String?) onRecipientTypeChanged;
   final VoidCallback onSend;
 
-  const _CreateNotificationTab({
+  const _FormCard({
     required this.formKey,
     required this.titleArController,
     required this.titleEnController,
     required this.messageArController,
     required this.messageEnController,
-    required this.recipientIdController,
     required this.selectedNotificationType,
     required this.selectedRecipientType,
-    required this.requiresRecipientId,
     required this.isLoading,
     required this.onNotificationTypeChanged,
     required this.onRecipientTypeChanged,
@@ -439,26 +311,31 @@ class _CreateNotificationTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+            color: Colors.black.withOpacity(0.05),
+          ),
+        ],
+      ),
       child: Form(
         key: formKey,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _SectionLabel(title: 'Create Bulk Notification'),
-            const SizedBox(height: 12),
             _InputField(
               controller: titleArController,
               label: 'Arabic Title',
               icon: Icons.title_rounded,
               textDirection: TextDirection.rtl,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Enter Arabic title';
-                }
-                return null;
-              },
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? 'Enter Arabic title'
+                  : null,
             ),
             const SizedBox(height: 14),
             _InputField(
@@ -466,12 +343,9 @@ class _CreateNotificationTab extends StatelessWidget {
               label: 'English Title',
               icon: Icons.title_rounded,
               textDirection: TextDirection.ltr,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Enter English title';
-                }
-                return null;
-              },
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? 'Enter English title'
+                  : null,
             ),
             const SizedBox(height: 14),
             _DropdownField(
@@ -503,7 +377,7 @@ class _CreateNotificationTab extends StatelessWidget {
               ],
               onChanged: onRecipientTypeChanged,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             const _FormHint(
               text:
                   'For a specific pilgrim or provider, send the notification directly from Manage Accounts.',
@@ -537,9 +411,7 @@ class _CreateNotificationTab extends StatelessWidget {
                         ),
                       )
                     : const Icon(Icons.send_rounded),
-                label: Text(
-                  isLoading ? 'Sending...' : 'Send Bulk Notification',
-                ),
+                label: Text(isLoading ? 'Sending...' : 'Send Notification'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primary,
                   foregroundColor: Colors.white,
@@ -554,157 +426,6 @@ class _CreateNotificationTab extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _FormHint extends StatelessWidget {
-  final String text;
-
-  const _FormHint({required this.text});
-
-  static const Color primary = Color(0xFF0D4C4A);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F6F4),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.info_outline_rounded, color: primary, size: 18),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(
-                color: primary,
-                fontSize: 12.3,
-                fontWeight: FontWeight.w700,
-                height: 1.35,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SentNotificationsTab extends StatelessWidget {
-  final Future<List<dynamic>> notificationsFuture;
-  final Future<void> Function() onRefresh;
-  final String Function(dynamic value) formatDate;
-
-  const _SentNotificationsTab({
-    required this.notificationsFuture,
-    required this.onRefresh,
-    required this.formatDate,
-  });
-
-  static const Color primary = Color(0xFF0D4C4A);
-
-  String _value(Map<String, dynamic> item, String key) {
-    return item[key]?.toString() ?? '';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<dynamic>>(
-      future: notificationsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 80, 16, 24),
-            children: const [
-              Center(child: CircularProgressIndicator(color: primary)),
-            ],
-          );
-        }
-
-        if (snapshot.hasError) {
-          return RefreshIndicator(
-            color: primary,
-            onRefresh: onRefresh,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-              children: const [
-                _MessageBox(
-                  icon: Icons.error_outline_rounded,
-                  text: 'Failed to load notifications',
-                ),
-              ],
-            ),
-          );
-        }
-
-        final notifications = snapshot.data ?? [];
-
-        if (notifications.isEmpty) {
-          return RefreshIndicator(
-            color: primary,
-            onRefresh: onRefresh,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-              children: const [
-                _MessageBox(
-                  icon: Icons.notifications_none_rounded,
-                  text: 'No notifications yet',
-                ),
-              ],
-            ),
-          );
-        }
-
-        return RefreshIndicator(
-          color: primary,
-          onRefresh: onRefresh,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            children: [
-              const _SectionLabel(title: 'Admin Alerts'),
-              const SizedBox(height: 12),
-              ...notifications.map((rawItem) {
-                final item = rawItem is Map<String, dynamic>
-                    ? rawItem
-                    : Map<String, dynamic>.from(rawItem as Map);
-
-                final titleAr = _value(item, 'title_ar').isNotEmpty
-                    ? _value(item, 'title_ar')
-                    : _value(item, 'title');
-
-                final titleEn = _value(item, 'title_en').isNotEmpty
-                    ? _value(item, 'title_en')
-                    : _value(item, 'title');
-
-                final messageAr = _value(item, 'messageContent_ar').isNotEmpty
-                    ? _value(item, 'messageContent_ar')
-                    : _value(item, 'messageContent');
-
-                final messageEn = _value(item, 'messageContent_en').isNotEmpty
-                    ? _value(item, 'messageContent_en')
-                    : _value(item, 'messageContent');
-
-                return _SentNotificationCard(
-                  titleAr: titleAr,
-                  titleEn: titleEn,
-                  messageAr: messageAr,
-                  messageEn: messageEn,
-                  type: _value(item, 'notificationType'),
-                  recipientType: _value(item, 'recipientType'),
-                  recipientUserID: _value(item, 'recipientUserID'),
-                  timestamp: formatDate(item['timestamp']),
-                );
-              }),
-            ],
-          ),
-        );
-      },
     );
   }
 }
@@ -755,7 +476,7 @@ class _InputField extends StatelessWidget {
         labelText: label,
         prefixIcon: Icon(icon, color: primary),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: const Color(0xFFFAFCFB),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: softMint),
@@ -798,7 +519,7 @@ class _DropdownField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: const Color(0xFFFAFCFB),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: softMint),
@@ -838,17 +559,13 @@ class _MessageField extends StatelessWidget {
       controller: controller,
       maxLines: 5,
       textDirection: textDirection,
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) {
-          return validatorMessage;
-        }
-        return null;
-      },
+      validator: (value) =>
+          value == null || value.trim().isEmpty ? validatorMessage : null,
       decoration: InputDecoration(
         labelText: label,
         alignLabelWithHint: true,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: const Color(0xFFFAFCFB),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: softMint),
@@ -866,222 +583,35 @@ class _MessageField extends StatelessWidget {
   }
 }
 
-class _SentNotificationCard extends StatelessWidget {
-  final String titleAr;
-  final String titleEn;
-  final String messageAr;
-  final String messageEn;
-  final String type;
-  final String recipientType;
-  final String recipientUserID;
-  final String timestamp;
+class _FormHint extends StatelessWidget {
+  final String text;
 
-  const _SentNotificationCard({
-    required this.titleAr,
-    required this.titleEn,
-    required this.messageAr,
-    required this.messageEn,
-    required this.type,
-    required this.recipientType,
-    required this.recipientUserID,
-    required this.timestamp,
-  });
+  const _FormHint({required this.text});
 
   static const Color primary = Color(0xFF0D4C4A);
-  static const Color primaryDark = Color(0xFF062C26);
-  static const Color softMint = Color(0xFFEAF5F2);
 
   @override
   Widget build(BuildContext context) {
-    final recipientText = recipientUserID.isEmpty
-        ? recipientType
-        : '$recipientType • $recipientUserID';
-
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-            color: Colors.black.withOpacity(0.05),
-          ),
-        ],
+        color: const Color(0xFFF0F6F4),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: softMint,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.notifications_rounded,
-              color: primary,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    _MiniChip(text: type.isEmpty ? 'notification' : type),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        timestamp,
-                        textAlign: TextAlign.end,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.black.withOpacity(0.45),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  titleAr.isEmpty ? 'No Arabic title' : titleAr,
-                  textDirection: TextDirection.rtl,
-                  style: const TextStyle(
-                    color: primaryDark,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 15,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  messageAr.isEmpty ? 'No Arabic message' : messageAr,
-                  textDirection: TextDirection.rtl,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.black.withOpacity(0.62),
-                    height: 1.35,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12.8,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  titleEn.isEmpty ? 'No English title' : titleEn,
-                  style: const TextStyle(
-                    color: primaryDark,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 15,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  messageEn.isEmpty ? 'No English message' : messageEn,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.black.withOpacity(0.62),
-                    height: 1.35,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12.8,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.people_alt_rounded,
-                      size: 14,
-                      color: Colors.black.withOpacity(0.45),
-                    ),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
-                        recipientText,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.black.withOpacity(0.48),
-                          fontWeight: FontWeight.w700,
-                          fontSize: 11.5,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniChip extends StatelessWidget {
-  final String text;
-
-  const _MiniChip({required this.text});
-
-  static const Color primary = Color(0xFF0D4C4A);
-  static const Color softMint = Color(0xFFEAF5F2);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: softMint,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: primary,
-          fontWeight: FontWeight.w800,
-          fontSize: 11,
-        ),
-      ),
-    );
-  }
-}
-
-class _MessageBox extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _MessageBox({required this.icon, required this.text});
-
-  static const Color primary = Color(0xFF0D4C4A);
-  static const Color softMint = Color(0xFFEAF5F2);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: softMint,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: primary),
-          const SizedBox(width: 10),
+          const Icon(Icons.info_outline_rounded, color: primary, size: 18),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
               style: const TextStyle(
                 color: primary,
-                fontWeight: FontWeight.w800,
+                fontSize: 12.3,
+                fontWeight: FontWeight.w700,
+                height: 1.35,
               ),
             ),
           ),

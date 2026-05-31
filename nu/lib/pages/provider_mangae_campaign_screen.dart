@@ -75,11 +75,13 @@ class ProviderCampaignManagementScreen extends StatefulWidget {
 
 class _ProviderCampaignManagementScreenState
     extends State<ProviderCampaignManagementScreen> {
-  static const Color bg = Color(0xFFF1F6F4);
-  static const Color primaryDark = Color(0xFF052720);
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color primaryMid = Color(0xFF167062);
-  static const Color mint = Color(0xFFA8E7CF);
+  static const Color bg = Color(0xFFF3F6F5);
+  static const Color primaryDark = Color(0xFF062C26);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color primaryMid = Color(0xFF1A6B66);
+  static const Color mint = Color(0xFF9FE5C9);
+  static const Color softMint = Color(0xFFE8F6F1);
+  static const Color gold = Color(0xFFF0E0C0);
 
   final CampaignService _campaignService = CampaignService();
   List<Campaign> _campaigns = [];
@@ -438,10 +440,13 @@ class _CampaignManagementHeaderCard extends StatelessWidget {
     required this.badgeText,
   });
 
-  static const Color primaryDark = Color(0xFF052720);
-  static const Color primary = Color(0xFF0B4A40);
-  static const Color primaryMid = Color(0xFF167062);
-  static const Color mint = Color(0xFFA8E7CF);
+  static const Color bg = Color(0xFFF3F6F5);
+  static const Color primaryDark = Color(0xFF062C26);
+  static const Color primary = Color(0xFF0D4C4A);
+  static const Color primaryMid = Color(0xFF1A6B66);
+  static const Color mint = Color(0xFF9FE5C9);
+  static const Color softMint = Color(0xFFE8F6F1);
+  static const Color gold = Color(0xFFF0E0C0);
 
   @override
   Widget build(BuildContext context) {

@@ -6,6 +6,7 @@ import '../widgets/admin_bottom_nav.dart';
 import 'admin_manage_accounts_page.dart';
 import 'admin_monitor_orders_page.dart';
 import 'admin_notifications_page.dart';
+import 'admin_alerts_page.dart';
 
 class AdminDashboardPage extends StatefulWidget {
   static const String routeName = '/admin-dashboard';
@@ -53,8 +54,25 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     Navigator.pushNamed(context, AdminMonitorOrdersPage.routeName);
   }
 
-  void _openNotifications() async {
-    await Navigator.pushNamed(context, AdminNotificationsPage.routeName);
+  void _openReceivedNotifications() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AdminAlertsPage(),
+      ),
+    );
+
+    _loadUnreadCount();
+  }
+
+  void _openSendNotifications() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AdminNotificationsPage(),
+      ),
+    );
+
     _loadUnreadCount();
   }
 
@@ -65,7 +83,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     return Scaffold(
       backgroundColor: bg,
       appBar: _AdminMainAppBar(
-        onTapNotifications: _openNotifications,
+        onTapNotifications: _openReceivedNotifications,
         unreadCount: _unreadCount,
       ),
       body: SafeArea(
@@ -97,7 +115,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 title: 'Notifications',
                 subtitle: 'Create and manage alerts',
                 icon: Icons.notifications_active_rounded,
-                onTap: _openNotifications,
+                onTap: _openSendNotifications,
               ),
             ],
           ),

@@ -61,8 +61,6 @@ exports.getProviderAnalysis = async (req, res) => {
         r.orderID,
         r.stars,
         r.comment,
-        r.providerReply,
-        r.reviewDateTime,
 
         m.mealName,
         m.mealName_en,

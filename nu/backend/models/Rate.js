@@ -5,16 +5,12 @@ class Rate {
     stars,
     comment,
     reviewDateTime,
-    providerReply,
-    replyDateTime,
   }) {
     this.ratingID = ratingID;
     this.orderID = orderID;
     this.stars = stars;
     this.comment = comment;
     this.reviewDateTime = reviewDateTime;
-    this.providerReply = providerReply;
-    this.replyDateTime = replyDateTime;
   }
 
   static fromRow(row) {
@@ -24,8 +20,6 @@ class Rate {
       stars: row.stars,
       comment: row.comment,
       reviewDateTime: row.reviewDateTime,
-      providerReply: row.providerReply,
-      replyDateTime: row.replyDateTime,
     });
   }
 }

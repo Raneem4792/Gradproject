@@ -39,23 +39,23 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     _profileFuture = _loadAdminProfile();
   }
 
-Future<AdminProfile> _loadAdminProfile() async {
-  final adminId = UserSession.userId;
+  Future<AdminProfile> _loadAdminProfile() async {
+    final adminId = UserSession.userId;
 
-  print('ADMIN ID: $adminId');
+    print('ADMIN ID: $adminId');
 
-  final response = await http.get(
-    Uri.parse('$baseUrl/admin/profile/$adminId'),
-  );
+    final response = await http.get(
+      Uri.parse('$baseUrl/admin/profile/$adminId'),
+    );
 
-  print(response.body);
+    print(response.body);
 
-  if (response.statusCode == 200) {
-    return AdminProfile.fromJson(jsonDecode(response.body));
+    if (response.statusCode == 200) {
+      return AdminProfile.fromJson(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to load admin profile');
   }
-
-  throw Exception('Failed to load admin profile');
-}
 
   Future<void> _refreshProfile() async {
     setState(() {
@@ -93,10 +93,7 @@ Future<AdminProfile> _loadAdminProfile() async {
               onPressed: () => Navigator.pop(context, false),
               child: const Text(
                 'Cancel',
-                style: TextStyle(
-                  color: primary,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(color: primary, fontWeight: FontWeight.w800),
               ),
             ),
             TextButton(
@@ -232,6 +229,16 @@ class _AdminProfileAppBar extends StatelessWidget
             ),
           ],
         ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.black87,
+            size: 20,
+          ),
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/admin-dashboard');
+          },
+        ),
       ),
     );
   }
@@ -240,9 +247,7 @@ class _AdminProfileAppBar extends StatelessWidget
 class _ProfileHeaderCard extends StatelessWidget {
   final AdminProfile admin;
 
-  const _ProfileHeaderCard({
-    required this.admin,
-  });
+  const _ProfileHeaderCard({required this.admin});
 
   @override
   Widget build(BuildContext context) {
@@ -283,9 +288,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white.withOpacity(0.12),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.26),
-                      ),
+                      border: Border.all(color: Colors.white.withOpacity(0.26)),
                     ),
                     child: const Icon(
                       Icons.admin_panel_settings_rounded,
@@ -354,9 +357,7 @@ class _ProfileHeaderCard extends StatelessWidget {
 class _HeaderChip extends StatelessWidget {
   final String text;
 
-  const _HeaderChip({
-    required this.text,
-  });
+  const _HeaderChip({required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -365,9 +366,7 @@ class _HeaderChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.13),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.14),
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.14)),
       ),
       child: Text(
         text,
@@ -384,9 +383,7 @@ class _HeaderChip extends StatelessWidget {
 class _AdminInfoCard extends StatelessWidget {
   final AdminProfile admin;
 
-  const _AdminInfoCard({
-    required this.admin,
-  });
+  const _AdminInfoCard({required this.admin});
 
   @override
   Widget build(BuildContext context) {
@@ -425,9 +422,7 @@ class _AdminInfoCard extends StatelessWidget {
 class _AccountCard extends StatelessWidget {
   final AdminProfile admin;
 
-  const _AccountCard({
-    required this.admin,
-  });
+  const _AccountCard({required this.admin});
 
   @override
   Widget build(BuildContext context) {
@@ -475,11 +470,7 @@ class _InfoRow extends StatelessWidget {
             color: _AdminProfilePageState.softMint,
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Icon(
-            icon,
-            color: _AdminProfilePageState.primary,
-            size: 21,
-          ),
+          child: Icon(icon, color: _AdminProfilePageState.primary, size: 21),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -515,9 +506,7 @@ class _InfoRow extends StatelessWidget {
 class _SectionTitle extends StatelessWidget {
   final String title;
 
-  const _SectionTitle({
-    required this.title,
-  });
+  const _SectionTitle({required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -535,9 +524,7 @@ class _SectionTitle extends StatelessWidget {
 class _LogoutButton extends StatelessWidget {
   final VoidCallback onTap;
 
-  const _LogoutButton({
-    required this.onTap,
-  });
+  const _LogoutButton({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -547,18 +534,13 @@ class _LogoutButton extends StatelessWidget {
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 15),
-          side: BorderSide(
-            color: Colors.red.withOpacity(0.22),
-          ),
+          side: BorderSide(color: Colors.red.withOpacity(0.22)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           backgroundColor: Colors.white,
         ),
-        icon: const Icon(
-          Icons.logout_rounded,
-          color: Colors.redAccent,
-        ),
+        icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
         label: const Text(
           'Log Out',
           style: TextStyle(
@@ -575,9 +557,7 @@ class _LogoutButton extends StatelessWidget {
 class _WhiteCard extends StatelessWidget {
   final Widget child;
 
-  const _WhiteCard({
-    required this.child,
-  });
+  const _WhiteCard({required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -603,9 +583,7 @@ class _WhiteCard extends StatelessWidget {
 class _ErrorState extends StatelessWidget {
   final Future<void> Function() onRetry;
 
-  const _ErrorState({
-    required this.onRetry,
-  });
+  const _ErrorState({required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -638,10 +616,7 @@ class _ErrorState extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: _AdminProfilePageState.primary,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 18,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),

@@ -15,6 +15,7 @@ import 'provider_notifications_page.dart';
 import '../widgets/provider_bottom_nav.dart';
 import '../services/provider_service.dart';
 import '../session/user_session.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProviderHomeScreen extends StatefulWidget {
   static const String routeName = '/provider-home';
@@ -71,6 +72,20 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
   }
 
   Future<void> _loadUnreadCount() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final enabled = prefs.getBool('provider_notifications_enabled') ?? true;
+
+    if (!enabled) {
+      if (!mounted) return;
+
+      setState(() {
+        unreadCount = 0;
+      });
+
+      return;
+    }
+
     try {
       final response = await http.get(
         Uri.parse(

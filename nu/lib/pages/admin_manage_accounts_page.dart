@@ -5,6 +5,7 @@ import '../models/admin_account_tree.dart';
 import '../services/admin_service.dart';
 import '../session/user_session.dart';
 import '../widgets/admin_bottom_nav.dart';
+import 'admin_dashboard_page.dart';
 
 class AdminManageAccountsPage extends StatefulWidget {
   static const String routeName = '/admin-manage-accounts';
@@ -99,10 +100,7 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
           ),
           title: const Text(
             'Edit Account',
-            style: TextStyle(
-              color: primary,
-              fontWeight: FontWeight.w900,
-            ),
+            style: TextStyle(color: primary, fontWeight: FontWeight.w900),
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -223,7 +221,6 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
       );
     }
   }
-
 
   Future<void> _sendSpecificNotification({
     required String recipientType,
@@ -517,8 +514,23 @@ class _AdminAccountsAppBar extends StatelessWidget
         elevation: 0.6,
         shadowColor: Colors.black.withOpacity(0.08),
         surfaceTintColor: Colors.white,
-        automaticallyImplyLeading: false,
+
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.black87,
+            size: 20,
+          ),
+  onPressed: () {
+    Navigator.pushReplacementNamed(
+      context,
+      AdminDashboardPage.routeName,
+    );
+  },
+        ),
+
         titleSpacing: 8,
+
         title: const Row(
           children: [
             SizedBox(width: 4),
@@ -768,19 +780,22 @@ class _ProviderCard extends StatelessWidget {
     required String accountType,
     required String accountID,
     required String currentStatus,
-  }) onStatusChanged;
+  })
+  onStatusChanged;
   final Future<void> Function({
     required String accountType,
     required String accountID,
     required String currentName,
     required String currentEmail,
     required String currentPhone,
-  }) onEditAccount;
+  })
+  onEditAccount;
   final Future<void> Function({
     required String recipientType,
     required String recipientUserID,
     required String recipientName,
-  }) onSendSpecificNotification;
+  })
+  onSendSpecificNotification;
 
   const _ProviderCard({
     required this.provider,
@@ -818,10 +833,9 @@ class _ProviderCard extends StatelessWidget {
         ],
       ),
       child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent,
-          splashColor: softMint,
-        ),
+        data: Theme.of(
+          context,
+        ).copyWith(dividerColor: Colors.transparent, splashColor: softMint),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
           childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
@@ -974,19 +988,22 @@ class _CampaignTile extends StatelessWidget {
     required String accountType,
     required String accountID,
     required String currentStatus,
-  }) onStatusChanged;
+  })
+  onStatusChanged;
   final Future<void> Function({
     required String accountType,
     required String accountID,
     required String currentName,
     required String currentEmail,
     required String currentPhone,
-  }) onEditAccount;
+  })
+  onEditAccount;
   final Future<void> Function({
     required String recipientType,
     required String recipientUserID,
     required String recipientName,
-  }) onSendSpecificNotification;
+  })
+  onSendSpecificNotification;
 
   const _CampaignTile({
     required this.campaign,
@@ -1017,11 +1034,7 @@ class _CampaignTile extends StatelessWidget {
           leading: CircleAvatar(
             radius: 19,
             backgroundColor: mint.withOpacity(0.45),
-            child: const Icon(
-              Icons.flag_rounded,
-              color: primary,
-              size: 19,
-            ),
+            child: const Icon(Icons.flag_rounded, color: primary, size: 19),
           ),
           title: Text(
             campaign.campaignName,
@@ -1084,19 +1097,22 @@ class _PilgrimCard extends StatelessWidget {
     required String accountType,
     required String accountID,
     required String currentStatus,
-  }) onStatusChanged;
+  })
+  onStatusChanged;
   final Future<void> Function({
     required String accountType,
     required String accountID,
     required String currentName,
     required String currentEmail,
     required String currentPhone,
-  }) onEditAccount;
+  })
+  onEditAccount;
   final Future<void> Function({
     required String recipientType,
     required String recipientUserID,
     required String recipientName,
-  }) onSendSpecificNotification;
+  })
+  onSendSpecificNotification;
 
   const _PilgrimCard({
     required this.pilgrim,
@@ -1270,10 +1286,7 @@ class _AccountActionButton extends StatelessWidget {
           visualDensity: VisualDensity.compact,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 0),
-          textStyle: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w900,
-          ),
+          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(999),
           ),
@@ -1354,10 +1367,7 @@ class _InfoLine extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _InfoLine({
-    required this.icon,
-    required this.text,
-  });
+  const _InfoLine({required this.icon, required this.text});
 
   static const Color primary = Color(0xFF0D4C4A);
 
@@ -1390,10 +1400,7 @@ class _SmallChip extends StatelessWidget {
   final String text;
   final IconData icon;
 
-  const _SmallChip({
-    required this.text,
-    required this.icon,
-  });
+  const _SmallChip({required this.text, required this.icon});
 
   static const Color primary = Color(0xFF0D4C4A);
   static const Color softMint = Color(0xFFF0F6F4);
@@ -1495,10 +1502,7 @@ class _ErrorState extends StatelessWidget {
   final String message;
   final Future<void> Function() onRetry;
 
-  const _ErrorState({
-    required this.message,
-    required this.onRetry,
-  });
+  const _ErrorState({required this.message, required this.onRetry});
 
   static const Color primary = Color(0xFF0D4C4A);
 
