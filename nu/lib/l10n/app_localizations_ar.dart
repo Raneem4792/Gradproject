@@ -15,7 +15,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settings => 'الإعدادات';
 
   @override
-  String get notification => 'الإشعارات';
+  String get notification => 'إشعار';
 
   @override
   String get chooseLanguage => 'اختر اللغة';
@@ -96,10 +96,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get totalOrders => 'إجمالي الطلبات';
 
   @override
-  String get accepted => 'المقبولة';
+  String get accepted => 'مقبول';
 
   @override
-  String get rejected => 'المرفوضة';
+  String get rejected => 'مرفوض';
 
   @override
   String get campaigns => 'الحملات';
@@ -108,7 +108,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noLinkedCampaigns => 'لا توجد حملات مرتبطة';
 
   @override
-  String get pilgrims => 'حاج';
+  String get pilgrims => 'الحجاج';
 
   @override
   String get arrivalDate => 'تاريخ الوصول';
@@ -210,7 +210,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get description => 'الوصف';
 
   @override
-  String get calories => 'السعرات';
+  String get calories => 'سعرة حرارية';
 
   @override
   String get protein => 'البروتين';
@@ -464,7 +464,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get markAllNotificationsAsRead => 'تحديد كل الإشعارات كمقروءة';
 
   @override
-  String get noNotificationsYet => 'لا توجد إشعارات بعد';
+  String get noNotificationsYet => 'لا توجد إشعارات حتى الآن';
 
   @override
   String get newProviderAlertsWillAppearHere => 'ستظهر تنبيهات وتحديثات المزود هنا.';
@@ -479,7 +479,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get status => 'الحالة';
 
   @override
-  String get orders => 'طلبات';
+  String get orders => 'الطلبات';
 
   @override
   String get clear => 'مسح';
@@ -1417,4 +1417,226 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get yourCampaignProviderHasNotAddedMealsYet => 'مزود الحملة لم يضف وجبات بعد.';
+
+  @override
+  String get role => 'الدور';
+
+  @override
+  String get administrator => 'مدير النظام';
+
+  @override
+  String get active => 'نشطة';
+
+  @override
+  String get adminId => 'رقم الأدمن';
+
+  @override
+  String get systemAdmin => 'مدير النظام';
+
+  @override
+  String get logoutConfirmMessage => 'هل أنت متأكد أنك تريد تسجيل الخروج؟';
+
+  @override
+  String get failedToLoadAdminProfile => 'فشل تحميل ملف الأدمن';
+
+  @override
+  String get tryAgain => 'حاول مرة أخرى';
+
+  @override
+  String get admin => 'الأدمن';
+
+  @override
+  String get id => 'الرقم';
+
+  @override
+  String get manageAccounts => 'إدارة الحسابات';
+
+  @override
+  String get viewAndManageUsers => 'عرض وإدارة المستخدمين';
+
+  @override
+  String get monitorOrders => 'متابعة الطلبات';
+
+  @override
+  String get trackMealOrders => 'تتبع طلبات الوجبات';
+
+  @override
+  String get createAndManageAlerts => 'إنشاء وإدارة التنبيهات';
+
+  @override
+  String get createNotification => 'إنشاء إشعار';
+
+  @override
+  String get sendNotifications => 'إرسال الإشعارات';
+
+  @override
+  String get createAlertsForPilgrimsAndProviders => 'إنشاء تنبيهات للحجاج ومقدمي الخدمة';
+
+  @override
+  String get arabicTitle => 'العنوان بالعربية';
+
+  @override
+  String get englishTitle => 'العنوان بالإنجليزية';
+
+  @override
+  String get enterArabicTitle => 'أدخل العنوان بالعربية';
+
+  @override
+  String get enterEnglishTitle => 'أدخل العنوان بالإنجليزية';
+
+  @override
+  String get notificationType => 'نوع الإشعار';
+
+  @override
+  String get alert => 'تنبيه';
+
+  @override
+  String get announcement => 'إعلان';
+
+  @override
+  String get reminder => 'تذكير';
+
+  @override
+  String get recipients => 'المستلمون';
+
+  @override
+  String get allPilgrims => 'جميع الحجاج';
+
+  @override
+  String get allProviders => 'جميع مقدمي الخدمة';
+
+  @override
+  String get specificNotificationHint => 'لإرسال إشعار لحاج أو مقدم خدمة محدد، أرسل الإشعار مباشرة من صفحة إدارة الحسابات.';
+
+  @override
+  String get arabicMessage => 'الرسالة بالعربية';
+
+  @override
+  String get englishMessage => 'الرسالة بالإنجليزية';
+
+  @override
+  String get enterArabicMessage => 'أدخل الرسالة بالعربية';
+
+  @override
+  String get enterEnglishMessage => 'أدخل الرسالة بالإنجليزية';
+
+  @override
+  String get sending => 'جاري الإرسال...';
+
+  @override
+  String get sendNotification => 'إرسال الإشعار';
+
+  @override
+  String get notificationSentSuccessfully => 'تم إرسال الإشعار بنجاح';
+
+  @override
+  String get editAccount => 'تعديل الحساب';
+
+  @override
+  String get pleaseFillAllFields => 'يرجى تعبئة جميع الحقول';
+
+  @override
+  String get accountInformationUpdatedSuccessfully => 'تم تحديث معلومات الحساب بنجاح';
+
+  @override
+  String get failedToUpdateAccountInformation => 'فشل تحديث معلومات الحساب';
+
+  @override
+  String get accountActivatedSuccessfully => 'تم تفعيل الحساب بنجاح';
+
+  @override
+  String get accountDeactivatedSuccessfully => 'تم إلغاء تفعيل الحساب بنجاح';
+
+  @override
+  String get failedToUpdateAccountStatus => 'فشل تحديث حالة الحساب';
+
+  @override
+  String get sendNotificationTo => 'إرسال إشعار إلى';
+
+  @override
+  String get send => 'إرسال';
+
+  @override
+  String get pleaseFillAllNotificationFields => 'يرجى تعبئة جميع حقول الإشعار';
+
+  @override
+  String get failedToSendNotification => 'فشل إرسال الإشعار';
+
+  @override
+  String get failedToLoadAccounts => 'فشل تحميل الحسابات.';
+
+  @override
+  String get registeredProviders => 'مقدمو الخدمة المسجلون';
+
+  @override
+  String get providersCampaignsAndPilgrims => 'مقدمو الخدمة والحملات والحجاج';
+
+  @override
+  String get providers => 'مقدمو الخدمة';
+
+  @override
+  String get notify => 'إشعار';
+
+  @override
+  String get deactivate => 'إلغاء التفعيل';
+
+  @override
+  String get activate => 'تفعيل';
+
+  @override
+  String get inactive => 'غير نشط';
+
+  @override
+  String get noCampaignsRegisteredForThisProvider => 'لا توجد حملات مسجلة لهذا مقدم الخدمة.';
+
+  @override
+  String get no => 'رقم';
+
+  @override
+  String get expected => 'متوقع';
+
+  @override
+  String get registered => 'مسجل';
+
+  @override
+  String get noPilgrimsRegisteredUnderThisCampaign => 'لا يوجد حجاج مسجلون ضمن هذه الحملة.';
+
+  @override
+  String get noAccountsFound => 'لا توجد حسابات';
+
+  @override
+  String get registeredAccountsWillAppearHere => 'سيظهر مقدمو الخدمة والحملات والحجاج المسجلون هنا.';
+
+  @override
+  String get adminAlerts => 'تنبيهات الأدمن';
+
+  @override
+  String get failedToLoadNotifications => 'فشل تحميل الإشعارات';
+
+  @override
+  String get noMessage => 'لا توجد رسالة';
+
+  @override
+  String get accounts => 'الحسابات';
+
+  @override
+  String get alerts => 'التنبيهات';
+
+  @override
+  String get failedToLoadOrders => 'فشل تحميل الطلبات.';
+
+  @override
+  String get campaignOrders => 'طلبات الحملات';
+
+  @override
+  String get campaignOrdersAndProviders => 'طلبات الحملات ومقدمو الخدمة';
+
+  @override
+  String get noOrdersFoundUnderThisCampaign => 'لا توجد طلبات ضمن هذه الحملة.';
+
+  @override
+  String get noDate => 'لا يوجد تاريخ';
+
+  @override
+  String get mealOrdersWillAppearHere => 'ستظهر طلبات الوجبات هنا مجمعة حسب الحملة ومقدم الخدمة.';
 }

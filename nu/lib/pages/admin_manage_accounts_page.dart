@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/admin_account_tree.dart';
 import '../services/admin_service.dart';
 import '../session/user_session.dart';
@@ -43,6 +44,8 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
     required String accountID,
     required String currentStatus,
   }) async {
+    final l10n = AppLocalizations.of(context)!;
+
     final isActive = currentStatus.toLowerCase() == 'active';
     final newStatus = isActive ? 'inactive' : 'active';
 
@@ -59,8 +62,8 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
         SnackBar(
           content: Text(
             newStatus == 'active'
-                ? 'Account activated successfully'
-                : 'Account deactivated successfully',
+                ? l10n.accountActivatedSuccessfully
+                : l10n.accountDeactivatedSuccessfully,
           ),
           backgroundColor: primary,
         ),
@@ -71,8 +74,8 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to update account status'),
+        SnackBar(
+          content: Text(l10n.failedToUpdateAccountStatus),
           backgroundColor: Colors.red,
         ),
       );
@@ -86,6 +89,8 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
     required String currentEmail,
     required String currentPhone,
   }) async {
+    final l10n = AppLocalizations.of(context)!;
+
     final nameController = TextEditingController(text: currentName);
     final emailController = TextEditingController(text: currentEmail);
     final phoneController = TextEditingController(text: currentPhone);
@@ -98,9 +103,9 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Text(
-            'Edit Account',
-            style: TextStyle(color: primary, fontWeight: FontWeight.w900),
+          title: Text(
+            l10n.editAccount,
+            style: const TextStyle(color: primary, fontWeight: FontWeight.w900),
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -110,7 +115,7 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                   controller: nameController,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
-                    labelText: 'Full Name',
+                    labelText: l10n.fullName,
                     prefixIcon: const Icon(Icons.person_rounded),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -123,7 +128,7 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
-                    labelText: 'Email',
+                    labelText: l10n.email,
                     prefixIcon: const Icon(Icons.email_rounded),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -135,7 +140,7 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                   controller: phoneController,
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
-                    labelText: 'Phone Number',
+                    labelText: l10n.phoneNumber,
                     prefixIcon: const Icon(Icons.phone_rounded),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -149,12 +154,12 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton.icon(
               onPressed: () => Navigator.pop(context, true),
               icon: const Icon(Icons.save_rounded, size: 17),
-              label: const Text('Save'),
+              label: Text(l10n.save),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primary,
                 foregroundColor: Colors.white,
@@ -183,8 +188,8 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill all fields'),
+        SnackBar(
+          content: Text(l10n.pleaseFillAllFields),
           backgroundColor: Colors.red,
         ),
       );
@@ -203,8 +208,8 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Account information updated successfully'),
+        SnackBar(
+          content: Text(l10n.accountInformationUpdatedSuccessfully),
           backgroundColor: primary,
         ),
       );
@@ -214,8 +219,8 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to update account information'),
+        SnackBar(
+          content: Text(l10n.failedToUpdateAccountInformation),
           backgroundColor: Colors.red,
         ),
       );
@@ -227,6 +232,8 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
     required String recipientUserID,
     required String recipientName,
   }) async {
+    final l10n = AppLocalizations.of(context)!;
+
     final titleArController = TextEditingController();
     final titleEnController = TextEditingController();
     final messageArController = TextEditingController();
@@ -244,7 +251,7 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                 borderRadius: BorderRadius.circular(20),
               ),
               title: Text(
-                'Send Notification to $recipientName',
+                '${l10n.sendNotificationTo} $recipientName',
                 style: const TextStyle(
                   color: primary,
                   fontWeight: FontWeight.w900,
@@ -257,21 +264,24 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                     DropdownButtonFormField<String>(
                       value: notificationType,
                       decoration: InputDecoration(
-                        labelText: 'Notification Type',
+                        labelText: l10n.notificationType,
                         prefixIcon: const Icon(Icons.notifications_rounded),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      items: const [
-                        DropdownMenuItem(value: 'alert', child: Text('Alert')),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'alert',
+                          child: Text(l10n.alert),
+                        ),
                         DropdownMenuItem(
                           value: 'announcement',
-                          child: Text('Announcement'),
+                          child: Text(l10n.announcement),
                         ),
                         DropdownMenuItem(
                           value: 'reminder',
-                          child: Text('Reminder'),
+                          child: Text(l10n.reminder),
                         ),
                       ],
                       onChanged: (value) {
@@ -287,7 +297,7 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                       textDirection: TextDirection.rtl,
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
-                        labelText: 'Arabic Title',
+                        labelText: l10n.arabicTitle,
                         prefixIcon: const Icon(Icons.title_rounded),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -299,7 +309,7 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                       controller: titleEnController,
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
-                        labelText: 'English Title',
+                        labelText: l10n.englishTitle,
                         prefixIcon: const Icon(Icons.title_rounded),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -313,7 +323,7 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                       minLines: 3,
                       maxLines: 4,
                       decoration: InputDecoration(
-                        labelText: 'Arabic Message',
+                        labelText: l10n.arabicMessage,
                         prefixIcon: const Icon(Icons.message_rounded),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -326,7 +336,7 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                       minLines: 3,
                       maxLines: 4,
                       decoration: InputDecoration(
-                        labelText: 'English Message',
+                        labelText: l10n.englishMessage,
                         prefixIcon: const Icon(Icons.message_rounded),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -340,12 +350,12 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
+                  child: Text(l10n.cancel),
                 ),
                 ElevatedButton.icon(
                   onPressed: () => Navigator.pop(context, true),
                   icon: const Icon(Icons.send_rounded, size: 17),
-                  label: const Text('Send'),
+                  label: Text(l10n.send),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primary,
                     foregroundColor: Colors.white,
@@ -380,8 +390,8 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill all notification fields'),
+        SnackBar(
+          content: Text(l10n.pleaseFillAllNotificationFields),
           backgroundColor: Colors.red,
         ),
       );
@@ -403,8 +413,8 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Notification sent successfully'),
+        SnackBar(
+          content: Text(l10n.notificationSentSuccessfully),
           backgroundColor: primary,
         ),
       );
@@ -412,8 +422,8 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to send notification'),
+        SnackBar(
+          content: Text(l10n.failedToSendNotification),
           backgroundColor: Colors.red,
         ),
       );
@@ -422,6 +432,8 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: bg,
       appBar: const _AdminAccountsAppBar(),
@@ -442,7 +454,7 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
 
               if (snapshot.hasError) {
                 return _ErrorState(
-                  message: 'Failed to load accounts.',
+                  message: l10n.failedToLoadAccounts,
                   onRetry: _refreshAccounts,
                 );
               }
@@ -478,7 +490,7 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                     pilgrimsCount: totalPilgrims,
                   ),
                   const SizedBox(height: 18),
-                  const _SectionLabel(title: 'Registered Providers'),
+                  _SectionLabel(title: l10n.registeredProviders),
                   const SizedBox(height: 12),
                   ...providers.map(
                     (provider) => _ProviderCard(
@@ -514,23 +526,20 @@ class _AdminAccountsAppBar extends StatelessWidget
         elevation: 0.6,
         shadowColor: Colors.black.withOpacity(0.08),
         surfaceTintColor: Colors.white,
-
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new,
             color: Colors.black87,
             size: 20,
           ),
-  onPressed: () {
-    Navigator.pushReplacementNamed(
-      context,
-      AdminDashboardPage.routeName,
-    );
-  },
+          onPressed: () {
+            Navigator.pushReplacementNamed(
+              context,
+              AdminDashboardPage.routeName,
+            );
+          },
         ),
-
         titleSpacing: 8,
-
         title: const Row(
           children: [
             SizedBox(width: 4),
@@ -568,6 +577,8 @@ class _AccountsTopBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: Container(
@@ -642,11 +653,11 @@ class _AccountsTopBlock extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Manage Accounts',
+                            Text(
+                              l10n.manageAccounts,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
                                 fontWeight: FontWeight.w900,
@@ -654,7 +665,7 @@ class _AccountsTopBlock extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Providers, campaigns, and pilgrims',
+                              l10n.providersCampaignsAndPilgrims,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -673,7 +684,7 @@ class _AccountsTopBlock extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _StatPill(
-                          title: 'Providers',
+                          title: l10n.providers,
                           value: providersCount.toString(),
                           icon: Icons.storefront_rounded,
                         ),
@@ -681,7 +692,7 @@ class _AccountsTopBlock extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: _StatPill(
-                          title: 'Campaigns',
+                          title: l10n.campaigns,
                           value: campaignsCount.toString(),
                           icon: Icons.flag_rounded,
                         ),
@@ -689,7 +700,7 @@ class _AccountsTopBlock extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: _StatPill(
-                          title: 'Pilgrims',
+                          title: l10n.pilgrims,
                           value: pilgrimsCount.toString(),
                           icon: Icons.groups_rounded,
                         ),
@@ -811,6 +822,8 @@ class _ProviderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     final campaignsCount = provider.campaigns.length;
     final pilgrimsCount = provider.campaigns.fold<int>(
       0,
@@ -888,11 +901,11 @@ class _ProviderCard extends StatelessWidget {
                   runSpacing: 6,
                   children: [
                     _SmallChip(
-                      text: '$campaignsCount campaigns',
+                      text: '$campaignsCount ${l10n.campaigns}',
                       icon: Icons.flag_rounded,
                     ),
                     _SmallChip(
-                      text: '$pilgrimsCount pilgrims',
+                      text: '$pilgrimsCount ${l10n.pilgrims}',
                       icon: Icons.groups_rounded,
                     ),
                   ],
@@ -903,7 +916,7 @@ class _ProviderCard extends StatelessWidget {
                   runSpacing: 8,
                   children: [
                     _AccountActionButton(
-                      label: 'Edit',
+                      label: l10n.edit,
                       icon: Icons.edit_rounded,
                       foregroundColor: primary,
                       backgroundColor: softMint,
@@ -919,7 +932,7 @@ class _ProviderCard extends StatelessWidget {
                       },
                     ),
                     _AccountActionButton(
-                      label: 'Notify',
+                      label: l10n.notify,
                       icon: Icons.notifications_active_rounded,
                       foregroundColor: primary,
                       backgroundColor: const Color(0xFFE8F6EF),
@@ -934,8 +947,8 @@ class _ProviderCard extends StatelessWidget {
                     ),
                     _AccountActionButton(
                       label: providerStatus == 'active'
-                          ? 'Deactivate'
-                          : 'Activate',
+                          ? l10n.deactivate
+                          : l10n.activate,
                       icon: providerStatus == 'active'
                           ? Icons.block_rounded
                           : Icons.check_circle_rounded,
@@ -963,8 +976,8 @@ class _ProviderCard extends StatelessWidget {
           ),
           children: [
             if (provider.campaigns.isEmpty)
-              const _SmallEmptyMessage(
-                text: 'No campaigns registered for this provider.',
+              _SmallEmptyMessage(
+                text: l10n.noCampaignsRegisteredForThisProvider,
               )
             else
               ...provider.campaigns.map(
@@ -1019,6 +1032,8 @@ class _CampaignTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       margin: const EdgeInsets.only(top: 10),
       decoration: BoxDecoration(
@@ -1053,15 +1068,15 @@ class _CampaignTile extends StatelessWidget {
                 if (campaign.campaignNumber != null &&
                     campaign.campaignNumber!.isNotEmpty)
                   _SmallChip(
-                    text: 'No. ${campaign.campaignNumber}',
+                    text: '${l10n.no} ${campaign.campaignNumber}',
                     icon: Icons.confirmation_number_rounded,
                   ),
                 _SmallChip(
-                  text: '${campaign.numberOfPilgrims} expected',
+                  text: '${campaign.numberOfPilgrims} ${l10n.expected}',
                   icon: Icons.people_alt_rounded,
                 ),
                 _SmallChip(
-                  text: '${campaign.pilgrims.length} registered',
+                  text: '${campaign.pilgrims.length} ${l10n.registered}',
                   icon: Icons.verified_user_rounded,
                 ),
               ],
@@ -1072,8 +1087,8 @@ class _CampaignTile extends StatelessWidget {
                 campaign.arrivalDetails!.isNotEmpty)
               _ArrivalBox(text: campaign.arrivalDetails!),
             if (campaign.pilgrims.isEmpty)
-              const _SmallEmptyMessage(
-                text: 'No pilgrims registered under this campaign.',
+              _SmallEmptyMessage(
+                text: l10n.noPilgrimsRegisteredUnderThisCampaign,
               )
             else
               ...campaign.pilgrims.map(
@@ -1127,6 +1142,7 @@ class _PilgrimCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final pilgrimStatus = pilgrim.pilgrimStatus;
 
     return Container(
@@ -1189,7 +1205,7 @@ class _PilgrimCard extends StatelessWidget {
                   runSpacing: 8,
                   children: [
                     _AccountActionButton(
-                      label: 'Edit',
+                      label: l10n.edit,
                       icon: Icons.edit_rounded,
                       foregroundColor: primary,
                       backgroundColor: softMint,
@@ -1205,7 +1221,7 @@ class _PilgrimCard extends StatelessWidget {
                       },
                     ),
                     _AccountActionButton(
-                      label: 'Notify',
+                      label: l10n.notify,
                       icon: Icons.notifications_active_rounded,
                       foregroundColor: primary,
                       backgroundColor: const Color(0xFFE8F6EF),
@@ -1220,8 +1236,8 @@ class _PilgrimCard extends StatelessWidget {
                     ),
                     _AccountActionButton(
                       label: pilgrimStatus == 'active'
-                          ? 'Deactivate'
-                          : 'Activate',
+                          ? l10n.deactivate
+                          : l10n.activate,
                       icon: pilgrimStatus == 'active'
                           ? Icons.block_rounded
                           : Icons.check_circle_rounded,
@@ -1303,6 +1319,7 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isActive = status.toLowerCase() == 'active';
 
     return Container(
@@ -1312,7 +1329,7 @@ class _StatusChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        isActive ? 'Active' : 'Inactive',
+        isActive ? l10n.active : l10n.inactive,
         style: TextStyle(
           color: isActive ? const Color(0xFF0D4C4A) : Colors.red,
           fontSize: 11.2,
@@ -1469,28 +1486,30 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return ListView(
       padding: const EdgeInsets.all(24),
-      children: const [
-        SizedBox(height: 120),
-        Icon(Icons.manage_accounts_rounded, color: primary, size: 58),
-        SizedBox(height: 14),
+      children: [
+        const SizedBox(height: 120),
+        const Icon(Icons.manage_accounts_rounded, color: primary, size: 58),
+        const SizedBox(height: 14),
         Center(
           child: Text(
-            'No accounts found',
-            style: TextStyle(
+            l10n.noAccountsFound,
+            style: const TextStyle(
               color: primary,
               fontSize: 18,
               fontWeight: FontWeight.w900,
             ),
           ),
         ),
-        SizedBox(height: 6),
+        const SizedBox(height: 6),
         Center(
           child: Text(
-            'Registered providers, campaigns, and pilgrims will appear here.',
+            l10n.registeredAccountsWillAppearHere,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.black54, height: 1.4),
+            style: const TextStyle(color: Colors.black54, height: 1.4),
           ),
         ),
       ],
@@ -1508,6 +1527,8 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -1529,7 +1550,7 @@ class _ErrorState extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Try again'),
+            label: Text(l10n.tryAgain),
             style: ElevatedButton.styleFrom(
               backgroundColor: primary,
               foregroundColor: Colors.white,

@@ -188,7 +188,7 @@ abstract class AppLocalizations {
   /// No description provided for @notAvailable.
   ///
   /// In en, this message translates to:
-  /// **'Not Available'**
+  /// **'Not available'**
   String get notAvailable;
 
   /// No description provided for @verifiedAccount.
@@ -272,13 +272,13 @@ abstract class AppLocalizations {
   /// No description provided for @accepted.
   ///
   /// In en, this message translates to:
-  /// **'Accepted'**
+  /// **'accepted'**
   String get accepted;
 
   /// No description provided for @rejected.
   ///
   /// In en, this message translates to:
-  /// **'Rejected'**
+  /// **'rejected'**
   String get rejected;
 
   /// No description provided for @campaigns.
@@ -296,7 +296,7 @@ abstract class AppLocalizations {
   /// No description provided for @pilgrims.
   ///
   /// In en, this message translates to:
-  /// **'pilgrims'**
+  /// **'Pilgrims'**
   String get pilgrims;
 
   /// No description provided for @arrivalDate.
@@ -500,7 +500,7 @@ abstract class AppLocalizations {
   /// No description provided for @calories.
   ///
   /// In en, this message translates to:
-  /// **'Calories'**
+  /// **'calories'**
   String get calories;
 
   /// No description provided for @protein.
@@ -1022,7 +1022,7 @@ abstract class AppLocalizations {
   /// No description provided for @orders.
   ///
   /// In en, this message translates to:
-  /// **'orders'**
+  /// **'Orders'**
   String get orders;
 
   /// No description provided for @clear.
@@ -1070,19 +1070,19 @@ abstract class AppLocalizations {
   /// No description provided for @completed.
   ///
   /// In en, this message translates to:
-  /// **'Completed'**
+  /// **'completed'**
   String get completed;
 
   /// No description provided for @cancelled.
   ///
   /// In en, this message translates to:
-  /// **'Cancelled'**
+  /// **'cancelled'**
   String get cancelled;
 
   /// No description provided for @pending.
   ///
   /// In en, this message translates to:
-  /// **'Pending'**
+  /// **'pending'**
   String get pending;
 
   /// No description provided for @unknown.
@@ -2890,6 +2890,450 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your campaign provider has not added meals yet.'**
   String get yourCampaignProviderHasNotAddedMealsYet;
+
+  /// No description provided for @role.
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get role;
+
+  /// No description provided for @administrator.
+  ///
+  /// In en, this message translates to:
+  /// **'Administrator'**
+  String get administrator;
+
+  /// No description provided for @active.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get active;
+
+  /// No description provided for @adminId.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin ID'**
+  String get adminId;
+
+  /// No description provided for @systemAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'System Admin'**
+  String get systemAdmin;
+
+  /// No description provided for @logoutConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to log out?'**
+  String get logoutConfirmMessage;
+
+  /// No description provided for @failedToLoadAdminProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load admin profile'**
+  String get failedToLoadAdminProfile;
+
+  /// No description provided for @tryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get tryAgain;
+
+  /// No description provided for @admin.
+  ///
+  /// In en, this message translates to:
+  /// **'admin'**
+  String get admin;
+
+  /// No description provided for @id.
+  ///
+  /// In en, this message translates to:
+  /// **'ID'**
+  String get id;
+
+  /// No description provided for @manageAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Accounts'**
+  String get manageAccounts;
+
+  /// No description provided for @viewAndManageUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'View and manage users'**
+  String get viewAndManageUsers;
+
+  /// No description provided for @monitorOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor Orders'**
+  String get monitorOrders;
+
+  /// No description provided for @trackMealOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Track meal orders'**
+  String get trackMealOrders;
+
+  /// No description provided for @createAndManageAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Create and manage alerts'**
+  String get createAndManageAlerts;
+
+  /// No description provided for @createNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Notification'**
+  String get createNotification;
+
+  /// No description provided for @sendNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Notifications'**
+  String get sendNotifications;
+
+  /// No description provided for @createAlertsForPilgrimsAndProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'Create alerts for pilgrims and providers'**
+  String get createAlertsForPilgrimsAndProviders;
+
+  /// No description provided for @arabicTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic Title'**
+  String get arabicTitle;
+
+  /// No description provided for @englishTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'English Title'**
+  String get englishTitle;
+
+  /// No description provided for @enterArabicTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Arabic title'**
+  String get enterArabicTitle;
+
+  /// No description provided for @enterEnglishTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter English title'**
+  String get enterEnglishTitle;
+
+  /// No description provided for @notificationType.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification Type'**
+  String get notificationType;
+
+  /// No description provided for @alert.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert'**
+  String get alert;
+
+  /// No description provided for @announcement.
+  ///
+  /// In en, this message translates to:
+  /// **'Announcement'**
+  String get announcement;
+
+  /// No description provided for @reminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder'**
+  String get reminder;
+
+  /// No description provided for @recipients.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipients'**
+  String get recipients;
+
+  /// No description provided for @allPilgrims.
+  ///
+  /// In en, this message translates to:
+  /// **'All Pilgrims'**
+  String get allPilgrims;
+
+  /// No description provided for @allProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'All Providers'**
+  String get allProviders;
+
+  /// No description provided for @specificNotificationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For a specific pilgrim or provider, send the notification directly from Manage Accounts.'**
+  String get specificNotificationHint;
+
+  /// No description provided for @arabicMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic Message'**
+  String get arabicMessage;
+
+  /// No description provided for @englishMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'English Message'**
+  String get englishMessage;
+
+  /// No description provided for @enterArabicMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Arabic message'**
+  String get enterArabicMessage;
+
+  /// No description provided for @enterEnglishMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter English message'**
+  String get enterEnglishMessage;
+
+  /// No description provided for @sending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending...'**
+  String get sending;
+
+  /// No description provided for @sendNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Notification'**
+  String get sendNotification;
+
+  /// No description provided for @notificationSentSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification sent successfully'**
+  String get notificationSentSuccessfully;
+
+  /// No description provided for @editAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Account'**
+  String get editAccount;
+
+  /// No description provided for @pleaseFillAllFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Please fill all fields'**
+  String get pleaseFillAllFields;
+
+  /// No description provided for @accountInformationUpdatedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Account information updated successfully'**
+  String get accountInformationUpdatedSuccessfully;
+
+  /// No description provided for @failedToUpdateAccountInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update account information'**
+  String get failedToUpdateAccountInformation;
+
+  /// No description provided for @accountActivatedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Account activated successfully'**
+  String get accountActivatedSuccessfully;
+
+  /// No description provided for @accountDeactivatedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Account deactivated successfully'**
+  String get accountDeactivatedSuccessfully;
+
+  /// No description provided for @failedToUpdateAccountStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update account status'**
+  String get failedToUpdateAccountStatus;
+
+  /// No description provided for @sendNotificationTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Notification to'**
+  String get sendNotificationTo;
+
+  /// No description provided for @send.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get send;
+
+  /// No description provided for @pleaseFillAllNotificationFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Please fill all notification fields'**
+  String get pleaseFillAllNotificationFields;
+
+  /// No description provided for @failedToSendNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send notification'**
+  String get failedToSendNotification;
+
+  /// No description provided for @failedToLoadAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load accounts.'**
+  String get failedToLoadAccounts;
+
+  /// No description provided for @registeredProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'Registered Providers'**
+  String get registeredProviders;
+
+  /// No description provided for @providersCampaignsAndPilgrims.
+  ///
+  /// In en, this message translates to:
+  /// **'Providers, campaigns, and pilgrims'**
+  String get providersCampaignsAndPilgrims;
+
+  /// No description provided for @providers.
+  ///
+  /// In en, this message translates to:
+  /// **'Providers'**
+  String get providers;
+
+  /// No description provided for @notify.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify'**
+  String get notify;
+
+  /// No description provided for @deactivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate'**
+  String get deactivate;
+
+  /// No description provided for @activate.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate'**
+  String get activate;
+
+  /// No description provided for @inactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get inactive;
+
+  /// No description provided for @noCampaignsRegisteredForThisProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'No campaigns registered for this provider.'**
+  String get noCampaignsRegisteredForThisProvider;
+
+  /// No description provided for @no.
+  ///
+  /// In en, this message translates to:
+  /// **'No.'**
+  String get no;
+
+  /// No description provided for @expected.
+  ///
+  /// In en, this message translates to:
+  /// **'expected'**
+  String get expected;
+
+  /// No description provided for @registered.
+  ///
+  /// In en, this message translates to:
+  /// **'registered'**
+  String get registered;
+
+  /// No description provided for @noPilgrimsRegisteredUnderThisCampaign.
+  ///
+  /// In en, this message translates to:
+  /// **'No pilgrims registered under this campaign.'**
+  String get noPilgrimsRegisteredUnderThisCampaign;
+
+  /// No description provided for @noAccountsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No accounts found'**
+  String get noAccountsFound;
+
+  /// No description provided for @registeredAccountsWillAppearHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Registered providers, campaigns, and pilgrims will appear here.'**
+  String get registeredAccountsWillAppearHere;
+
+  /// No description provided for @adminAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin Alerts'**
+  String get adminAlerts;
+
+  /// No description provided for @failedToLoadNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load notifications'**
+  String get failedToLoadNotifications;
+
+  /// No description provided for @noMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No message'**
+  String get noMessage;
+
+  /// No description provided for @accounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get accounts;
+
+  /// No description provided for @alerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts'**
+  String get alerts;
+
+  /// No description provided for @failedToLoadOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load orders.'**
+  String get failedToLoadOrders;
+
+  /// No description provided for @campaignOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Campaign Orders'**
+  String get campaignOrders;
+
+  /// No description provided for @campaignOrdersAndProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'Campaign orders and providers'**
+  String get campaignOrdersAndProviders;
+
+  /// No description provided for @noOrdersFoundUnderThisCampaign.
+  ///
+  /// In en, this message translates to:
+  /// **'No orders found under this campaign.'**
+  String get noOrdersFoundUnderThisCampaign;
+
+  /// No description provided for @noDate.
+  ///
+  /// In en, this message translates to:
+  /// **'No date'**
+  String get noDate;
+
+  /// No description provided for @mealOrdersWillAppearHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal orders will appear here grouped by campaign and provider.'**
+  String get mealOrdersWillAppearHere;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

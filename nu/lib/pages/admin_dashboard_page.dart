@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../l10n/app_localizations.dart';
 import '../services/admin_service.dart';
 import '../session/user_session.dart';
 import '../widgets/admin_bottom_nav.dart';
@@ -57,9 +58,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   void _openReceivedNotifications() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const AdminAlertsPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const AdminAlertsPage()),
     );
 
     _loadUnreadCount();
@@ -68,9 +67,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   void _openSendNotifications() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const AdminNotificationsPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const AdminNotificationsPage()),
     );
 
     _loadUnreadCount();
@@ -78,7 +75,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final adminName = UserSession.fullName ?? 'System Admin';
+    final l10n = AppLocalizations.of(context)!;
+    final adminName = UserSession.fullName ?? l10n.systemAdmin;
 
     return Scaffold(
       backgroundColor: bg,
@@ -95,25 +93,25 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             children: [
               _AdminTopBlock(adminName: adminName),
               const SizedBox(height: 18),
-              const _SectionLabel(title: 'Services'),
+              _SectionLabel(title: l10n.services),
               const SizedBox(height: 12),
               _ServiceListCard(
-                title: 'Manage Accounts',
-                subtitle: 'View and manage users',
+                title: l10n.manageAccounts,
+                subtitle: l10n.viewAndManageUsers,
                 icon: Icons.manage_accounts_rounded,
                 onTap: _openManageAccounts,
               ),
               const SizedBox(height: 12),
               _ServiceListCard(
-                title: 'Monitor Orders',
-                subtitle: 'Track meal orders',
+                title: l10n.monitorOrders,
+                subtitle: l10n.trackMealOrders,
                 icon: Icons.receipt_long_rounded,
                 onTap: _openMonitorOrders,
               ),
               const SizedBox(height: 12),
               _ServiceListCard(
-                title: 'Notifications',
-                subtitle: 'Create and manage alerts',
+                title: l10n.notifications,
+                subtitle: l10n.createAndManageAlerts,
                 icon: Icons.notifications_active_rounded,
                 onTap: _openSendNotifications,
               ),
@@ -223,6 +221,8 @@ class _AdminTopBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: Container(
@@ -279,7 +279,7 @@ class _AdminTopBlock extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Welcome back',
+                          l10n.welcomeBack,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.86),
                             fontSize: 13,

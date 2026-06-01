@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../services/admin_service.dart';
 import '../session/user_session.dart';
 import '../widgets/admin_bottom_nav.dart';
@@ -41,6 +42,8 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
   }
 
   Future<void> sendNotification() async {
+    final l10n = AppLocalizations.of(context)!;
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => isLoading = true);
@@ -60,7 +63,7 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Notification sent successfully')),
+        SnackBar(content: Text(l10n.notificationSentSuccessfully)),
       );
 
       titleArController.clear();
@@ -84,6 +87,8 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: bg,
       appBar: const _NotificationsAppBar(),
@@ -97,7 +102,7 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
             children: [
               const _TopBlock(),
               const SizedBox(height: 18),
-              const _SectionLabel(title: 'Create Notification'),
+              _SectionLabel(title: l10n.createNotification),
               const SizedBox(height: 12),
               _FormCard(
                 formKey: _formKey,
@@ -181,6 +186,8 @@ class _TopBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: Container(
@@ -226,9 +233,9 @@ class _TopBlock extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Send Notifications',
-                          style: TextStyle(
+                        Text(
+                          l10n.sendNotifications,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
@@ -236,7 +243,7 @@ class _TopBlock extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Create alerts for pilgrims and providers',
+                          l10n.createAlertsForPilgrimsAndProviders,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.86),
                             fontSize: 13,
@@ -311,6 +318,8 @@ class _FormCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -330,71 +339,70 @@ class _FormCard extends StatelessWidget {
           children: [
             _InputField(
               controller: titleArController,
-              label: 'Arabic Title',
+              label: l10n.arabicTitle,
               icon: Icons.title_rounded,
               textDirection: TextDirection.rtl,
               validator: (value) => value == null || value.trim().isEmpty
-                  ? 'Enter Arabic title'
+                  ? l10n.enterArabicTitle
                   : null,
             ),
             const SizedBox(height: 14),
             _InputField(
               controller: titleEnController,
-              label: 'English Title',
+              label: l10n.englishTitle,
               icon: Icons.title_rounded,
               textDirection: TextDirection.ltr,
               validator: (value) => value == null || value.trim().isEmpty
-                  ? 'Enter English title'
+                  ? l10n.enterEnglishTitle
                   : null,
             ),
             const SizedBox(height: 14),
             _DropdownField(
-              label: 'Notification Type',
+              label: l10n.notificationType,
               value: selectedNotificationType,
-              items: const [
-                DropdownMenuItem(value: 'alert', child: Text('Alert')),
+              items: [
+                DropdownMenuItem(value: 'alert', child: Text(l10n.alert)),
                 DropdownMenuItem(
                   value: 'announcement',
-                  child: Text('Announcement'),
+                  child: Text(l10n.announcement),
                 ),
-                DropdownMenuItem(value: 'reminder', child: Text('Reminder')),
+                DropdownMenuItem(value: 'reminder', child: Text(l10n.reminder)),
               ],
               onChanged: onNotificationTypeChanged,
             ),
             const SizedBox(height: 14),
             _DropdownField(
-              label: 'Recipients',
+              label: l10n.recipients,
               value: selectedRecipientType,
-              items: const [
+              items: [
                 DropdownMenuItem(
                   value: 'all_pilgrims',
-                  child: Text('All Pilgrims'),
+                  child: Text(l10n.allPilgrims),
                 ),
                 DropdownMenuItem(
                   value: 'all_providers',
-                  child: Text('All Providers'),
+                  child: Text(l10n.allProviders),
                 ),
               ],
               onChanged: onRecipientTypeChanged,
             ),
             const SizedBox(height: 12),
-            const _FormHint(
-              text:
-                  'For a specific pilgrim or provider, send the notification directly from Manage Accounts.',
+            _FormHint(
+              text: l10n.specificNotificationHint,
             ),
             const SizedBox(height: 14),
             _MessageField(
               controller: messageArController,
-              label: 'Arabic Message',
+              label: l10n.arabicMessage,
               textDirection: TextDirection.rtl,
-              validatorMessage: 'Enter Arabic message',
+              validatorMessage: l10n.enterArabicMessage,
             ),
             const SizedBox(height: 14),
             _MessageField(
               controller: messageEnController,
-              label: 'English Message',
+              label: l10n.englishMessage,
               textDirection: TextDirection.ltr,
-              validatorMessage: 'Enter English message',
+              validatorMessage: l10n.enterEnglishMessage,
             ),
             const SizedBox(height: 22),
             SizedBox(
@@ -411,7 +419,9 @@ class _FormCard extends StatelessWidget {
                         ),
                       )
                     : const Icon(Icons.send_rounded),
-                label: Text(isLoading ? 'Sending...' : 'Send Notification'),
+                label: Text(
+                  isLoading ? l10n.sending : l10n.sendNotification,
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primary,
                   foregroundColor: Colors.white,

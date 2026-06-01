@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/admin_orders_monitor.dart';
 import '../services/admin_service.dart';
 
@@ -54,6 +55,8 @@ class _AdminMonitorOrdersPageState extends State<AdminMonitorOrdersPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: bg,
       appBar: const _AdminOrdersAppBar(),
@@ -73,7 +76,7 @@ class _AdminMonitorOrdersPageState extends State<AdminMonitorOrdersPage> {
 
               if (snapshot.hasError) {
                 return _ErrorState(
-                  message: 'Failed to load orders.',
+                  message: l10n.failedToLoadOrders,
                   onRetry: _refreshOrders,
                 );
               }
@@ -93,7 +96,7 @@ class _AdminMonitorOrdersPageState extends State<AdminMonitorOrdersPage> {
                     activeOrders: _activeOrders(campaigns),
                   ),
                   const SizedBox(height: 18),
-                  const _SectionLabel(title: 'Campaign Orders'),
+                  _SectionLabel(title: l10n.campaignOrders),
                   const SizedBox(height: 12),
                   ...campaigns.map(
                     (campaign) => _CampaignOrdersCard(campaign: campaign),
@@ -172,6 +175,8 @@ class _OrdersTopBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: Container(
@@ -246,11 +251,11 @@ class _OrdersTopBlock extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Monitor Orders',
+                            Text(
+                              l10n.monitorOrders,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
                                 fontWeight: FontWeight.w900,
@@ -258,7 +263,7 @@ class _OrdersTopBlock extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Campaign orders and providers',
+                              l10n.campaignOrdersAndProviders,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -277,7 +282,7 @@ class _OrdersTopBlock extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _StatPill(
-                          title: 'Campaigns',
+                          title: l10n.campaigns,
                           value: campaignsCount.toString(),
                           icon: Icons.flag_rounded,
                         ),
@@ -285,7 +290,7 @@ class _OrdersTopBlock extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: _StatPill(
-                          title: 'Orders',
+                          title: l10n.orders,
                           value: totalOrders.toString(),
                           icon: Icons.shopping_bag_rounded,
                         ),
@@ -293,7 +298,7 @@ class _OrdersTopBlock extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: _StatPill(
-                          title: 'Active',
+                          title: l10n.active,
                           value: activeOrders.toString(),
                           icon: Icons.timelapse_rounded,
                         ),
@@ -390,6 +395,8 @@ class _CampaignOrdersCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -430,7 +437,7 @@ class _CampaignOrdersCard extends StatelessWidget {
                 if (campaign.campaignNumber != null &&
                     campaign.campaignNumber!.isNotEmpty)
                   _SmallChip(
-                    text: 'No. ${campaign.campaignNumber}',
+                    text: '${l10n.no} ${campaign.campaignNumber}',
                     icon: Icons.confirmation_number_rounded,
                   ),
                 _SmallChip(
@@ -438,7 +445,7 @@ class _CampaignOrdersCard extends StatelessWidget {
                   icon: Icons.storefront_rounded,
                 ),
                 _SmallChip(
-                  text: '${campaign.orders.length} orders',
+                  text: '${campaign.orders.length} ${l10n.orders}',
                   icon: Icons.receipt_long_rounded,
                 ),
               ],
@@ -447,9 +454,7 @@ class _CampaignOrdersCard extends StatelessWidget {
           children: [
             _ProviderBox(provider: campaign.provider),
             if (campaign.orders.isEmpty)
-              const _SmallEmptyMessage(
-                text: 'No orders found under this campaign.',
-              )
+              _SmallEmptyMessage(text: l10n.noOrdersFoundUnderThisCampaign)
             else
               ...campaign.orders.map((order) => _OrderCard(order: order)),
           ],
@@ -519,8 +524,10 @@ class _OrderCard extends StatelessWidget {
     return const Color(0xFFC78200);
   }
 
-  String _formatDate(String? value) {
-    if (value == null || value.isEmpty) return 'No date';
+  String _formatDate(BuildContext context, String? value) {
+    final l10n = AppLocalizations.of(context)!;
+
+    if (value == null || value.isEmpty) return l10n.noDate;
 
     final date = DateTime.tryParse(value);
     if (date == null) return value;
@@ -528,8 +535,30 @@ class _OrderCard extends StatelessWidget {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
+  String _localizedStatus(BuildContext context, String status) {
+    final l10n = AppLocalizations.of(context)!;
+    final value = status.toLowerCase();
+
+    switch (value) {
+      case 'completed':
+        return l10n.completed;
+      case 'accepted':
+        return l10n.accepted;
+      case 'rejected':
+        return l10n.rejected;
+      case 'cancelled':
+        return l10n.cancelled;
+      case 'pending':
+        return l10n.pending;
+      default:
+        return status;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     final statusColor = _statusColor(order.status);
     final languageCode = Localizations.localeOf(context).languageCode;
 
@@ -576,7 +605,7 @@ class _OrderCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '$mealType • ${order.calories} calories',
+                      '$mealType • ${order.calories} ${l10n.calories}',
                       style: TextStyle(
                         color: Colors.black.withOpacity(0.55),
                         fontWeight: FontWeight.w600,
@@ -593,7 +622,7 @@ class _OrderCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  order.status,
+                  _localizedStatus(context, order.status),
                   style: TextStyle(
                     color: statusColor,
                     fontWeight: FontWeight.w900,
@@ -608,7 +637,7 @@ class _OrderCard extends StatelessWidget {
           _InfoLine(icon: Icons.email_rounded, text: order.pilgrimEmail),
           _InfoLine(
             icon: Icons.calendar_month_rounded,
-            text: _formatDate(order.requestDate),
+            text: _formatDate(context, order.requestDate),
           ),
         ],
       ),
@@ -722,28 +751,30 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return ListView(
       padding: const EdgeInsets.all(24),
-      children: const [
-        SizedBox(height: 120),
-        Icon(Icons.receipt_long_rounded, color: primary, size: 58),
-        SizedBox(height: 14),
+      children: [
+        const SizedBox(height: 120),
+        const Icon(Icons.receipt_long_rounded, color: primary, size: 58),
+        const SizedBox(height: 14),
         Center(
           child: Text(
-            'No orders found',
-            style: TextStyle(
+            l10n.noOrdersFound,
+            style: const TextStyle(
               color: primary,
               fontSize: 18,
               fontWeight: FontWeight.w900,
             ),
           ),
         ),
-        SizedBox(height: 6),
+        const SizedBox(height: 6),
         Center(
           child: Text(
-            'Meal orders will appear here grouped by campaign and provider.',
+            l10n.mealOrdersWillAppearHere,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.black54, height: 1.4),
+            style: const TextStyle(color: Colors.black54, height: 1.4),
           ),
         ),
       ],
@@ -761,6 +792,8 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -782,7 +815,7 @@ class _ErrorState extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Try again'),
+            label: Text(l10n.tryAgain),
             style: ElevatedButton.styleFrom(
               backgroundColor: primary,
               foregroundColor: Colors.white,

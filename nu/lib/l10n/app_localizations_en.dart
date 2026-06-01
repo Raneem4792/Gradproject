@@ -54,7 +54,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get service => 'Service';
 
   @override
-  String get notAvailable => 'Not Available';
+  String get notAvailable => 'Not available';
 
   @override
   String get verifiedAccount => 'Verified Account';
@@ -96,10 +96,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get totalOrders => 'Total Orders';
 
   @override
-  String get accepted => 'Accepted';
+  String get accepted => 'accepted';
 
   @override
-  String get rejected => 'Rejected';
+  String get rejected => 'rejected';
 
   @override
   String get campaigns => 'Campaigns';
@@ -108,7 +108,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noLinkedCampaigns => 'No linked campaigns';
 
   @override
-  String get pilgrims => 'pilgrims';
+  String get pilgrims => 'Pilgrims';
 
   @override
   String get arrivalDate => 'Arrival Date';
@@ -210,7 +210,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get description => 'Description';
 
   @override
-  String get calories => 'Calories';
+  String get calories => 'calories';
 
   @override
   String get protein => 'Protein';
@@ -479,7 +479,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get status => 'Status';
 
   @override
-  String get orders => 'orders';
+  String get orders => 'Orders';
 
   @override
   String get clear => 'Clear';
@@ -503,13 +503,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectStatus => 'Select Status';
 
   @override
-  String get completed => 'Completed';
+  String get completed => 'completed';
 
   @override
-  String get cancelled => 'Cancelled';
+  String get cancelled => 'cancelled';
 
   @override
-  String get pending => 'Pending';
+  String get pending => 'pending';
 
   @override
   String get unknown => 'Unknown';
@@ -1417,4 +1417,226 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yourCampaignProviderHasNotAddedMealsYet => 'Your campaign provider has not added meals yet.';
+
+  @override
+  String get role => 'Role';
+
+  @override
+  String get administrator => 'Administrator';
+
+  @override
+  String get active => 'Active';
+
+  @override
+  String get adminId => 'Admin ID';
+
+  @override
+  String get systemAdmin => 'System Admin';
+
+  @override
+  String get logoutConfirmMessage => 'Are you sure you want to log out?';
+
+  @override
+  String get failedToLoadAdminProfile => 'Failed to load admin profile';
+
+  @override
+  String get tryAgain => 'Try again';
+
+  @override
+  String get admin => 'admin';
+
+  @override
+  String get id => 'ID';
+
+  @override
+  String get manageAccounts => 'Manage Accounts';
+
+  @override
+  String get viewAndManageUsers => 'View and manage users';
+
+  @override
+  String get monitorOrders => 'Monitor Orders';
+
+  @override
+  String get trackMealOrders => 'Track meal orders';
+
+  @override
+  String get createAndManageAlerts => 'Create and manage alerts';
+
+  @override
+  String get createNotification => 'Create Notification';
+
+  @override
+  String get sendNotifications => 'Send Notifications';
+
+  @override
+  String get createAlertsForPilgrimsAndProviders => 'Create alerts for pilgrims and providers';
+
+  @override
+  String get arabicTitle => 'Arabic Title';
+
+  @override
+  String get englishTitle => 'English Title';
+
+  @override
+  String get enterArabicTitle => 'Enter Arabic title';
+
+  @override
+  String get enterEnglishTitle => 'Enter English title';
+
+  @override
+  String get notificationType => 'Notification Type';
+
+  @override
+  String get alert => 'Alert';
+
+  @override
+  String get announcement => 'Announcement';
+
+  @override
+  String get reminder => 'Reminder';
+
+  @override
+  String get recipients => 'Recipients';
+
+  @override
+  String get allPilgrims => 'All Pilgrims';
+
+  @override
+  String get allProviders => 'All Providers';
+
+  @override
+  String get specificNotificationHint => 'For a specific pilgrim or provider, send the notification directly from Manage Accounts.';
+
+  @override
+  String get arabicMessage => 'Arabic Message';
+
+  @override
+  String get englishMessage => 'English Message';
+
+  @override
+  String get enterArabicMessage => 'Enter Arabic message';
+
+  @override
+  String get enterEnglishMessage => 'Enter English message';
+
+  @override
+  String get sending => 'Sending...';
+
+  @override
+  String get sendNotification => 'Send Notification';
+
+  @override
+  String get notificationSentSuccessfully => 'Notification sent successfully';
+
+  @override
+  String get editAccount => 'Edit Account';
+
+  @override
+  String get pleaseFillAllFields => 'Please fill all fields';
+
+  @override
+  String get accountInformationUpdatedSuccessfully => 'Account information updated successfully';
+
+  @override
+  String get failedToUpdateAccountInformation => 'Failed to update account information';
+
+  @override
+  String get accountActivatedSuccessfully => 'Account activated successfully';
+
+  @override
+  String get accountDeactivatedSuccessfully => 'Account deactivated successfully';
+
+  @override
+  String get failedToUpdateAccountStatus => 'Failed to update account status';
+
+  @override
+  String get sendNotificationTo => 'Send Notification to';
+
+  @override
+  String get send => 'Send';
+
+  @override
+  String get pleaseFillAllNotificationFields => 'Please fill all notification fields';
+
+  @override
+  String get failedToSendNotification => 'Failed to send notification';
+
+  @override
+  String get failedToLoadAccounts => 'Failed to load accounts.';
+
+  @override
+  String get registeredProviders => 'Registered Providers';
+
+  @override
+  String get providersCampaignsAndPilgrims => 'Providers, campaigns, and pilgrims';
+
+  @override
+  String get providers => 'Providers';
+
+  @override
+  String get notify => 'Notify';
+
+  @override
+  String get deactivate => 'Deactivate';
+
+  @override
+  String get activate => 'Activate';
+
+  @override
+  String get inactive => 'Inactive';
+
+  @override
+  String get noCampaignsRegisteredForThisProvider => 'No campaigns registered for this provider.';
+
+  @override
+  String get no => 'No.';
+
+  @override
+  String get expected => 'expected';
+
+  @override
+  String get registered => 'registered';
+
+  @override
+  String get noPilgrimsRegisteredUnderThisCampaign => 'No pilgrims registered under this campaign.';
+
+  @override
+  String get noAccountsFound => 'No accounts found';
+
+  @override
+  String get registeredAccountsWillAppearHere => 'Registered providers, campaigns, and pilgrims will appear here.';
+
+  @override
+  String get adminAlerts => 'Admin Alerts';
+
+  @override
+  String get failedToLoadNotifications => 'Failed to load notifications';
+
+  @override
+  String get noMessage => 'No message';
+
+  @override
+  String get accounts => 'Accounts';
+
+  @override
+  String get alerts => 'Alerts';
+
+  @override
+  String get failedToLoadOrders => 'Failed to load orders.';
+
+  @override
+  String get campaignOrders => 'Campaign Orders';
+
+  @override
+  String get campaignOrdersAndProviders => 'Campaign orders and providers';
+
+  @override
+  String get noOrdersFoundUnderThisCampaign => 'No orders found under this campaign.';
+
+  @override
+  String get noDate => 'No date';
+
+  @override
+  String get mealOrdersWillAppearHere => 'Meal orders will appear here grouped by campaign and provider.';
 }

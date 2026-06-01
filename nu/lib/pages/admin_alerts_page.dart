@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/admin_service.dart';
 import '../session/user_session.dart';
 import '../widgets/admin_bottom_nav.dart';
@@ -68,7 +69,8 @@ class _AdminAlertsPageState extends State<AdminAlertsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final adminName = UserSession.fullName ?? 'System Admin';
+    final l10n = AppLocalizations.of(context)!;
+    final adminName = UserSession.fullName ?? l10n.systemAdmin;
 
     return Scaffold(
       backgroundColor: bg,
@@ -84,7 +86,7 @@ class _AdminAlertsPageState extends State<AdminAlertsPage> {
             children: [
               _AdminAlertsTopBlock(adminName: adminName),
               const SizedBox(height: 18),
-              const _SectionLabel(title: 'Admin Alerts'),
+              _SectionLabel(title: l10n.adminAlerts),
               const SizedBox(height: 12),
               _AdminAlertsList(
                 notificationsFuture: _notificationsFuture,
@@ -156,6 +158,8 @@ class _AdminAlertsTopBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: Container(
@@ -202,11 +206,11 @@ class _AdminAlertsTopBlock extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Admin Alerts',
+                        Text(
+                          l10n.adminAlerts,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
@@ -290,6 +294,9 @@ class _AdminAlertsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     return FutureBuilder<List<dynamic>>(
       future: notificationsFuture,
       builder: (context, snapshot) {
@@ -301,18 +308,18 @@ class _AdminAlertsList extends StatelessWidget {
         }
 
         if (snapshot.hasError) {
-          return const _MessageBox(
+          return _MessageBox(
             icon: Icons.error_outline_rounded,
-            text: 'Failed to load notifications',
+            text: l10n.failedToLoadNotifications,
           );
         }
 
         final notifications = snapshot.data ?? [];
 
         if (notifications.isEmpty) {
-          return const _MessageBox(
+          return _MessageBox(
             icon: Icons.notifications_none_rounded,
-            text: 'No notifications yet',
+            text: l10n.noNotificationsYet,
           );
         }
 
@@ -320,10 +327,21 @@ class _AdminAlertsList extends StatelessWidget {
           children: notifications.map((rawItem) {
             final item = _toMap(rawItem);
 
+            final titleAr = _firstValue(item, [
+              'title_ar',
+              'titleAr',
+            ]);
+
             final titleEn = _firstValue(item, [
               'title_en',
               'titleEn',
               'title',
+            ]);
+
+            final messageAr = _firstValue(item, [
+              'messageContent_ar',
+              'message_ar',
+              'messageAr',
             ]);
 
             final messageEn = _firstValue(item, [
@@ -334,14 +352,22 @@ class _AdminAlertsList extends StatelessWidget {
               'message',
             ]);
 
+            final title = isArabic
+                ? (titleAr.isEmpty ? titleEn : titleAr)
+                : (titleEn.isEmpty ? titleAr : titleEn);
+
+            final message = isArabic
+                ? (messageAr.isEmpty ? messageEn : messageAr)
+                : (messageEn.isEmpty ? messageAr : messageEn);
+
             final timestampValue = item['timestamp'] ??
                 item['createdAt'] ??
                 item['created_at'] ??
                 item['createdDate'];
 
             return _AdminAlertCard(
-              title: titleEn.isEmpty ? 'Notification' : titleEn,
-              message: messageEn.isEmpty ? 'No message' : messageEn,
+              title: title.isEmpty ? l10n.notification : title,
+              message: message.isEmpty ? l10n.noMessage : message,
               type: _firstValue(item, ['notificationType', 'type']),
               sender: _firstValue(item, [
                 'createdByAdminID',
@@ -379,7 +405,10 @@ class _AdminAlertCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final senderText = sender.isEmpty ? 'admin' : 'admin • $sender';
+    final l10n = AppLocalizations.of(context)!;
+    final senderText = sender.isEmpty
+        ? l10n.admin
+        : '${l10n.admin} • $sender';
 
     return Container(
       width: double.infinity,
@@ -504,7 +533,6 @@ class _SectionLabel extends StatelessWidget {
     );
   }
 }
-
 
 class _MessageBox extends StatelessWidget {
   final IconData icon;

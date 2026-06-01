@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../main.dart';
+import '../l10n/app_localizations.dart';
 import '../session/user_session.dart';
 import '../widgets/admin_bottom_nav.dart';
 import 'login_page.dart';
@@ -66,6 +68,8 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
   }
 
   Future<void> _logout() async {
+    final l10n = AppLocalizations.of(context)!;
+
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -74,16 +78,16 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(22),
           ),
-          title: const Text(
-            'Log Out',
-            style: TextStyle(
+          title: Text(
+            l10n.logOut,
+            style: const TextStyle(
               fontWeight: FontWeight.w900,
               color: Colors.black87,
             ),
           ),
-          content: const Text(
-            'Are you sure you want to log out?',
-            style: TextStyle(
+          content: Text(
+            l10n.logoutConfirmMessage,
+            style: const TextStyle(
               color: Colors.black87,
               fontWeight: FontWeight.w500,
             ),
@@ -91,16 +95,19 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: primary, fontWeight: FontWeight.w800),
+              child: Text(
+                l10n.cancel,
+                style: const TextStyle(
+                  color: primary,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text(
-                'Log Out',
-                style: TextStyle(
+              child: Text(
+                l10n.logOut,
+                style: const TextStyle(
                   color: Colors.redAccent,
                   fontWeight: FontWeight.w800,
                 ),
@@ -126,6 +133,8 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: bg,
       appBar: const _AdminProfileAppBar(),
@@ -155,11 +164,11 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                 children: [
                   _ProfileHeaderCard(admin: admin),
                   const SizedBox(height: 18),
-                  const _SectionTitle(title: 'Basic Information'),
+                  _SectionTitle(title: l10n.basicInformation),
                   const SizedBox(height: 10),
                   _AdminInfoCard(admin: admin),
                   const SizedBox(height: 16),
-                  const _SectionTitle(title: 'Account'),
+                  _SectionTitle(title: l10n.account),
                   const SizedBox(height: 10),
                   _AccountCard(admin: admin),
                   const SizedBox(height: 22),
@@ -251,6 +260,8 @@ class _ProfileHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: Container(
@@ -302,7 +313,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          admin.fullName.isEmpty ? 'Admin' : admin.fullName,
+                          admin.fullName.isEmpty ? l10n.admin : admin.fullName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -313,7 +324,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'System Admin',
+                          l10n.systemAdmin,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.86),
                             fontSize: 13,
@@ -325,8 +336,8 @@ class _ProfileHeaderCard extends StatelessWidget {
                           spacing: 8,
                           runSpacing: 6,
                           children: [
-                            _HeaderChip(text: 'ID: ${admin.adminID}'),
-                            const _HeaderChip(text: 'Verified Account'),
+                            _HeaderChip(text: '${l10n.id}: ${admin.adminID}'),
+                            _HeaderChip(text: l10n.verifiedAccount),
                           ],
                         ),
                       ],
@@ -387,30 +398,32 @@ class _AdminInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return _WhiteCard(
       child: Column(
         children: [
           _InfoRow(
             icon: Icons.person_outline_rounded,
-            title: 'Full Name',
+            title: l10n.fullName,
             value: admin.fullName,
           ),
           const Divider(height: 22),
           _InfoRow(
             icon: Icons.badge_outlined,
-            title: 'Admin ID',
+            title: l10n.adminId,
             value: admin.adminID,
           ),
           const Divider(height: 22),
           _InfoRow(
             icon: Icons.email_outlined,
-            title: 'Email',
+            title: l10n.email,
             value: admin.email,
           ),
           const Divider(height: 22),
           _InfoRow(
             icon: Icons.phone_outlined,
-            title: 'Phone Number',
+            title: l10n.phoneNumber,
             value: admin.phoneNumber,
           ),
         ],
@@ -426,22 +439,186 @@ class _AccountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _WhiteCard(
+    final l10n = AppLocalizations.of(context)!;
+
+    return _WhiteCard(
       child: Column(
         children: [
           _InfoRow(
             icon: Icons.security_rounded,
-            title: 'Role',
-            value: 'Administrator',
+            title: l10n.role,
+            value: l10n.administrator,
           ),
-          Divider(height: 22),
+          const Divider(height: 22),
           _InfoRow(
             icon: Icons.verified_user_outlined,
-            title: 'Status',
-            value: 'Active',
+            title: l10n.status,
+            value: l10n.active,
+          ),
+          const Divider(height: 22),
+          const _LanguageRow(),
+        ],
+      ),
+    );
+  }
+}
+
+class _LanguageRow extends StatelessWidget {
+  const _LanguageRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final currentLang = Localizations.localeOf(context).languageCode;
+
+    final shownLanguage = currentLang == 'ar' ? l10n.arabic : l10n.english;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () => _showLanguageSheet(context),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: _AdminProfilePageState.softMint,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.language_rounded,
+              color: _AdminProfilePageState.primary,
+              size: 21,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.language,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: Colors.black.withOpacity(0.55),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  shownLanguage,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: _AdminProfilePageState.primary,
           ),
         ],
       ),
+    );
+  }
+
+  void _showLanguageSheet(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final currentLang = Localizations.localeOf(context).languageCode;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    l10n.chooseLanguage,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _LanguageOptionTile(
+                  title: l10n.arabic,
+                  selected: currentLang == 'ar',
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    NusuqApp.of(context).setLocale(const Locale('ar'));
+                  },
+                ),
+                _LanguageOptionTile(
+                  title: l10n.english,
+                  selected: currentLang == 'en',
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    NusuqApp.of(context).setLocale(const Locale('en'));
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _LanguageOptionTile extends StatelessWidget {
+  final String title;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _LanguageOptionTile({
+    required this.title,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      onTap: onTap,
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 15.5,
+          fontWeight: FontWeight.w800,
+          color: Colors.black87,
+        ),
+      ),
+      trailing: selected
+          ? const Icon(
+              Icons.check_rounded,
+              color: _AdminProfilePageState.primary,
+            )
+          : null,
     );
   }
 }
@@ -459,7 +636,8 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shownValue = value.isEmpty ? 'Not available' : value;
+    final l10n = AppLocalizations.of(context)!;
+    final shownValue = value.isEmpty ? l10n.notAvailable : value;
 
     return Row(
       children: [
@@ -528,6 +706,8 @@ class _LogoutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
@@ -541,9 +721,9 @@ class _LogoutButton extends StatelessWidget {
           backgroundColor: Colors.white,
         ),
         icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-        label: const Text(
-          'Log Out',
-          style: TextStyle(
+        label: Text(
+          l10n.logOut,
+          style: const TextStyle(
             color: Colors.redAccent,
             fontSize: 14.5,
             fontWeight: FontWeight.w900,
@@ -587,6 +767,8 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -597,10 +779,10 @@ class _ErrorState extends StatelessWidget {
           size: 58,
         ),
         const SizedBox(height: 14),
-        const Center(
+        Center(
           child: Text(
-            'Failed to load admin profile',
-            style: TextStyle(
+            l10n.failedToLoadAdminProfile,
+            style: const TextStyle(
               color: _AdminProfilePageState.primary,
               fontSize: 18,
               fontWeight: FontWeight.w900,
@@ -612,7 +794,7 @@ class _ErrorState extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Try again'),
+            label: Text(l10n.tryAgain),
             style: ElevatedButton.styleFrom(
               backgroundColor: _AdminProfilePageState.primary,
               foregroundColor: Colors.white,

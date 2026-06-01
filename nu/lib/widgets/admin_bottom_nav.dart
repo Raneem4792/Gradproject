@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../pages/admin_dashboard_page.dart';
 import '../pages/admin_manage_accounts_page.dart';
 import '../pages/admin_notifications_page.dart';
@@ -42,6 +43,8 @@ class AdminBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: (index) => _onTap(context, index),
@@ -51,17 +54,23 @@ class AdminBottomNav extends StatelessWidget {
       unselectedItemColor: Colors.black54,
       selectedFontSize: 12,
       unselectedFontSize: 12,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Home'),
+      items: [
         BottomNavigationBarItem(
-          icon: Icon(Icons.manage_accounts_rounded),
-          label: 'Accounts',
+          icon: const Icon(Icons.home_filled),
+          label: l10n.home,
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.notifications_rounded),
-          label: 'Alerts',
+          icon: const Icon(Icons.manage_accounts_rounded),
+          label: l10n.accounts,
         ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Account'),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.notifications_rounded),
+          label: l10n.alerts,
+        ),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.person),
+          label: l10n.account,
+        ),
       ],
     );
   }
