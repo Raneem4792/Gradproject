@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../models/admin_orders_monitor.dart';
 import '../services/admin_service.dart';
-import '../widgets/admin_bottom_nav.dart';
 
 class AdminMonitorOrdersPage extends StatefulWidget {
   static const String routeName = '/admin-monitor-orders';
@@ -58,7 +57,6 @@ class _AdminMonitorOrdersPageState extends State<AdminMonitorOrdersPage> {
     return Scaffold(
       backgroundColor: bg,
       appBar: const _AdminOrdersAppBar(),
-      bottomNavigationBar: const AdminBottomNav(currentIndex: 2),
       body: SafeArea(
         top: false,
         child: RefreshIndicator(

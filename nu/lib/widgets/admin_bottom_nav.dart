@@ -2,48 +2,41 @@ import 'package:flutter/material.dart';
 
 import '../pages/admin_dashboard_page.dart';
 import '../pages/admin_manage_accounts_page.dart';
-import '../pages/admin_monitor_orders_page.dart';
 import '../pages/admin_notifications_page.dart';
 import '../pages/admin_profile_page.dart';
 
 class AdminBottomNav extends StatelessWidget {
   final int currentIndex;
 
-  const AdminBottomNav({
-    super.key,
-    required this.currentIndex,
-  });
+  const AdminBottomNav({super.key, required this.currentIndex});
 
   static const Color primary = Color(0xFF0D4C4A);
 
   void _onTap(BuildContext context, int index) {
     if (index == currentIndex) return;
 
-    if (index == 0) {
-      Navigator.pushReplacementNamed(
-        context,
-        AdminDashboardPage.routeName,
-      );
-    } else if (index == 1) {
-      Navigator.pushReplacementNamed(
-        context,
-        AdminManageAccountsPage.routeName,
-      );
-    } else if (index == 2) {
-      Navigator.pushReplacementNamed(
-        context,
-        AdminMonitorOrdersPage.routeName,
-      );
-    } else if (index == 3) {
-      Navigator.pushReplacementNamed(
-        context,
-        AdminNotificationsPage.routeName,
-      );
-    } else if (index == 4) {
-      Navigator.pushReplacementNamed(
-        context,
-        AdminProfilePage.routeName,
-      );
+    switch (index) {
+      case 0:
+        Navigator.pushReplacementNamed(context, AdminDashboardPage.routeName);
+        break;
+
+      case 1:
+        Navigator.pushReplacementNamed(
+          context,
+          AdminManageAccountsPage.routeName,
+        );
+        break;
+
+      case 2:
+        Navigator.pushReplacementNamed(
+          context,
+          AdminNotificationsPage.routeName,
+        );
+        break;
+
+      case 3:
+        Navigator.pushReplacementNamed(context, AdminProfilePage.routeName);
+        break;
     }
   }
 
@@ -54,38 +47,21 @@ class AdminBottomNav extends StatelessWidget {
       onTap: (index) => _onTap(context, index),
       type: BottomNavigationBarType.fixed,
       backgroundColor: Colors.white,
-      elevation: 0,
       selectedItemColor: primary,
       unselectedItemColor: Colors.black54,
       selectedFontSize: 12,
       unselectedFontSize: 12,
-      selectedLabelStyle: const TextStyle(
-        fontWeight: FontWeight.w800,
-      ),
-      unselectedLabelStyle: const TextStyle(
-        fontWeight: FontWeight.w700,
-      ),
       items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_filled),
-          label: 'Home',
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Home'),
         BottomNavigationBarItem(
           icon: Icon(Icons.manage_accounts_rounded),
           label: 'Accounts',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.receipt_long_rounded),
-          label: 'Orders',
-        ),
-        BottomNavigationBarItem(
           icon: Icon(Icons.notifications_rounded),
           label: 'Alerts',
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Account',
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Account'),
       ],
     );
   }

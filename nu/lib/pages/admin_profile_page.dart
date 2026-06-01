@@ -129,7 +129,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     return Scaffold(
       backgroundColor: bg,
       appBar: const _AdminProfileAppBar(),
-      bottomNavigationBar: const AdminBottomNav(currentIndex: 4),
+      bottomNavigationBar: const AdminBottomNav(currentIndex: 3),
       body: SafeArea(
         top: false,
         child: RefreshIndicator(

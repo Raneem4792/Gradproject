@@ -87,7 +87,7 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
     return Scaffold(
       backgroundColor: bg,
       appBar: const _NotificationsAppBar(),
-      bottomNavigationBar: const AdminBottomNav(currentIndex: 3),
+      bottomNavigationBar: const AdminBottomNav(currentIndex: 2),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
