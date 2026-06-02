@@ -188,6 +188,12 @@ class MealController {
       }
 
       const result = await mealService.createMeal(mealData);
+      
+      const mealNameAr =
+        mealData.mealName_ar || mealData.mealName || mealData.mealName_en || '';
+
+      const mealNameEn =
+        mealData.mealName_en || mealData.mealName || mealData.mealName_ar || '';
 
       await createAdminNotification({
         title: 'New Meal',
@@ -201,11 +207,6 @@ class MealController {
         messageContent_en: `New meal added: ${mealNameEn}`,
       });
 
-      const mealNameAr =
-        mealData.mealName_ar || mealData.mealName || mealData.mealName_en || '';
-
-      const mealNameEn =
-        mealData.mealName_en || mealData.mealName || mealData.mealName_ar || '';
 
       const [pilgrimRows] = await db.query(
         `

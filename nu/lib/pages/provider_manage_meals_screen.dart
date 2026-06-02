@@ -12,6 +12,8 @@ import '../models/meal.dart';
 import '../services/meal_service.dart';
 import 'provider_home_screen.dart';
 import '../session/user_session.dart';
+import 'incoming_meal_requests_page.dart';
+import 'provider_dashboard_page.dart';
 
 enum _FormMode { add, edit }
 
@@ -58,6 +60,8 @@ class _ProviderMealManagementScreenState
   static const Color mint = Color(0xFF9FE5C9);
   static const Color softMint = Color(0xFFE8F6F1);
   static const Color gold = Color(0xFFF0E0C0);
+
+  int _navIndex = 0;
 
   final MealService _mealService = MealService();
   List<Meal> _meals = [];
@@ -222,6 +226,31 @@ class _ProviderMealManagementScreenState
         ),
       ),
     );
+  }
+
+  void _handleBottomNavTap(int i) {
+    if (i == _navIndex) return;
+
+    setState(() => _navIndex = i);
+
+    if (i == 0) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProviderHomeScreen()),
+      );
+    } else if (i == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const IncomingMealRequestsPage()),
+      );
+    } else if (i == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProviderDashboardPage()),
+      );
+    } else if (i == 3) {
+      Navigator.pushReplacementNamed(context, '/providerProfile');
+    }
   }
 
   Widget _detailChip(String text, {bool filled = false}) {
@@ -429,7 +458,10 @@ class _ProviderMealManagementScreenState
                 ),
               ),
       ),
-      bottomNavigationBar: ProviderBottomNav(currentIndex: 0, onTap: (i) {}),
+      bottomNavigationBar: ProviderBottomNav(
+        currentIndex: _navIndex,
+        onTap: _handleBottomNavTap,
+      ),
     );
   }
 
