@@ -5,6 +5,36 @@ const cleanText = (value) => {
   return String(value).trim();
 };
 
+const validateAccountInfo = ({ fullName, email, phoneNumber }) => {
+  const errors = [];
+
+  const finalName = cleanText(fullName);
+  const finalEmail = cleanText(email).toLowerCase();
+  const finalPhone = cleanText(phoneNumber);
+
+  const nameRegex = /^[\u0600-\u06FFa-zA-Z\s'-]{3,80}$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  const phoneRegex = /^(05\d{8}|\+9665\d{8})$/;
+
+  if (!finalName || !finalEmail || !finalPhone) {
+    errors.push('Full name, email, and phone number are required');
+  }
+
+  if (finalName && !nameRegex.test(finalName)) {
+    errors.push('Full name must be 3-80 letters only');
+  }
+
+  if (finalEmail && !emailRegex.test(finalEmail)) {
+    errors.push('Invalid email format');
+  }
+
+  if (finalPhone && !phoneRegex.test(finalPhone)) {
+    errors.push('Invalid Saudi phone number format');
+  }
+
+  return errors;
+};
+
 const isValidNotificationText = (value) => {
   /*
     يسمح بـ:
@@ -285,9 +315,16 @@ exports.updateAccountInfo = async (req, res) => {
       });
     }
 
-    if (!fullName || !email || !phoneNumber) {
+    const validationErrors = validateAccountInfo({
+      fullName,
+      email,
+      phoneNumber,
+    });
+
+    if (validationErrors.length > 0) {
       return res.status(400).json({
-        message: 'Full name, email, and phone number are required',
+        message: 'Invalid account information',
+        errors: validationErrors,
       });
     }
 

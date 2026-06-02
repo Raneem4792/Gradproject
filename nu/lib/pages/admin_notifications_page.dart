@@ -73,6 +73,7 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
 
       setState(() {
         selectedNotificationType = 'alert';
+        final formKey = GlobalKey<FormState>();
         selectedRecipientType = 'all_pilgrims';
       });
     } catch (e) {
