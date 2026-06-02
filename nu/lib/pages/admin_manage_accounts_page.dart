@@ -117,11 +117,8 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
     required String currentEmail,
     required String currentPhone,
   }) async {
-<<<<<<< Updated upstream
     final l10n = AppLocalizations.of(context)!;
-=======
     final formKey = GlobalKey<FormState>();
->>>>>>> Stashed changes
 
     final nameController = TextEditingController(text: currentName);
     final emailController = TextEditingController(text: currentEmail);
@@ -140,19 +137,6 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
             style: const TextStyle(color: primary, fontWeight: FontWeight.w900),
           ),
           content: SingleChildScrollView(
-<<<<<<< Updated upstream
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: l10n.fullName,
-                    prefixIcon: const Icon(Icons.person_rounded),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-=======
             child: Form(
               key: formKey,
               child: Column(
@@ -162,52 +146,38 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                     controller: nameController,
                     textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
-                      labelText: 'Full Name',
+                      labelText: l10n.fullName,
                       prefixIcon: const Icon(Icons.person_rounded),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
->>>>>>> Stashed changes
                     ),
                     validator: (value) {
                       final name = value?.trim() ?? '';
+                      final nameRegex = RegExp(r"^[a-zA-Z\u0600-\u06FF\s'-]{3,80}$");
 
                       if (name.isEmpty) {
                         return 'Full name is required';
                       }
 
-                      if (name.length < 3) {
-                        return 'Full name must be at least 3 characters';
+                      if (!nameRegex.hasMatch(name)) {
+                        return 'Full name must be 3-80 letters only';
                       }
 
                       return null;
                     },
                   ),
-<<<<<<< Updated upstream
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: l10n.email,
-                    prefixIcon: const Icon(Icons.email_rounded),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-=======
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: emailController,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
-                      labelText: 'Email',
+                      labelText: l10n.email,
                       prefixIcon: const Icon(Icons.email_rounded),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
->>>>>>> Stashed changes
                     ),
                     validator: (value) {
                       final email = value?.trim() ?? '';
@@ -218,35 +188,25 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                       }
 
                       if (!emailRegex.hasMatch(email)) {
-                        return 'Invalid email format';
+                        return 'Please enter a valid email address';
                       }
 
                       return null;
                     },
                   ),
-<<<<<<< Updated upstream
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    labelText: l10n.phoneNumber,
-                    prefixIcon: const Icon(Icons.phone_rounded),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-=======
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: phoneController,
                     keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9+]')),
+                    ],
                     decoration: InputDecoration(
-                      labelText: 'Phone Number',
+                      labelText: l10n.phoneNumber,
                       prefixIcon: const Icon(Icons.phone_rounded),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
->>>>>>> Stashed changes
                     ),
                     validator: (value) {
                       final phone = value?.trim() ?? '';
@@ -307,21 +267,6 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
     final newEmail = emailController.text.trim();
     final newPhone = phoneController.text.trim();
 
-<<<<<<< Updated upstream
-    if (newName.isEmpty || newEmail.isEmpty || newPhone.isEmpty) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.pleaseFillAllFields),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-=======
->>>>>>> Stashed changes
     try {
       await _adminService.updateAccountInfo(
         accountType: accountType,
@@ -358,11 +303,8 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
     required String recipientUserID,
     required String recipientName,
   }) async {
-<<<<<<< Updated upstream
     final l10n = AppLocalizations.of(context)!;
-=======
     final formKey = GlobalKey<FormState>();
->>>>>>> Stashed changes
 
     final titleArController = TextEditingController();
     final titleEnController = TextEditingController();
@@ -389,18 +331,6 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                 ),
               ),
               content: SingleChildScrollView(
-<<<<<<< Updated upstream
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DropdownButtonFormField<String>(
-                      value: notificationType,
-                      decoration: InputDecoration(
-                        labelText: l10n.notificationType,
-                        prefixIcon: const Icon(Icons.notifications_rounded),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-=======
                 child: Form(
                   key: formKey,
                   child: Column(
@@ -409,25 +339,24 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                       DropdownButtonFormField<String>(
                         value: notificationType,
                         decoration: InputDecoration(
-                          labelText: 'Notification Type',
+                          labelText: l10n.notificationType,
                           prefixIcon: const Icon(Icons.notifications_rounded),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
->>>>>>> Stashed changes
                         ),
-                        items: const [
+                        items: [
                           DropdownMenuItem(
                             value: 'alert',
-                            child: Text('Alert'),
+                            child: Text(l10n.alert),
                           ),
                           DropdownMenuItem(
                             value: 'announcement',
-                            child: Text('Announcement'),
+                            child: Text(l10n.announcement),
                           ),
                           DropdownMenuItem(
                             value: 'reminder',
-                            child: Text('Reminder'),
+                            child: Text(l10n.reminder),
                           ),
                         ],
                         onChanged: (value) {
@@ -438,52 +367,17 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                           });
                         },
                       ),
-<<<<<<< Updated upstream
-                      items: [
-                        DropdownMenuItem(
-                          value: 'alert',
-                          child: Text(l10n.alert),
-                        ),
-                        DropdownMenuItem(
-                          value: 'announcement',
-                          child: Text(l10n.announcement),
-                        ),
-                        DropdownMenuItem(
-                          value: 'reminder',
-                          child: Text(l10n.reminder),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setDialogState(() {
-                          notificationType = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: titleArController,
-                      textDirection: TextDirection.rtl,
-                      textInputAction: TextInputAction.next,
-                      decoration: InputDecoration(
-                        labelText: l10n.arabicTitle,
-                        prefixIcon: const Icon(Icons.title_rounded),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-=======
                       const SizedBox(height: 12),
-
                       TextFormField(
                         controller: titleArController,
                         textDirection: TextDirection.rtl,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
-                          labelText: 'Arabic Title',
+                          labelText: l10n.arabicTitle,
                           prefixIcon: const Icon(Icons.title_rounded),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
->>>>>>> Stashed changes
                         ),
                         validator: (value) {
                           final title = value?.trim() ?? '';
@@ -499,30 +393,16 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                           return null;
                         },
                       ),
-<<<<<<< Updated upstream
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: titleEnController,
-                      textInputAction: TextInputAction.next,
-                      decoration: InputDecoration(
-                        labelText: l10n.englishTitle,
-                        prefixIcon: const Icon(Icons.title_rounded),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-=======
                       const SizedBox(height: 12),
-
                       TextFormField(
                         controller: titleEnController,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
-                          labelText: 'English Title',
+                          labelText: l10n.englishTitle,
                           prefixIcon: const Icon(Icons.title_rounded),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
->>>>>>> Stashed changes
                         ),
                         validator: (value) {
                           final title = value?.trim() ?? '';
@@ -538,34 +418,18 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                           return null;
                         },
                       ),
-<<<<<<< Updated upstream
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: messageArController,
-                      textDirection: TextDirection.rtl,
-                      minLines: 3,
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        labelText: l10n.arabicMessage,
-                        prefixIcon: const Icon(Icons.message_rounded),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-=======
                       const SizedBox(height: 12),
-
                       TextFormField(
                         controller: messageArController,
                         textDirection: TextDirection.rtl,
                         minLines: 3,
                         maxLines: 4,
                         decoration: InputDecoration(
-                          labelText: 'Arabic Message',
+                          labelText: l10n.arabicMessage,
                           prefixIcon: const Icon(Icons.message_rounded),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
->>>>>>> Stashed changes
                         ),
                         validator: (value) {
                           final message = value?.trim() ?? '';
@@ -581,32 +445,17 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
                           return null;
                         },
                       ),
-<<<<<<< Updated upstream
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: messageEnController,
-                      minLines: 3,
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        labelText: l10n.englishMessage,
-                        prefixIcon: const Icon(Icons.message_rounded),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-=======
                       const SizedBox(height: 12),
-
                       TextFormField(
                         controller: messageEnController,
                         minLines: 3,
                         maxLines: 4,
                         decoration: InputDecoration(
-                          labelText: 'English Message',
+                          labelText: l10n.englishMessage,
                           prefixIcon: const Icon(Icons.message_rounded),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
->>>>>>> Stashed changes
                         ),
                         validator: (value) {
                           final message = value?.trim() ?? '';
@@ -669,24 +518,6 @@ class _AdminManageAccountsPageState extends State<AdminManageAccountsPage> {
     final messageAr = messageArController.text.trim();
     final messageEn = messageEnController.text.trim();
 
-<<<<<<< Updated upstream
-    if (titleAr.isEmpty ||
-        titleEn.isEmpty ||
-        messageAr.isEmpty ||
-        messageEn.isEmpty) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.pleaseFillAllNotificationFields),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-=======
->>>>>>> Stashed changes
     try {
       await _adminService.createNotification(
         titleAr: titleAr,
