@@ -45,11 +45,21 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _homeFuture = _pilgrimService.getPilgrimHomeData(UserSession.userId!);
+    _homeFuture = Future.value({
+  'fullName': 'Demo Pilgrim',
+  'latestOrder': {
+    'mealName': 'Grilled Chicken',
+    'status': 'accepted',
+  },
+});
     _loadUnreadCount();
   }
 
   Future<void> _loadUnreadCount() async {
+    setState(() {
+  unreadCount = 3;
+});
+return;
     final prefs = await SharedPreferences.getInstance();
     final notificationsEnabled =
         prefs.getBool('pilgrim_notifications_enabled') ?? true;

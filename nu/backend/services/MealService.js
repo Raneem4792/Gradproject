@@ -60,7 +60,7 @@ class MealService {
         Meal.calories,
         Meal.image,
         Meal.providerID,
-        Provider.fullName AS providerName
+        Provider.fullName AS fullName
       FROM Meal
       LEFT JOIN Provider ON Meal.providerID = Provider.providerID
       ORDER BY Meal.mealID DESC
@@ -227,7 +227,7 @@ class MealService {
         Meal.calories,
         Meal.image,
         Meal.providerID,
-        Provider.fullName AS providerName
+        Provider.fullName AS fullName
       FROM Meal
       LEFT JOIN Provider ON Meal.providerID = Provider.providerID
       WHERE Meal.providerID = ?
@@ -263,7 +263,7 @@ class MealService {
         Meal.calories,
         Meal.image,
         Meal.providerID,
-        Provider.fullName AS providerName
+        Provider.fullName AS fullName
       FROM Pilgrim
       JOIN Campaign ON Pilgrim.campaignID = Campaign.campaignID
       JOIN Meal ON Campaign.providerID = Meal.providerID

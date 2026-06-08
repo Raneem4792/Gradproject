@@ -221,11 +221,11 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get cancel;
 
-  /// No description provided for @providerName.
+  /// No description provided for @fullName.
   ///
   /// In en, this message translates to:
   /// **'Provider Name'**
-  String get providerName;
+  String get fullName;
 
   /// No description provided for @email.
   ///

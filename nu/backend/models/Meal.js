@@ -20,7 +20,7 @@ class Meal {
     calories,
     image,
     providerID,
-    providerName,
+    fullName,
   }) {
     this.mealID = mealID;
 
@@ -43,7 +43,7 @@ class Meal {
     this.calories = calories;
     this.image = image;
     this.providerID = providerID;
-    this.providerName = providerName;
+    this.fullName = fullName;
   }
 
   static fromRow(row) {
@@ -68,7 +68,7 @@ class Meal {
       calories: row.calories,
       image: row.image,
       providerID: row.providerID,
-      providerName: row.providerName,
+      fullName: row.fullName,
     });
   }
 }

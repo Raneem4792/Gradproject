@@ -20,7 +20,7 @@ class Meal {
   final int calories;
   final String image;
   final String providerID;
-  final String providerName;
+  final String fullName;
   final String? aiReason;
 
   Meal({
@@ -40,7 +40,7 @@ class Meal {
     required this.calories,
     required this.image,
     required this.providerID,
-    required this.providerName,
+    required this.fullName,
     this.aiReason,
   });
 
@@ -119,8 +119,8 @@ class Meal {
       calories: _toInt(json['calories']),
       image: _toStringValue(json['image']),
       providerID: _toStringValue(json['providerID']),
-      providerName: _toStringValue(json['providerName']).isNotEmpty
-          ? _toStringValue(json['providerName'])
+      fullName: _toStringValue(json['fullName']).isNotEmpty
+          ? _toStringValue(json['fullName'])
           : 'Unknown Provider',
       aiReason: json['aiReason']?.toString(),
     );

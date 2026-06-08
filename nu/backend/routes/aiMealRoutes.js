@@ -75,7 +75,7 @@ router.get('/ai-recommended/:pilgrimID', async (req, res) => {
         m.calories,
         m.image,
         m.providerID,
-        p.fullName AS providerName
+        p.fullName AS fullName
       FROM pilgrim pi
       JOIN campaign c ON pi.campaignID = c.campaignID
       JOIN meal m ON c.providerID = m.providerID

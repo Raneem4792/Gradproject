@@ -24,7 +24,7 @@
   "save": "Save",
   "edit": "Edit",
   "cancel": "Cancel",
-  "providerName": "Provider Name",
+  "fullName": "Provider Name",
   "email": "Email",
   "phone": "Phone",
   "location": "Location",

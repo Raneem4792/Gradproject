@@ -19,6 +19,7 @@ class IncomingMealRequestsPage extends StatefulWidget {
 }
 
 class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
+  static const bool demoMode = true;
   int _navIndex = 1;
   int _selectedTabIndex = 0;
 
@@ -38,9 +39,51 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
     _loadRequests();
   }
 
-  void _loadRequests() {
-    _requestsFuture = _mealService.getOrdersByProvider(UserSession.userId!);
+void _loadRequests() {
+  if (demoMode) {
+    _requestsFuture = Future.value([
+      MealOrder(
+        orderID: 1001,
+        mealID: 1,
+        mealNameEn: 'Grilled Chicken',
+        mealNameAr: 'دجاج مشوي',
+        fullName: 'Demo Provider',
+        pilgrimName: 'Ahmed Ali',
+        requestDate: DateTime.now().toString(),
+        status: 'pending',
+      ),
+      MealOrder(
+        orderID: 1002,
+        mealID: 2,
+        mealNameEn: 'Healthy Salad',
+        mealNameAr: 'سلطة صحية',
+        fullName: 'Demo Provider',
+        pilgrimName: 'Sara Mohamed',
+        requestDate: DateTime.now()
+            .subtract(const Duration(hours: 2))
+            .toString(),
+        status: 'accepted',
+      ),
+      MealOrder(
+        orderID: 1003,
+        mealID: 3,
+        mealNameEn: 'Beef Rice Bowl',
+        mealNameAr: 'وعاء لحم مع الأرز',
+        fullName: 'Demo Provider',
+        pilgrimName: 'Omar Hassan',
+        requestDate: DateTime.now()
+            .subtract(const Duration(days: 1))
+            .toString(),
+        status: 'completed',
+      ),
+    ]);
+
+    return;
   }
+
+  _requestsFuture =
+      _mealService.getOrdersByProvider(UserSession.userId!);
+}
 
   void _handleBack() {
     if (Navigator.canPop(context)) {
@@ -74,6 +117,19 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
   }
 
   Future<void> _acceptRequest(int orderID) async {
+    if (demoMode) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Request accepted successfully'),
+    ),
+  );
+
+  setState(() {
+    _selectedTabIndex = 1;
+  });
+
+  return;
+}
     final l10n = AppLocalizations.of(context)!;
 
     try {
@@ -102,6 +158,15 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
   }
 
   Future<void> _rejectRequest(int orderID) async {
+    if (demoMode) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Request rejected successfully'),
+    ),
+  );
+
+  return;
+}
     final l10n = AppLocalizations.of(context)!;
 
     try {
@@ -129,6 +194,15 @@ class _IncomingMealRequestsPageState extends State<IncomingMealRequestsPage> {
   }
 
   Future<void> _updateAcceptedOrderStatus(int orderID, String newStatus) async {
+    if (demoMode) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('Status updated to $newStatus'),
+    ),
+  );
+
+  return;
+}
     final l10n = AppLocalizations.of(context)!;
 
     try {

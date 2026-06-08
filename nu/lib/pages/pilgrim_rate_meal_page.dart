@@ -18,6 +18,8 @@ class PilgrimRateMealPage extends StatefulWidget {
 }
 
 class _PilgrimRateMealPageState extends State<PilgrimRateMealPage> {
+  static const bool demoMode = true;
+
   final TextEditingController _commentController = TextEditingController();
   final RateService _rateService = RateService();
 
@@ -104,6 +106,19 @@ class _PilgrimRateMealPageState extends State<PilgrimRateMealPage> {
 
       final avgRating = count == 0 ? 0 : (total / count).round();
 
+      if (demoMode) {
+        await Future.delayed(const Duration(milliseconds: 800));
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.reviewSubmittedSuccessfully)),
+        );
+
+        Navigator.pop(context, true);
+        return;
+      }
+
       await _rateService.submitRate(
         orderID: int.parse(widget.orderId),
         stars: avgRating,
@@ -158,13 +173,9 @@ class _PilgrimRateMealPageState extends State<PilgrimRateMealPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _RateHeroCard(mealName: widget.mealName),
-
               const SizedBox(height: 18),
-
               const _SectionTitle(title: "Rating Details"),
-
               const SizedBox(height: 10),
-
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -197,13 +208,9 @@ class _PilgrimRateMealPageState extends State<PilgrimRateMealPage> {
                   }).toList(),
                 ),
               ),
-
               const SizedBox(height: 18),
-
               const _SectionTitle(title: "Comment"),
-
               const SizedBox(height: 10),
-
               TextField(
                 controller: _commentController,
                 maxLines: 4,
@@ -233,9 +240,7 @@ class _PilgrimRateMealPageState extends State<PilgrimRateMealPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 22),
-
               SizedBox(
                 width: double.infinity,
                 height: 52,

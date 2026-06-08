@@ -80,7 +80,7 @@ exports.getAccountsTree = async () => {
   const [rows] = await db.query(`
     SELECT 
       p.providerID,
-      p.fullName AS providerName,
+      p.fullName AS fullName,
       p.email AS providerEmail,
       p.phoneNumber AS providerPhone,
       p.status AS providerStatus,
@@ -117,7 +117,7 @@ exports.getAccountsTree = async () => {
     if (!providersMap[row.providerID]) {
       providersMap[row.providerID] = {
         providerID: row.providerID,
-        providerName: row.providerName,
+        fullName: row.fullName,
         providerEmail: row.providerEmail,
         providerPhone: row.providerPhone,
         providerStatus: row.providerStatus,
@@ -193,7 +193,7 @@ exports.getOrdersMonitor = async () => {
       c.campaignNumber,
 
       p.providerID,
-      p.fullName AS providerName,
+      p.fullName AS fullName,
       p.email AS providerEmail,
 
       o.orderID,
@@ -244,7 +244,7 @@ exports.getOrdersMonitor = async () => {
 
         provider: {
           providerID: row.providerID,
-          providerName: row.providerName,
+          fullName: row.fullName,
           providerEmail: row.providerEmail,
         },
 

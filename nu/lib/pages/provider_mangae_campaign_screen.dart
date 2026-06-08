@@ -75,6 +75,8 @@ class ProviderCampaignManagementScreen extends StatefulWidget {
 
 class _ProviderCampaignManagementScreenState
     extends State<ProviderCampaignManagementScreen> {
+  static const bool demoMode = true;
+
   static const Color bg = Color(0xFFF3F6F5);
   static const Color primaryDark = Color(0xFF062C26);
   static const Color primary = Color(0xFF0D4C4A);
@@ -95,7 +97,52 @@ class _ProviderCampaignManagementScreenState
     _loadCampaigns();
   }
 
+  List<Campaign> _getDemoCampaigns() {
+    return [
+      Campaign(
+        campaignID: 1,
+        campaignName: 'Egypt Hajj Campaign',
+        campaignNumber: '1001',
+        numberOfPilgrims: 120,
+        arrivalDetails:
+            'From: Egypt\nArrival Time: 2026-04-16T09:30:00.000\nDescription: Arrival through King Abdulaziz International Airport.',
+        providerID: 'PR001',
+      ),
+      Campaign(
+        campaignID: 2,
+        campaignName: 'Malaysia Umrah Group',
+        campaignNumber: '1002',
+        numberOfPilgrims: 85,
+        arrivalDetails:
+            'From: Malaysia\nArrival Time: 2026-04-18T14:15:00.000\nDescription: Group requires low-sugar meal options.',
+        providerID: 'PR001',
+      ),
+      Campaign(
+        campaignID: 3,
+        campaignName: 'Turkey Pilgrim Campaign',
+        campaignNumber: '1003',
+        numberOfPilgrims: 95,
+        arrivalDetails:
+            'From: Turkey\nArrival Time: 2026-04-20T20:00:00.000\nDescription: Vegetarian meals should be available.',
+        providerID: 'PR001',
+      ),
+    ];
+  }
+
   Future<void> _loadCampaigns() async {
+    if (demoMode) {
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      if (!mounted) return;
+
+      setState(() {
+        _campaigns = _getDemoCampaigns();
+        _isLoading = false;
+      });
+
+      return;
+    }
+
     print('1- _loadCampaigns started');
 
     try {
@@ -182,6 +229,31 @@ class _ProviderCampaignManagementScreenState
 
     if (created == null) return;
 
+    if (demoMode) {
+      setState(() {
+        _campaigns.insert(
+          0,
+          Campaign(
+            campaignID: DateTime.now().millisecondsSinceEpoch,
+            campaignName: created.campaignName,
+            campaignNumber: created.campaignNumber,
+            numberOfPilgrims: created.numberOfPilgrims,
+            arrivalDetails: created.arrivalDetails,
+            providerID: 'PR001',
+          ),
+        );
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.campaignAddedSuccessfully),
+          backgroundColor: primary,
+        ),
+      );
+      return;
+    }
+
     try {
       final providerID = UserSession.userId;
       if (providerID == null || providerID.isEmpty) {
@@ -228,6 +300,34 @@ class _ProviderCampaignManagementScreenState
     );
 
     if (updated == null) return;
+
+    if (demoMode) {
+      setState(() {
+        final index = _campaigns.indexWhere(
+          (item) => item.campaignID == campaign.campaignID,
+        );
+
+        if (index != -1) {
+          _campaigns[index] = Campaign(
+            campaignID: campaign.campaignID,
+            campaignName: updated.campaignName,
+            campaignNumber: updated.campaignNumber,
+            numberOfPilgrims: updated.numberOfPilgrims,
+            arrivalDetails: updated.arrivalDetails,
+            providerID: 'PR001',
+          );
+        }
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.campaignUpdatedSuccessfully),
+          backgroundColor: primary,
+        ),
+      );
+      return;
+    }
 
     try {
       await _campaignService.updateCampaign(
@@ -304,6 +404,23 @@ class _ProviderCampaignManagementScreenState
     );
 
     if (ok != true) return;
+
+    if (demoMode) {
+      setState(() {
+        _campaigns.removeWhere(
+          (item) => item.campaignID == campaign.campaignID,
+        );
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.campaignDeletedSuccessfully),
+          backgroundColor: primary,
+        ),
+      );
+      return;
+    }
 
     try {
       await _campaignService.deleteCampaign(campaign.campaignID);

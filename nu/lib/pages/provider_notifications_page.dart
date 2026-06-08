@@ -1,12 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart' hide TextDirection;
+
 import '../l10n/app_localizations.dart';
-import '../services/meal_service.dart';
-import '../models/notification_model.dart';
-import '../session/user_session.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ProviderNotificationsPage extends StatefulWidget {
   static const String routeName = '/provider-notifications';
@@ -22,57 +17,96 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage> {
   static const Color bg = Color(0xFFF3F6F5);
   static const Color primary = Color(0xFF0D4C4A);
 
-  final MealService _mealService = MealService();
-  late Future<List<AppNotification>> _notificationsFuture;
-
-  String get _userId => UserSession.userId ?? '';
-  static const String _userType = 'provider';
-
-  String get baseUrl {
-    if (kIsWeb) return 'http://localhost:3000/api';
-    return 'http://10.0.2.2:3000/api';
-  }
+  late Future<List<Map<String, dynamic>>> _notificationsFuture;
 
   @override
   void initState() {
     super.initState();
-    _notificationsFuture = _loadNotificationsAndMarkRead();
+    _notificationsFuture = _getDemoNotifications();
   }
 
-  Future<List<AppNotification>> _loadNotificationsAndMarkRead() async {
-    final prefs = await SharedPreferences.getInstance();
+  Future<List<Map<String, dynamic>>> _getDemoNotifications() async {
+    await Future.delayed(const Duration(milliseconds: 400));
 
-    final enabled = prefs.getBool('provider_notifications_enabled') ?? true;
-
-    if (!enabled) {
-      return [];
-    }
-
-    final notifications = await _mealService.getNotifications(
-      _userId,
-      _userType,
-    );
-
-    await _markNotificationsAsRead();
-
-    return notifications;
-  }
-
-  Future<void> _markNotificationsAsRead() async {
-    try {
-      await http.put(
-        Uri.parse('$baseUrl/notifications/mark-read/$_userId/$_userType'),
-      );
-    } catch (e) {
-      debugPrint(e.toString());
-    }
+    return [
+      {
+        "titleEn": "New Meal Request",
+        "titleAr": "طلب وجبة جديد",
+        "messageEn": "A pilgrim has submitted a new request for Grilled Chicken.",
+        "messageAr": "قام حاج بإرسال طلب جديد لوجبة الدجاج المشوي.",
+        "timestamp": DateTime.now().subtract(const Duration(minutes: 12)),
+        "icon": Icons.restaurant_menu_rounded,
+        "isUnread": true,
+        "tone": "success",
+      },
+      {
+        "titleEn": "AI Dashboard Update",
+        "titleAr": "تحديث لوحة التحليلات",
+        "messageEn":
+            "AI detected high demand for healthy lunch meals today.",
+        "messageAr":
+            "اكتشف الذكاء الاصطناعي ارتفاع الطلب على وجبات الغداء الصحية اليوم.",
+        "timestamp": DateTime.now().subtract(const Duration(hours: 1)),
+        "icon": Icons.auto_graph_rounded,
+        "isUnread": true,
+        "tone": "gold",
+      },
+      {
+        "titleEn": "Campaign Meal Plan",
+        "titleAr": "خطة وجبات الحملة",
+        "messageEn":
+            "The meal plan for Hajj Campaign 2026 is ready for review.",
+        "messageAr":
+            "خطة الوجبات لحملة حج 2026 جاهزة للمراجعة.",
+        "timestamp": DateTime.now().subtract(const Duration(hours: 4)),
+        "icon": Icons.groups_rounded,
+        "isUnread": false,
+        "tone": "normal",
+      },
+    ];
   }
 
   Future<void> _refreshNotifications() async {
-    await _markNotificationsAsRead();
-
     setState(() {
-      _notificationsFuture = _mealService.getNotifications(_userId, _userType);
+      _notificationsFuture = Future.value(
+        [
+          {
+            "titleEn": "New Meal Request",
+            "titleAr": "طلب وجبة جديد",
+            "messageEn":
+                "A pilgrim has submitted a new request for Grilled Chicken.",
+            "messageAr": "قام حاج بإرسال طلب جديد لوجبة الدجاج المشوي.",
+            "timestamp": DateTime.now().subtract(const Duration(minutes: 12)),
+            "icon": Icons.restaurant_menu_rounded,
+            "isUnread": false,
+            "tone": "success",
+          },
+          {
+            "titleEn": "AI Dashboard Update",
+            "titleAr": "تحديث لوحة التحليلات",
+            "messageEn":
+                "AI detected high demand for healthy lunch meals today.",
+            "messageAr":
+                "اكتشف الذكاء الاصطناعي ارتفاع الطلب على وجبات الغداء الصحية اليوم.",
+            "timestamp": DateTime.now().subtract(const Duration(hours: 1)),
+            "icon": Icons.auto_graph_rounded,
+            "isUnread": false,
+            "tone": "gold",
+          },
+          {
+            "titleEn": "Campaign Meal Plan",
+            "titleAr": "خطة وجبات الحملة",
+            "messageEn":
+                "The meal plan for Hajj Campaign 2026 is ready for review.",
+            "messageAr":
+                "خطة الوجبات لحملة حج 2026 جاهزة للمراجعة.",
+            "timestamp": DateTime.now().subtract(const Duration(hours: 4)),
+            "icon": Icons.groups_rounded,
+            "isUnread": false,
+            "tone": "normal",
+          },
+        ],
+      );
     });
   }
 
@@ -80,27 +114,25 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final languageCode = Localizations.localeOf(context).languageCode;
+    final isAr = languageCode == 'ar';
 
     return Scaffold(
       backgroundColor: bg,
       appBar: const _ProviderNotificationsAppBar(),
       body: SafeArea(
         top: false,
-        child: FutureBuilder<List<AppNotification>>(
+        child: FutureBuilder<List<Map<String, dynamic>>>(
           future: _notificationsFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
                 child: CircularProgressIndicator(color: primary),
               );
-            } else if (snapshot.hasError) {
-              return Center(child: Text(l10n.errorLoadingNotifications));
             }
 
             final notifications = snapshot.data ?? [];
-            final unreadCount = notifications
-                .where((item) => item.isUnread)
-                .length;
+            final unreadCount =
+                notifications.where((item) => item["isUnread"] == true).length;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 22),
@@ -114,7 +146,6 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage> {
                   const SizedBox(height: 18),
                   _NotificationsSectionLabel(title: l10n.recentNotifications),
                   const SizedBox(height: 12),
-
                   if (notifications.isEmpty)
                     const _EmptyProviderNotificationsState()
                   else
@@ -122,14 +153,15 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage> {
                       (item) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _ProviderNotificationCard(
-                          title: item.localizedTitle(languageCode),
-                          message: item.localizedMessage(languageCode),
+                          title: isAr ? item["titleAr"] : item["titleEn"],
+                          message:
+                              isAr ? item["messageAr"] : item["messageEn"],
                           time: DateFormat(
                             'MMM dd · hh:mm a',
-                          ).format(item.timestamp),
-                          icon: item.icon,
-                          isUnread: item.isUnread,
-                          tone: item.type,
+                          ).format(item["timestamp"]),
+                          icon: item["icon"],
+                          isUnread: item["isUnread"],
+                          tone: item["tone"],
                         ),
                       ),
                     ),
@@ -280,9 +312,7 @@ class _ProviderNotificationsTopBlock extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           InkWell(
-            onTap: () {
-              onMarkAllRead();
-            },
+            onTap: onMarkAllRead,
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -370,9 +400,9 @@ class _ProviderNotificationCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               color: tone == "success"
                   ? const Color(0xFFE9F7F2)
-                  : (tone == "gold"
-                        ? const Color(0xFFFBF5E8)
-                        : const Color(0xFFEAF4F2)),
+                  : tone == "gold"
+                      ? const Color(0xFFFBF5E8)
+                      : const Color(0xFFEAF4F2),
               border: Border.all(
                 color: const Color(0xFF0D4C4A).withOpacity(0.08),
               ),
@@ -390,18 +420,16 @@ class _ProviderNotificationCard extends StatelessWidget {
             child: Directionality(
               textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
               child: Column(
-                crossAxisAlignment: isArabic
-                    ? CrossAxisAlignment.end
-                    : CrossAxisAlignment.start,
+                crossAxisAlignment:
+                    isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
                       Expanded(
                         child: Text(
                           title,
-                          textAlign: isArabic
-                              ? TextAlign.right
-                              : TextAlign.left,
+                          textAlign:
+                              isArabic ? TextAlign.right : TextAlign.left,
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w900,
@@ -456,13 +484,13 @@ class _NotificationsSectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-    title,
-    style: TextStyle(
-      fontSize: 13.5,
-      fontWeight: FontWeight.w900,
-      color: Colors.black.withOpacity(0.78),
-    ),
-  );
+        title,
+        style: TextStyle(
+          fontSize: 13.5,
+          fontWeight: FontWeight.w900,
+          color: Colors.black.withOpacity(0.78),
+        ),
+      );
 }
 
 class _EmptyProviderNotificationsState extends StatelessWidget {

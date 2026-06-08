@@ -1,6 +1,6 @@
 class AdminProviderAccount {
   final String providerID;
-  final String providerName;
+  final String fullName;
   final String providerEmail;
   final String? providerPhone;
   final String providerStatus;
@@ -9,7 +9,7 @@ class AdminProviderAccount {
 
   AdminProviderAccount({
     required this.providerID,
-    required this.providerName,
+    required this.fullName,
     required this.providerEmail,
     this.providerPhone,
     required this.providerStatus,
@@ -19,7 +19,7 @@ class AdminProviderAccount {
   factory AdminProviderAccount.fromJson(Map<String, dynamic> json) {
     return AdminProviderAccount(
       providerID: json['providerID']?.toString() ?? '',
-      providerName: json['providerName']?.toString() ?? '',
+      fullName: json['fullName']?.toString() ?? '',
       providerEmail: json['providerEmail']?.toString() ?? '',
       providerPhone: json['providerPhone']?.toString(),
       providerStatus: json['providerStatus']?.toString() ?? 'active',

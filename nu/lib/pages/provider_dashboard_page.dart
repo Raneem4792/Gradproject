@@ -26,9 +26,11 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
   static const Color primaryDark = Color(0xFF052720);
   static const Color primary = Color(0xFF0B4A40);
 
+  static const bool demoMode = true;
+
   int _navIndex = 2;
 
-  ProviderDashboardReport? _report;
+  dynamic _report;
   bool _isLoading = true;
   String? _error;
 
@@ -57,7 +59,7 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
 
   Future<void> _initDashboard() async {
     try {
-      final providerId = UserSession.userId;
+      final providerId = demoMode ? 'PR001' : UserSession.userId;
 
       if (providerId == null || providerId.isEmpty) {
         throw Exception('Provider ID not found in session');
@@ -87,6 +89,20 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
 
       if (providerId == null || providerId.isEmpty) {
         throw Exception('Provider ID is missing');
+      }
+
+      if (demoMode) {
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        if (!mounted) return;
+
+        setState(() {
+          _report = _DemoProviderDashboardReport.sample();
+          _isLoading = false;
+        });
+
+        _loadAiAnalysis();
+        return;
       }
 
       final language = Localizations.localeOf(context).languageCode;
@@ -128,6 +144,19 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
         _aiAnalysis = null;
       });
 
+      if (demoMode) {
+        await Future.delayed(const Duration(milliseconds: 700));
+
+        if (!mounted) return;
+
+        setState(() {
+          _aiAnalysis =
+              'AI Insight: Today\'s demand is highest for grilled chicken and healthy salad. Prepare more high-protein meals and reduce heavy rice portions to minimize food waste.';
+          _isAiLoading = false;
+        });
+        return;
+      }
+
       final result = await _aiDashboardService
           .getProviderAnalysis(
             providerID: providerId,
@@ -158,6 +187,13 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
 
   Future<void> _openPdfReport() async {
     final l10n = AppLocalizations.of(context)!;
+
+    if (demoMode) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Demo report generated successfully')),
+      );
+      return;
+    }
 
     final providerId = _providerId;
 
@@ -367,6 +403,86 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
         currentIndex: _navIndex,
         onTap: _handleBottomNavTap,
       ),
+    );
+  }
+}
+
+
+class _DemoProviderDashboardReport {
+  final DateTime updatedAt;
+  final int todayOrders;
+  final int campaigns;
+  final int mealAcceptance;
+  final double averageScore;
+  final int starsFilled;
+  final int totalReviews;
+  final int highestScore;
+  final String latestReview;
+  final Map<String, int> healthSnapshot;
+  final List<Map<String, dynamic>> orderTrend;
+  final List<Map<String, dynamic>> topMeals;
+
+  const _DemoProviderDashboardReport({
+    required this.updatedAt,
+    required this.todayOrders,
+    required this.campaigns,
+    required this.mealAcceptance,
+    required this.averageScore,
+    required this.starsFilled,
+    required this.totalReviews,
+    required this.highestScore,
+    required this.latestReview,
+    required this.healthSnapshot,
+    required this.orderTrend,
+    required this.topMeals,
+  });
+
+  factory _DemoProviderDashboardReport.sample() {
+    return _DemoProviderDashboardReport(
+      updatedAt: DateTime.now(),
+      todayOrders: 128,
+      campaigns: 4,
+      mealAcceptance: 87,
+      averageScore: 4.6,
+      starsFilled: 5,
+      totalReviews: 42,
+      highestScore: 5,
+      latestReview: 'The meal was healthy, fresh, and suitable for my needs.',
+      healthSnapshot: {
+        'diabetes': 28,
+        'allergies': 18,
+        'lowSodium': 32,
+        'highProtein': 46,
+      },
+      orderTrend: [
+        {'label': 'Mon', 'value': 42},
+        {'label': 'Tue', 'value': 55},
+        {'label': 'Wed', 'value': 68},
+        {'label': 'Thu', 'value': 74},
+        {'label': 'Fri', 'value': 91},
+        {'label': 'Sat', 'value': 86},
+        {'label': 'Sun', 'value': 128},
+      ],
+      topMeals: [
+        {
+          'name': 'Grilled Chicken',
+          'name_en': 'Grilled Chicken',
+          'name_ar': 'دجاج مشوي',
+          'orders': 48,
+        },
+        {
+          'name': 'Healthy Salad',
+          'name_en': 'Healthy Salad',
+          'name_ar': 'سلطة صحية',
+          'orders': 35,
+        },
+        {
+          'name': 'Beef Rice Bowl',
+          'name_en': 'Beef Rice Bowl',
+          'name_ar': 'وعاء لحم مع الأرز',
+          'orders': 29,
+        },
+      ],
     );
   }
 }

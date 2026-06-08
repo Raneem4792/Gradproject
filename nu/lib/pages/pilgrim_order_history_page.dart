@@ -21,6 +21,8 @@ class PilgrimOrderHistoryPage extends StatefulWidget {
 }
 
 class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
+  static const bool demoMode = true;
+
   int _navIndex = 2;
 
   static const Color bg = Color(0xFFF3F6F5);
@@ -34,13 +36,44 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
   void initState() {
     super.initState();
 
-    final pilgrimId = UserSession.userId;
+    if (!demoMode) {
+      final pilgrimId = UserSession.userId;
 
-    if (pilgrimId == null) {
-      throw Exception("User not logged in");
+      if (pilgrimId == null) {
+        throw Exception("User not logged in");
+      }
+
+      _ordersFuture = _mealService.getOrdersByPilgrim(pilgrimId);
     }
+  }
 
-    _ordersFuture = _mealService.getOrdersByPilgrim(pilgrimId);
+  Future<List<Map<String, dynamic>>> _getDemoOrders() async {
+    return [
+      {
+        "orderId": "1001",
+        "mealName": "Grilled Chicken",
+        "orderDate": "2026-06-08",
+        "orderStatus": "completed",
+        "isReviewed": true,
+        "reviewRating": 5,
+      },
+      {
+        "orderId": "1002",
+        "mealName": "Healthy Salad",
+        "orderDate": "2026-06-07",
+        "orderStatus": "accepted",
+        "isReviewed": false,
+        "reviewRating": 0,
+      },
+      {
+        "orderId": "1003",
+        "mealName": "Beef Rice Bowl",
+        "orderDate": "2026-06-06",
+        "orderStatus": "pending",
+        "isReviewed": false,
+        "reviewRating": 0,
+      },
+    ];
   }
 
   List<Map<String, dynamic>> _mapOrders(
@@ -91,6 +124,14 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
     );
 
     if (result == true) {
+      if (demoMode) {
+        setState(() {
+          orders[index]["isReviewed"] = true;
+          orders[index]["reviewRating"] = 5;
+        });
+        return;
+      }
+
       final pilgrimId = UserSession.userId;
       if (pilgrimId == null) return;
 
@@ -145,13 +186,19 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
     final l10n = AppLocalizations.of(context)!;
     final languageCode = Localizations.localeOf(context).languageCode;
 
+    final Future<List<Map<String, dynamic>>> displayOrdersFuture = demoMode
+        ? _getDemoOrders()
+        : _ordersFuture.then(
+            (apiOrders) => _mapOrders(apiOrders, languageCode),
+          );
+
     return Scaffold(
       backgroundColor: bg,
       appBar: const _OrderHistoryAppBar(),
       body: SafeArea(
         top: false,
-        child: FutureBuilder<List<MealOrder>>(
-          future: _ordersFuture,
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: displayOrdersFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -169,7 +216,7 @@ class _PilgrimOrderHistoryPageState extends State<PilgrimOrderHistoryPage> {
               );
             }
 
-            orders = _mapOrders(snapshot.data ?? [], languageCode);
+            orders = snapshot.data ?? [];
 
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 22),

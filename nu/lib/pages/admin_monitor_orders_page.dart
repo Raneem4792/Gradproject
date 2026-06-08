@@ -441,7 +441,7 @@ class _CampaignOrdersCard extends StatelessWidget {
                     icon: Icons.confirmation_number_rounded,
                   ),
                 _SmallChip(
-                  text: campaign.provider.providerName,
+                  text: campaign.provider.fullName,
                   icon: Icons.storefront_rounded,
                 ),
                 _SmallChip(
@@ -488,7 +488,7 @@ class _ProviderBox extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              '${provider.providerName} • ${provider.providerEmail}',
+              '${provider.fullName} • ${provider.providerEmail}',
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: primary,

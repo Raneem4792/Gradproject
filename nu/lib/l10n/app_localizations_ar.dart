@@ -72,7 +72,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cancel => 'إلغاء';
 
   @override
-  String get providerName => 'اسم المزود';
+  String get fullName => 'اسم المزود';
 
   @override
   String get email => 'البريد الإلكتروني';

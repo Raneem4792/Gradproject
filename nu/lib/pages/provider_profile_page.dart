@@ -28,6 +28,7 @@ class ProviderProfilePage extends StatefulWidget {
 }
 
 class _ProviderProfilePageState extends State<ProviderProfilePage> {
+  static const bool demoMode = true;
   final ProviderService _providerService = ProviderService();
   bool _isProfileLoading = true;
   bool _isSummaryLoading = true;
@@ -59,7 +60,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     });
   }
 
-  String providerName = "";
+  String fullName = "";
   String providerId = "";
   String email = "";
   String phone = "";
@@ -73,7 +74,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
   void initState() {
     super.initState();
 
-    nameController = TextEditingController(text: providerName);
+    nameController = TextEditingController(text: fullName);
     emailController = TextEditingController(text: email);
     phoneController = TextEditingController(text: phone);
 
@@ -90,9 +91,34 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
   }
 
   Future<void> _loadProviderProfile() async {
-    final providerId = UserSession.userId;
+if (demoMode) {
+  setState(() {
+    fullName = "Demo Provider";
+    this.providerId = "PR001";
+    email = "demo.provider@nusuq.com";
+    phone = "0500000002";
 
-    if (providerId == null || providerId.isEmpty) {
+    nameController.text = fullName;
+    emailController.text = email;
+    phoneController.text = phone;
+
+    _profileSummary = {
+      "campaignsCount": 4,
+      "mealsCount": 12,
+      "ordersCount": 87,
+      "averageRating": 4.8,
+    };
+
+    _isProfileLoading = false;
+    _isSummaryLoading = false;
+  });
+
+  return;
+}
+
+final providerId = UserSession.userId;
+
+if (providerId == null || providerId.isEmpty) {
       setState(() {
         _isProfileLoading = false;
         _isSummaryLoading = false;
@@ -110,12 +136,12 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
       final summary = results[1] as Map<String, dynamic>;
 
       setState(() {
-        providerName = profile.fullName;
+        fullName = profile.fullName;
         this.providerId = profile.providerID;
         email = profile.email;
         phone = profile.phoneNumber;
 
-        nameController.text = providerName;
+        nameController.text = fullName;
         emailController.text = email;
         phoneController.text = phone;
 
@@ -132,7 +158,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     }
   }
 
-  String? _validateProviderName(String? value) {
+  String? _validatefullName(String? value) {
     final l10n = AppLocalizations.of(context)!;
     final text = (value ?? '').trim().replaceAll(RegExp(r'\s+'), ' ');
 
@@ -205,6 +231,24 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     final l10n = AppLocalizations.of(context)!;
 
     if (isEditingBasicInfo) {
+      if (demoMode) {
+  if (!(_providerFormKey.currentState?.validate() ?? false)) {
+    return;
+  }
+
+  setState(() {
+    fullName = nameController.text.trim();
+    email = emailController.text.trim();
+    phone = phoneController.text.trim();
+    isEditingBasicInfo = false;
+  });
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(l10n.basicInformationUpdated)),
+  );
+
+  return;
+}
       final providerId = UserSession.userId;
 
       if (providerId == null || providerId.isEmpty) {
@@ -228,7 +272,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
         await _providerService.updateProfile(profile);
 
         setState(() {
-          providerName = nameController.text.trim();
+          fullName = nameController.text.trim();
           email = emailController.text.trim();
           phone = phoneController.text.trim();
           isEditingBasicInfo = false;
@@ -243,7 +287,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
         );
       }
     } else {
-      nameController.text = providerName;
+      nameController.text = fullName;
       emailController.text = email;
       phoneController.text = phone;
 
@@ -255,7 +299,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
 
   void _cancelBasicInfoEdit() {
     setState(() {
-      nameController.text = providerName;
+      nameController.text = fullName;
       emailController.text = email;
       phoneController.text = phone;
       isEditingBasicInfo = false;
@@ -377,11 +421,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
 
       if (!mounted) return;
 
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        LoginScreen.routeName,
-        (route) => false,
-      );
+Navigator.pop(context);
     }
   }
 
@@ -430,7 +470,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _ProfileHeaderCard(
-              providerName: providerName,
+              fullName: fullName,
               providerId: providerId,
             ),
             const SizedBox(height: 16),
@@ -443,14 +483,14 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
               _InfoCard(
                 formKey: _providerFormKey,
                 isEditing: isEditingBasicInfo,
-                providerName: providerName,
+                fullName: fullName,
                 providerId: providerId,
                 email: email,
                 phone: phone,
                 nameController: nameController,
                 emailController: emailController,
                 phoneController: phoneController,
-                nameValidator: _validateProviderName,
+                nameValidator: _validatefullName,
                 emailValidator: _validateProviderEmail,
                 phoneValidator: _validateProviderPhone,
                 onEditTap: _toggleBasicInfoEdit,
@@ -513,11 +553,11 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _ProfileHeaderCard extends StatelessWidget {
-  final String providerName;
+  final String fullName;
   final String providerId;
 
   const _ProfileHeaderCard({
-    required this.providerName,
+    required this.fullName,
     required this.providerId,
   });
 
@@ -565,7 +605,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        providerName,
+                        fullName,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 19,
@@ -638,7 +678,7 @@ class _ProfileHeaderCard extends StatelessWidget {
 
 class _InfoCard extends StatelessWidget {
   final bool isEditing;
-  final String providerName;
+  final String fullName;
   final String providerId;
   final String email;
   final String phone;
@@ -657,7 +697,7 @@ class _InfoCard extends StatelessWidget {
 
   const _InfoCard({
     required this.isEditing,
-    required this.providerName,
+    required this.fullName,
     required this.providerId,
     required this.email,
     required this.phone,
@@ -695,7 +735,7 @@ class _InfoCard extends StatelessWidget {
                 children: [
                   _EditableField(
                     icon: Icons.storefront_outlined,
-                    label: l10n.providerName,
+                    label: l10n.fullName,
                     controller: nameController,
                     keyboardType: TextInputType.name,
                     validator: nameValidator,
@@ -722,8 +762,8 @@ class _InfoCard extends StatelessWidget {
           ] else ...[
             _InfoRow(
               icon: Icons.storefront_outlined,
-              title: l10n.providerName,
-              value: providerName,
+              title: l10n.fullName,
+              value: fullName,
             ),
             const Divider(height: 22),
             _InfoRow(

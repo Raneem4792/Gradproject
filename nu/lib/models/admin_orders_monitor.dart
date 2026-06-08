@@ -32,19 +32,19 @@ class AdminOrdersCampaign {
 
 class AdminOrdersProvider {
   final String providerID;
-  final String providerName;
+  final String fullName;
   final String providerEmail;
 
   AdminOrdersProvider({
     required this.providerID,
-    required this.providerName,
+    required this.fullName,
     required this.providerEmail,
   });
 
   factory AdminOrdersProvider.fromJson(Map<String, dynamic> json) {
     return AdminOrdersProvider(
       providerID: json['providerID']?.toString() ?? '',
-      providerName: json['providerName']?.toString() ?? '',
+      fullName: json['fullName']?.toString() ?? '',
       providerEmail: json['providerEmail']?.toString() ?? '',
     );
   }

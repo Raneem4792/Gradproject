@@ -45,6 +45,7 @@ class _SectionLabel extends StatelessWidget {
 }
 
 class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
+  static const bool demoMode = true;
   int _navIndex = 0;
   int unreadCount = 0;
 
@@ -60,18 +61,53 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
     return 'http://10.0.2.2:3000/api';
   }
 
-  @override
-  void initState() {
-    super.initState();
+@override
+void initState() {
+  super.initState();
+
+  if (demoMode) {
+    _homeFuture = Future.value({
+      'fullName': 'Demo Provider',
+      'newRequestsCount': 7,
+      'latestOrder': {
+        'orderID': 1025,
+      },
+    });
+
+    unreadCount = 5;
+  } else {
     _reloadHomeData();
     _loadUnreadCount();
   }
+}
 
-  void _reloadHomeData() {
-    _homeFuture = _providerService.getProviderHomeData(UserSession.userId!);
+void _reloadHomeData() {
+  if (demoMode) {
+    _homeFuture = Future.value({
+      'fullName': 'Demo Provider',
+      'newRequestsCount': 7,
+      'latestOrder': {
+        'orderID': 1025,
+      },
+    });
+    return;
   }
 
+  _homeFuture = _providerService.getProviderHomeData(
+    UserSession.userId!,
+  );
+}
+
   Future<void> _loadUnreadCount() async {
+    if (demoMode) {
+  if (!mounted) return;
+
+  setState(() {
+    unreadCount = 5;
+  });
+
+  return;
+}
     final prefs = await SharedPreferences.getInstance();
 
     final enabled = prefs.getBool('provider_notifications_enabled') ?? true;
@@ -181,7 +217,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
             }
 
             final data = snapshot.data ?? {};
-            final providerName = data['fullName'] ?? l10n.provider;
+            final fullName = data['fullName'] ?? l10n.provider;
             final latestOrder = data['latestOrder'];
             final newRequestsCount = data['newRequestsCount'] ?? 0;
 
@@ -197,7 +233,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ProviderTopBlock(providerName: providerName),
+                  _ProviderTopBlock(fullName: fullName),
                   const SizedBox(height: 14),
                   _RequestsCard(
                     newRequestsCount: newRequestsCount,
@@ -308,9 +344,9 @@ class _ProviderMainAppBar extends StatelessWidget
 }
 
 class _ProviderTopBlock extends StatelessWidget {
-  final String providerName;
+  final String fullName;
 
-  const _ProviderTopBlock({required this.providerName});
+  const _ProviderTopBlock({required this.fullName});
 
   static const Color primaryDark = Color(0xFF062C26);
   static const Color primary = Color(0xFF0D4C4A);
@@ -364,7 +400,7 @@ class _ProviderTopBlock extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          providerName,
+                          fullName,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 18,

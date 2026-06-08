@@ -20,6 +20,7 @@ class PilgrimNotificationsPage extends StatefulWidget {
 }
 
 class _PilgrimNotificationsPageState extends State<PilgrimNotificationsPage> {
+  static const bool demoMode = true;
   static const Color bg = Color(0xFFF3F6F5);
   static const Color primary = Color(0xFF0D4C4A);
 
@@ -53,7 +54,11 @@ class _PilgrimNotificationsPageState extends State<PilgrimNotificationsPage> {
   @override
   void initState() {
     super.initState();
-    _notificationsFuture = _loadNotificationsAndMarkRead();
+    if (demoMode) {
+  _notificationsFuture = _getDemoNotifications();
+} else {
+  _notificationsFuture = _loadNotificationsAndMarkRead();
+}
   }
 
   Future<void> _markNotificationsAsRead() async {
@@ -68,7 +73,9 @@ class _PilgrimNotificationsPageState extends State<PilgrimNotificationsPage> {
 
   Future<void> _refreshData() async {
     setState(() {
-      _notificationsFuture = _loadNotificationsAndMarkRead();
+      _notificationsFuture = demoMode
+    ? _getDemoNotifications()
+    : _loadNotificationsAndMarkRead();
     });
   }
 
@@ -509,4 +516,45 @@ class _EmptyNotificationsState extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<List<AppNotification>> _getDemoNotifications() async {
+  return [
+    AppNotification(
+      id: 1,
+      title: 'Meal Recommendation Ready',
+      titleEn: 'Meal Recommendation Ready',
+      titleAr: 'تم تجهيز التوصية الغذائية',
+      type: 'highlight',
+      timestamp: DateTime.now(),
+      message: 'AI has recommended a healthy grilled chicken meal for you.',
+      messageEn: 'AI has recommended a healthy grilled chicken meal for you.',
+      messageAr: 'اقترح الذكاء الاصطناعي وجبة دجاج مشوي صحية لك.',
+      isUnread: true,
+    ),
+    AppNotification(
+      id: 2,
+      title: 'Order Confirmed',
+      titleEn: 'Order Confirmed',
+      titleAr: 'تم تأكيد الطلب',
+      type: 'success',
+      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+      message: 'Your meal order has been successfully confirmed.',
+      messageEn: 'Your meal order has been successfully confirmed.',
+      messageAr: 'تم تأكيد طلب الوجبة بنجاح.',
+      isUnread: true,
+    ),
+    AppNotification(
+      id: 3,
+      title: 'Welcome to NUSUQ',
+      titleEn: 'Welcome to NUSUQ',
+      titleAr: 'مرحباً بك في نسك',
+      type: 'info',
+      timestamp: DateTime.now().subtract(const Duration(days: 1)),
+      message: 'Explore personalized meals and smart recommendations.',
+      messageEn: 'Explore personalized meals and smart recommendations.',
+      messageAr: 'استكشف الوجبات المخصصة والتوصيات الذكية.',
+      isUnread: false,
+    ),
+  ];
 }

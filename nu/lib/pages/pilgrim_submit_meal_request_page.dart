@@ -8,7 +8,7 @@ class PilgrimSubmitMealRequestPage extends StatefulWidget {
   final int mealID;
   final String mealName;
   final String mealDescription;
-  final String providerName;
+  final String fullName;
   final String nutritionLine;
   final IconData mealIcon;
 
@@ -17,7 +17,7 @@ class PilgrimSubmitMealRequestPage extends StatefulWidget {
     required this.mealID,
     required this.mealName,
     required this.mealDescription,
-    required this.providerName,
+    required this.fullName,
     required this.nutritionLine,
     required this.mealIcon,
   });
@@ -29,6 +29,8 @@ class PilgrimSubmitMealRequestPage extends StatefulWidget {
 
 class _PilgrimSubmitMealRequestPageState
     extends State<PilgrimSubmitMealRequestPage> {
+  static const bool demoMode = true;
+
   final TextEditingController _notesController = TextEditingController();
   final MealService _mealService = MealService();
 
@@ -48,18 +50,31 @@ class _PilgrimSubmitMealRequestPageState
 
   Future<void> _submitRequest() async {
     final l10n = AppLocalizations.of(context)!;
-    final pilgrimId = UserSession.userId;
-
-    if (pilgrimId == null || pilgrimId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.userSessionNotFoundLoginAgain)),
-      );
-      return;
-    }
 
     setState(() => _isSubmitting = true);
 
     try {
+      if (demoMode) {
+        await Future.delayed(const Duration(milliseconds: 800));
+
+        if (!mounted) return;
+
+        final demoOrderId =
+            'D-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+
+        _showSuccessDialog(context, demoOrderId);
+        return;
+      }
+
+      final pilgrimId = UserSession.userId;
+
+      if (pilgrimId == null || pilgrimId.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.userSessionNotFoundLoginAgain)),
+        );
+        return;
+      }
+
       final result = await _mealService.createOrder(
         mealID: widget.mealID,
         pilgrimID: pilgrimId,
@@ -92,7 +107,9 @@ class _PilgrimSubmitMealRequestPageState
     final submitTime =
         "${now.hour % 12 == 0 ? 12 : now.hour % 12}:${now.minute.toString().padLeft(2, '0')} ${now.hour >= 12 ? 'PM' : 'AM'}";
 
-    final pilgrimId = UserSession.userId ?? l10n.notAvailable;
+    final pilgrimId = demoMode
+        ? "P001"
+        : (UserSession.userId ?? l10n.notAvailable);
 
     return Scaffold(
       backgroundColor: bg,
@@ -107,7 +124,7 @@ class _PilgrimSubmitMealRequestPageState
               _MealSummaryCard(
                 mealName: widget.mealName,
                 mealDescription: widget.mealDescription,
-                providerName: widget.providerName,
+                fullName: widget.fullName,
                 nutritionLine: widget.nutritionLine,
                 mealIcon: widget.mealIcon,
               ),
@@ -366,14 +383,14 @@ class _SubmitMealAppBar extends StatelessWidget implements PreferredSizeWidget {
 class _MealSummaryCard extends StatelessWidget {
   final String mealName;
   final String mealDescription;
-  final String providerName;
+  final String fullName;
   final String nutritionLine;
   final IconData mealIcon;
 
   const _MealSummaryCard({
     required this.mealName,
     required this.mealDescription,
-    required this.providerName,
+    required this.fullName,
     required this.nutritionLine,
     required this.mealIcon,
   });
@@ -445,7 +462,7 @@ class _MealSummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '${l10n.providedBy} $providerName',
+                  '${l10n.providedBy} $fullName',
                   style: TextStyle(
                     fontSize: 12.2,
                     color: Colors.black.withOpacity(0.58),

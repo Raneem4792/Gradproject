@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
-import 'login_page.dart';
-import 'signup_page.dart';
+import 'provider_home_screen.dart';
+import 'pilgrim_home_screen.dart';
+import '../session/user_session.dart';
 
 class HomePage extends StatelessWidget {
   static const String routeName = '/';
@@ -11,9 +12,11 @@ class HomePage extends StatelessWidget {
 
   static const Color primaryDark = Color(0xFF062C26);
   static const Color primary = Color(0xFF0D4C4A);
-  static const Color primaryMid = Color(0xFF1A6B66);
   static const Color accent = Color(0xFF16A085);
   static const Color softBg = Color(0xFFF8FAFA);
+
+  static const String demoPilgrimID = 'P001';
+  static const String demoProviderID = 'PR001';
 
   bool _isArabic(BuildContext context) {
     return Localizations.localeOf(context).languageCode == 'ar';
@@ -90,7 +93,6 @@ class HomePage extends StatelessWidget {
       body: Stack(
         children: [
           const Positioned.fill(child: _SoftPatternBackground()),
-
           Positioned(
             top: -90,
             right: -70,
@@ -101,7 +103,6 @@ class HomePage extends StatelessWidget {
             left: -90,
             child: _GlowCircle(size: 270, opacity: 0.10),
           ),
-
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -128,9 +129,7 @@ class HomePage extends StatelessWidget {
                           icon: const Icon(Icons.language_rounded),
                         ),
                       ),
-
                       const SizedBox(height: 6),
-
                       Container(
                         width: 108,
                         height: 108,
@@ -162,9 +161,7 @@ class HomePage extends StatelessWidget {
                           size: 48,
                         ),
                       ),
-
                       const SizedBox(height: 20),
-
                       const Text(
                         'NUSUQ',
                         style: TextStyle(
@@ -174,9 +171,7 @@ class HomePage extends StatelessWidget {
                           letterSpacing: 2,
                         ),
                       ),
-
                       const SizedBox(height: 10),
-
                       Text(
                         isAr
                             ? 'منصة ذكية لخدمة الحجاج ومقدمي الوجبات'
@@ -189,9 +184,7 @@ class HomePage extends StatelessWidget {
                           height: 1.5,
                         ),
                       ),
-
                       const SizedBox(height: 28),
-
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
@@ -216,11 +209,11 @@ class HomePage extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(50),
                               ),
                             ),
-
                             const SizedBox(height: 18),
-
                             Text(
-                              isAr ? 'مرحبًا بك في نسق' : 'Welcome to Nusuq',
+                              isAr
+                                  ? 'جربي نسق بدون تسجيل دخول'
+                                  : 'Try Nusuq Without Login',
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 25,
@@ -228,13 +221,11 @@ class HomePage extends StatelessWidget {
                                 color: Color(0xFF1F2937),
                               ),
                             ),
-
                             const SizedBox(height: 10),
-
                             Text(
                               isAr
-                                  ? 'ابدئي رحلتك بسهولة للوصول إلى الوجبات، الطلبات، والتوصيات الذكية المناسبة.'
-                                  : 'Start your journey easily with meals, orders, and smart recommendations.',
+                                  ? 'اختاري طريقة التجربة واستكشفي خصائص التطبيق مباشرة.'
+                                  : 'Choose a demo mode and explore the app features directly.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 13.5,
@@ -243,9 +234,7 @@ class HomePage extends StatelessWidget {
                                 height: 1.55,
                               ),
                             ),
-
                             const SizedBox(height: 22),
-
                             LayoutBuilder(
                               builder: (context, constraints) {
                                 return Wrap(
@@ -258,9 +247,7 @@ class HomePage extends StatelessWidget {
                                       child: _FeatureCard(
                                         icon: Icons.restaurant_menu_rounded,
                                         title: isAr ? 'وجبات' : 'Meals',
-                                        subtitle: isAr
-                                            ? 'مناسبة لك'
-                                            : 'For you',
+                                        subtitle: isAr ? 'مناسبة لك' : 'For you',
                                       ),
                                     ),
                                     SizedBox(
@@ -268,9 +255,7 @@ class HomePage extends StatelessWidget {
                                       child: _FeatureCard(
                                         icon: Icons.health_and_safety_outlined,
                                         title: isAr ? 'صحة' : 'Health',
-                                        subtitle: isAr
-                                            ? 'ملفك الصحي'
-                                            : 'Your profile',
+                                        subtitle: isAr ? 'ملفك الصحي' : 'Your profile',
                                       ),
                                     ),
                                     SizedBox(
@@ -278,28 +263,38 @@ class HomePage extends StatelessWidget {
                                       child: _FeatureCard(
                                         icon: Icons.auto_awesome_rounded,
                                         title: isAr ? 'ذكاء' : 'AI',
-                                        subtitle: isAr
-                                            ? 'توصيات'
-                                            : 'Smart picks',
+                                        subtitle: isAr ? 'توصيات' : 'Smart picks',
                                       ),
                                     ),
                                   ],
                                 );
                               },
                             ),
-
                             const SizedBox(height: 24),
 
                             SizedBox(
                               width: double.infinity,
                               height: 54,
                               child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    LoginScreen.routeName,
-                                  );
-                                },
+onPressed: () async {
+  final prefs = await SharedPreferences.getInstance();
+
+  await prefs.setString('userId', 'P001');
+  await prefs.setString('pilgrimID', 'P001');
+  await prefs.setString('userType', 'pilgrim');
+  await prefs.setBool('isDemo', true);
+
+  UserSession.userId = 'P001';
+
+  if (!context.mounted) return;
+
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const PilgrimHomeScreen(),
+    ),
+  );
+},
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: accent,
                                   elevation: 0,
@@ -312,13 +307,13 @@ class HomePage extends StatelessWidget {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     const Icon(
-                                      Icons.login_rounded,
+                                      Icons.person_rounded,
                                       color: Colors.white,
                                       size: 20,
                                     ),
                                     const SizedBox(width: 9),
                                     Text(
-                                      isAr ? 'تسجيل الدخول' : 'Log In',
+                                      isAr ? 'تجربة كحاج' : 'Try as Pilgrim',
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 15.5,
@@ -336,12 +331,25 @@ class HomePage extends StatelessWidget {
                               width: double.infinity,
                               height: 54,
                               child: OutlinedButton(
-                                onPressed: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    SignUpScreen.routeName,
-                                  );
-                                },
+onPressed: () async {
+  final prefs = await SharedPreferences.getInstance();
+
+  await prefs.setString('userId', 'PR001');
+  await prefs.setString('providerID', 'PR001');
+  await prefs.setString('userType', 'provider');
+  await prefs.setBool('isDemo', true);
+
+  UserSession.userId = 'PR001';
+
+  if (!context.mounted) return;
+
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const ProviderHomeScreen(),
+    ),
+  );
+},
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: primary,
                                   backgroundColor: Colors.white,
@@ -357,14 +365,14 @@ class HomePage extends StatelessWidget {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     const Icon(
-                                      Icons.person_add_alt_1_rounded,
+                                      Icons.storefront_rounded,
                                       size: 20,
                                     ),
                                     const SizedBox(width: 9),
                                     Text(
                                       isAr
-                                          ? 'إنشاء حساب جديد'
-                                          : 'Create Account',
+                                          ? 'تجربة كمزود خدمة'
+                                          : 'Try as Provider',
                                       style: const TextStyle(
                                         fontSize: 15.5,
                                         fontWeight: FontWeight.w900,
@@ -377,9 +385,7 @@ class HomePage extends StatelessWidget {
                           ],
                         ),
                       ),
-
                       const SizedBox(height: 18),
-
                       Text(
                         '© 2026 NUSUQ',
                         style: TextStyle(
@@ -388,13 +394,11 @@ class HomePage extends StatelessWidget {
                           fontSize: 11.5,
                         ),
                       ),
-
                       const SizedBox(height: 4),
-
                       Text(
                         isAr
-                            ? 'نظام متكامل لخدمة الحجاج'
-                            : 'Integrated system for serving pilgrims',
+                            ? 'نسخة تجريبية للمعرض'
+                            : 'Exhibition demo version',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.55),
                           fontWeight: FontWeight.w600,

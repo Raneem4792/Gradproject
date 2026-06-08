@@ -103,32 +103,22 @@ class _PilgrimAIChatPageState extends State<PilgrimAIChatPage> {
     _messageController.clear();
     _scrollToBottom();
 
-    try {
-      final reply = await _aiChatService.sendMessage(
-  message: text,
-  pilgrimID: pilgrimID,
-  language: Localizations.localeOf(context).languageCode,
-);
+await Future.delayed(const Duration(seconds: 1));
 
-      if (!mounted) return;
+final reply = _getDemoReply(text);
 
-      setState(() {
-        _messages.add(_ChatMessage(text: reply, isUser: false));
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
+if (!mounted) return;
 
-      setState(() {
-        _messages.add(
-          _ChatMessage(
-            text: l10n.aiChatSomethingWentWrong,
-            isUser: false,
-          ),
-        );
-        _isLoading = false;
-      });
-    }
+setState(() {
+  _messages.add(
+    _ChatMessage(
+      text: reply,
+      isUser: false,
+    ),
+  );
+
+  _isLoading = false;
+});
 
     _scrollToBottom();
   }
@@ -411,4 +401,31 @@ class _ChatMessage {
   final bool isUser;
 
   _ChatMessage({required this.text, required this.isUser});
+}
+
+String _getDemoReply(String message) {
+  final msg = message.toLowerCase();
+
+  if (msg.contains('diabetes') ||
+      msg.contains('سكر') ||
+      msg.contains('سكري')) {
+    return 'Based on your profile, I recommend grilled chicken with vegetables and a low-sugar meal option.';
+  }
+
+  if (msg.contains('protein') ||
+      msg.contains('بروتين')) {
+    return 'Recommended high-protein meals: grilled chicken, tuna sandwich, and boiled eggs.';
+  }
+
+  if (msg.contains('allergy') ||
+      msg.contains('حساسية')) {
+    return 'Please avoid meals containing nuts and dairy products. Suitable alternatives are available.';
+  }
+
+  if (msg.contains('meal') ||
+      msg.contains('وجبة')) {
+    return 'Today’s recommended meal is grilled chicken with brown rice and fresh salad.';
+  }
+
+  return 'Based on your health profile, I recommend a balanced meal rich in protein and vegetables.';
 }

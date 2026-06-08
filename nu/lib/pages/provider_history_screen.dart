@@ -20,6 +20,7 @@ class ProviderHistoryScreen extends StatefulWidget {
 }
 
 class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
+  static const bool demoMode = true;
   static const Color bg = Color(0xFFF1F6F4);
   static const Color primaryDark = Color(0xFF052720);
   static const Color primary = Color(0xFF0B4A40);
@@ -58,6 +59,28 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
         _error = null;
       });
 
+      if (demoMode) {
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        final campaigns = _getDemoCampaigns();
+        final orders = _getDemoOrders();
+
+        setState(() {
+          _campaigns = campaigns;
+          _allOrders = campaignID == null
+              ? orders
+              : orders.where((order) {
+                  return order.campaignNumber == campaignID ||
+                      order.campaignName == campaignID;
+                }).toList();
+          _filteredOrders = List<MealOrder>.from(_allOrders);
+          _isLoading = false;
+        });
+
+        _applyLocalFilters();
+        return;
+      }
+
       final providerID = UserSession.userId ?? '';
       if (providerID.isEmpty) {
         throw Exception('Provider ID not found in session');
@@ -83,6 +106,106 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  List<Map<String, dynamic>> _getDemoCampaigns() {
+    return [
+      {
+        'campaignID': 'C001',
+        'campaignName': 'Hajj Campaign 2026',
+        'campaignNumber': 'HC-2026',
+      },
+      {
+        'campaignID': 'C002',
+        'campaignName': 'Umrah Guests',
+        'campaignNumber': 'UG-2026',
+      },
+    ];
+  }
+
+  List<MealOrder> _getDemoOrders() {
+    return [
+      MealOrder.fromJson({
+        'orderID': 1001,
+        'mealID': 1,
+        'pilgrimID': 'P001',
+        'pilgrimName': 'Demo Pilgrim',
+        'campaignName': 'Hajj Campaign 2026',
+        'campaignNumber': 'HC-2026',
+        'mealName': 'Grilled Chicken',
+        'mealName_en': 'Grilled Chicken',
+        'mealName_ar': 'دجاج مشوي',
+        'mealType': 'Lunch',
+        'mealType_en': 'Lunch',
+        'mealType_ar': 'غداء',
+        'requestDate': DateTime.now()
+            .subtract(const Duration(days: 1))
+            .toIso8601String(),
+        'status': 'completed',
+        'isReviewed': true,
+        'reviewRating': 5,
+      }),
+      MealOrder.fromJson({
+        'orderID': 1002,
+        'mealID': 2,
+        'pilgrimID': 'P002',
+        'pilgrimName': 'Ahmed Ali',
+        'campaignName': 'Hajj Campaign 2026',
+        'campaignNumber': 'HC-2026',
+        'mealName': 'Healthy Salad',
+        'mealName_en': 'Healthy Salad',
+        'mealName_ar': 'سلطة صحية',
+        'mealType': 'Dinner',
+        'mealType_en': 'Dinner',
+        'mealType_ar': 'عشاء',
+        'requestDate': DateTime.now()
+            .subtract(const Duration(days: 2))
+            .toIso8601String(),
+        'status': 'accepted',
+        'isReviewed': false,
+        'reviewRating': null,
+      }),
+      MealOrder.fromJson({
+        'orderID': 1003,
+        'mealID': 3,
+        'pilgrimID': 'P003',
+        'pilgrimName': 'Sara Mohammed',
+        'campaignName': 'Umrah Guests',
+        'campaignNumber': 'UG-2026',
+        'mealName': 'Beef Rice Bowl',
+        'mealName_en': 'Beef Rice Bowl',
+        'mealName_ar': 'وعاء لحم مع الأرز',
+        'mealType': 'Lunch',
+        'mealType_en': 'Lunch',
+        'mealType_ar': 'غداء',
+        'requestDate': DateTime.now()
+            .subtract(const Duration(days: 3))
+            .toIso8601String(),
+        'status': 'pending',
+        'isReviewed': false,
+        'reviewRating': null,
+      }),
+      MealOrder.fromJson({
+        'orderID': 1004,
+        'mealID': 4,
+        'pilgrimID': 'P004',
+        'pilgrimName': 'Fatimah Hassan',
+        'campaignName': 'Umrah Guests',
+        'campaignNumber': 'UG-2026',
+        'mealName': 'Vegetarian Pasta',
+        'mealName_en': 'Vegetarian Pasta',
+        'mealName_ar': 'باستا نباتية',
+        'mealType': 'Dinner',
+        'mealType_en': 'Dinner',
+        'mealType_ar': 'عشاء',
+        'requestDate': DateTime.now()
+            .subtract(const Duration(days: 4))
+            .toIso8601String(),
+        'status': 'completed',
+        'isReviewed': true,
+        'reviewRating': 4,
+      }),
+    ];
   }
 
   void _openNotificationsPage() {
@@ -402,6 +525,19 @@ class _ProviderHistoryScreenState extends State<ProviderHistoryScreen> {
     if (!order.isReviewed || order.reviewRating == null) return;
 
     final l10n = AppLocalizations.of(context)!;
+
+    if (demoMode) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        ),
+        builder: (_) => _DemoReviewViewSheet(order: order),
+      );
+      return;
+    }
 
     try {
       final rate = await _rateService.getRateByOrder(order.orderID);
@@ -1128,6 +1264,151 @@ class _Stars extends StatelessWidget {
           color: filled ? const Color(0xFFF4D03F) : Colors.black38,
         );
       }),
+    );
+  }
+}
+
+class _DemoReviewViewSheet extends StatelessWidget {
+  const _DemoReviewViewSheet({required this.order});
+
+  final MealOrder order;
+
+  static const Color primaryDark = Color(0xFF052720);
+  static const Color primary = Color(0xFF0B4A40);
+  static const Color mint = Color(0xFFA8E7CF);
+  static const Color softMint = Color(0xFFE6F6F0);
+
+  String _formatDate(DateTime dt) {
+    final dd = dt.day.toString().padLeft(2, '0');
+    final mm = dt.month.toString().padLeft(2, '0');
+    final yyyy = dt.year.toString();
+    final hh = dt.hour.toString().padLeft(2, '0');
+    final min = dt.minute.toString().padLeft(2, '0');
+    return '$dd/$mm/$yyyy  •  $hh:$min';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final languageCode = Localizations.localeOf(context).languageCode;
+    final mealName = order.localizedMealName(languageCode);
+    final stars = order.reviewRating ?? 5;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  height: 4,
+                  width: 44,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                ),
+              ),
+              Text(
+                "${l10n.reviewDetails} • #${order.orderID}",
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 17,
+                  color: primaryDark,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                mealName,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black.withOpacity(0.72),
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "${order.pilgrimName} • ${order.campaignName}",
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black.withOpacity(0.55),
+                  fontSize: 12.5,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: softMint,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: mint.withOpacity(0.60)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.star_rounded,
+                      color: Color(0xFFF4B400),
+                      size: 24,
+                    ),
+                    const SizedBox(width: 8),
+                    _Stars(rating: stars),
+                    const Spacer(),
+                    Text(
+                      "$stars/5",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                        color: primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: softMint,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: mint.withOpacity(0.65)),
+                ),
+                child: const Text(
+                  'The meal was healthy, well prepared, and suitable for my dietary needs.',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: primaryDark,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _formatDate(order.requestDate),
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Colors.black.withOpacity(0.55),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(l10n.close),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

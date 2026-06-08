@@ -91080,10 +91080,10 @@ A.as5.prototype={
 $0(){return this.a.e=!1},
 $S:0}
 A.asa.prototype={
-$1(a){return new A.aD(B.iL,new A.Vm(a.j(0,"title"),a.j(0,"providerName"),a.j(0,"mealType"),a.j(0,"description"),a.j(0,"nutritionLine"),a.j(0,"isHealthMatched"),a.j(0,"icon"),new A.as4(this.a,a),null),null)},
+$1(a){return new A.aD(B.iL,new A.Vm(a.j(0,"title"),a.j(0,"fullName"),a.j(0,"mealType"),a.j(0,"description"),a.j(0,"nutritionLine"),a.j(0,"isHealthMatched"),a.j(0,"icon"),new A.as4(this.a,a),null),null)},
 $S:568}
 A.as4.prototype={
-$0(){var s=this.b,r=s.j(0,"title"),q=s.j(0,"description"),p=s.j(0,"providerName"),o=s.j(0,"nutritionLine")
+$0(){var s=this.b,r=s.j(0,"title"),q=s.j(0,"description"),p=s.j(0,"fullName"),o=s.j(0,"nutritionLine")
 this.a.agQ(q,s.j(0,"icon"),o,p,r)},
 $S:0}
 A.asb.prototype={
@@ -97335,7 +97335,7 @@ B.O2=s([0.2126,0.7152,0.0722],t.n)
 B.PL=s([0.01932141,0.11916382,0.95034478],t.n)
 B.e3=s([B.Ot,B.O2,B.PL],t.zg)
 B.rT=s([0,4,12,1,5,13,3,7,15],t.t)
-B.mY={title:0,providerName:1,mealType:2,description:3,nutritionLine:4,isHealthMatched:5,icon:6}
+B.mY={title:0,fullName:1,mealType:2,description:3,nutritionLine:4,isHealthMatched:5,icon:6}
 B.Ry=new A.c6(B.mY,["Grilled Chicken Salad","Al Noor Catering","Lunch","Fresh grilled chicken with greens and light dressing.","420 kcal \u2022 32g protein \u2022 18g carbs \u2022 14g fat",!0,B.cA],t.yf)
 B.LH=new A.ax(983379,"MaterialIcons",!1)
 B.Rx=new A.c6(B.mY,["Baked Fish with Rice","Al Barakah Kitchen","Dinner","Healthy baked fish served with white rice and vegetables.","510 kcal \u2022 35g protein \u2022 40g carbs \u2022 16g fat",!0,B.LH],t.yf)

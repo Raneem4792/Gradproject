@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
@@ -61,6 +60,8 @@ class _ProviderMealManagementScreenState
   static const Color softMint = Color(0xFFE8F6F1);
   static const Color gold = Color(0xFFF0E0C0);
 
+  static const bool demoMode = true;
+
   int _navIndex = 0;
 
   final MealService _mealService = MealService();
@@ -70,10 +71,89 @@ class _ProviderMealManagementScreenState
   @override
   void initState() {
     super.initState();
-    _loadMealsFromServer();
+
+    if (demoMode) {
+      _loadDemoMeals();
+    } else {
+      _loadMealsFromServer();
+    }
+  }
+
+  void _loadDemoMeals() {
+    setState(() {
+      _meals = [
+        Meal(
+          mealID: 1,
+          mealName: 'Grilled Chicken',
+          mealNameEn: 'Grilled Chicken',
+          mealNameAr: 'دجاج مشوي',
+          mealType: 'Lunch',
+          mealTypeEn: 'Lunch',
+          mealTypeAr: 'غداء',
+          description: 'Healthy grilled chicken with rice and vegetables.',
+          descriptionEn: 'Healthy grilled chicken with rice and vegetables.',
+          descriptionAr: 'دجاج مشوي صحي مع الأرز والخضروات.',
+          protein: 35,
+          carbohydrates: 40,
+          fat: 10,
+          calories: 450,
+          image: '',
+          providerID: 'PR001',
+          fullName: 'Demo Provider',
+          aiReason: 'Recommended for a balanced lunch option.',
+        ),
+        Meal(
+          mealID: 2,
+          mealName: 'Healthy Salad',
+          mealNameEn: 'Healthy Salad',
+          mealNameAr: 'سلطة صحية',
+          mealType: 'Dinner',
+          mealTypeEn: 'Dinner',
+          mealTypeAr: 'عشاء',
+          description: 'Fresh vegetables with light dressing.',
+          descriptionEn: 'Fresh vegetables with light dressing.',
+          descriptionAr: 'خضروات طازجة مع صوص خفيف.',
+          protein: 12,
+          carbohydrates: 15,
+          fat: 5,
+          calories: 180,
+          image: '',
+          providerID: 'PR001',
+          fullName: 'Demo Provider',
+          aiReason: 'Suitable for light and healthy meals.',
+        ),
+        Meal(
+          mealID: 3,
+          mealName: 'Beef Rice Bowl',
+          mealNameEn: 'Beef Rice Bowl',
+          mealNameAr: 'وعاء لحم مع الأرز',
+          mealType: 'High Protein',
+          mealTypeEn: 'High Protein',
+          mealTypeAr: 'عالي البروتين',
+          description: 'Lean beef served with brown rice.',
+          descriptionEn: 'Lean beef served with brown rice.',
+          descriptionAr: 'لحم قليل الدهون مع أرز بني.',
+          protein: 30,
+          carbohydrates: 45,
+          fat: 12,
+          calories: 520,
+          image: '',
+          providerID: 'PR001',
+          fullName: 'Demo Provider',
+          aiReason: 'High protein option for pilgrims.',
+        ),
+      ];
+
+      _isLoading = false;
+    });
   }
 
   Future<void> _loadMealsFromServer() async {
+    if (demoMode) {
+      _loadDemoMeals();
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       final providerID = UserSession.userId;
@@ -308,7 +388,7 @@ class _ProviderMealManagementScreenState
   }
 
   void _openForm(_FormMode mode, Meal? meal) async {
-    final success = await showModalBottomSheet<bool>(
+    final result = await showModalBottomSheet<dynamic>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
@@ -317,7 +397,48 @@ class _ProviderMealManagementScreenState
       ),
       builder: (_) => _MealFormSheet(mode: mode, initial: meal),
     );
-    if (success == true) _loadMealsFromServer();
+
+    if (demoMode && result is Meal) {
+      setState(() {
+        if (mode == _FormMode.add) {
+          final nextId = _meals.isEmpty
+              ? 1
+              : (_meals.map((m) => m.mealID).reduce((a, b) => a > b ? a : b) + 1);
+
+          _meals.insert(
+            0,
+            Meal(
+              mealID: nextId,
+              mealName: result.mealName,
+              mealNameEn: result.mealNameEn,
+              mealNameAr: result.mealNameAr,
+              mealType: result.mealType,
+              mealTypeEn: result.mealTypeEn,
+              mealTypeAr: result.mealTypeAr,
+              description: result.description,
+              descriptionEn: result.descriptionEn,
+              descriptionAr: result.descriptionAr,
+              protein: result.protein,
+              carbohydrates: result.carbohydrates,
+              fat: result.fat,
+              calories: result.calories,
+              image: result.image,
+              providerID: result.providerID,
+              fullName: result.fullName,
+              aiReason: result.aiReason,
+            ),
+          );
+        } else {
+          final index = _meals.indexWhere((m) => m.mealID == result.mealID);
+          if (index != -1) {
+            _meals[index] = result;
+          }
+        }
+      });
+      return;
+    }
+
+    if (result == true) _loadMealsFromServer();
   }
 
   Future<void> _deleteMeal(Meal meal) async {
@@ -371,6 +492,13 @@ class _ProviderMealManagementScreenState
     );
 
     if (ok == true) {
+      if (demoMode) {
+        setState(() {
+          _meals.removeWhere((m) => m.mealID == meal.mealID);
+        });
+        return;
+      }
+
       await _mealService.deleteMeal(meal.mealID);
       _loadMealsFromServer();
     }
@@ -873,17 +1001,6 @@ class _MealImage extends StatelessWidget {
       );
     }
 
-    if (!kIsWeb && _isLocalFile) {
-      final path = imagePath.replaceFirst('file://', '');
-      return Image.file(
-        File(path),
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _placeholder(),
-      );
-    }
-
     return Image.network(
       imagePath,
       width: width,
@@ -914,6 +1031,8 @@ class _MealFormSheet extends StatefulWidget {
 }
 
 class _MealFormSheetState extends State<_MealFormSheet> {
+  static const bool demoMode = true;
+
   static const Color primaryDark = Color(0xFF052720);
   static const Color primary = Color(0xFF0B4A40);
   static const Color mint = Color(0xFFA8E7CF);
@@ -1153,14 +1272,22 @@ class _MealFormSheetState extends State<_MealFormSheet> {
         );
       }
 
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: Image.file(
-          File(_selectedImage!.path),
-          height: 170,
-          width: double.infinity,
-          fit: BoxFit.cover,
-        ),
+      return FutureBuilder<List<int>>(
+        future: _selectedImage!.readAsBytes(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: Image.memory(
+              Uint8List.fromList(snapshot.data!),
+              height: 170,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          );
+        },
       );
     }
 
@@ -1205,8 +1332,8 @@ class _MealFormSheetState extends State<_MealFormSheet> {
 
     if (!_formKey.currentState!.validate()) return;
 
-    final currentProviderId = UserSession.userId;
-    final currentProviderName = UserSession.fullName;
+    final currentProviderId = demoMode ? 'PR001' : UserSession.userId;
+    final currentfullName = demoMode ? 'Demo Provider' : UserSession.fullName;
 
     if (currentProviderId == null || currentProviderId.isEmpty) {
       _showSnack(l10n.providerSessionNotFound, const Color(0xFFB3261E));
@@ -1238,10 +1365,23 @@ class _MealFormSheetState extends State<_MealFormSheet> {
       calories: int.parse(_cal.text.trim()),
       image: _existingImage,
       providerID: widget.initial?.providerID ?? currentProviderId,
-      providerName: widget.initial?.providerName ?? currentProviderName ?? '',
+      fullName: widget.initial?.fullName ?? currentfullName ?? '',
     );
 
     try {
+      if (demoMode) {
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        if (widget.mode == _FormMode.add) {
+          _showSnack(l10n.mealAddedSuccessfully, primary);
+        } else {
+          _showSnack(l10n.mealUpdatedSuccessfully, primary);
+        }
+
+        if (mounted) Navigator.pop(context, meal);
+        return;
+      }
+
       if (widget.mode == _FormMode.add) {
         await _service.addMeal(meal, imageFile: _selectedImage);
         _showSnack(l10n.mealAddedSuccessfully, primary);

@@ -976,8 +976,8 @@ class _ProviderCard extends StatelessWidget {
             radius: 23,
             backgroundColor: mint.withOpacity(0.45),
             child: Text(
-              provider.providerName.isNotEmpty
-                  ? provider.providerName[0].toUpperCase()
+              provider.fullName.isNotEmpty
+                  ? provider.fullName[0].toUpperCase()
                   : 'P',
               style: const TextStyle(
                 color: primary,
@@ -989,7 +989,7 @@ class _ProviderCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  provider.providerName,
+                  provider.fullName,
                   style: const TextStyle(
                     color: primaryDark,
                     fontSize: 15.5,
@@ -1045,7 +1045,7 @@ class _ProviderCard extends StatelessWidget {
                         onEditAccount(
                           accountType: 'provider',
                           accountID: provider.providerID,
-                          currentName: provider.providerName,
+                          currentName: provider.fullName,
                           currentEmail: provider.providerEmail,
                           currentPhone: provider.providerPhone ?? '',
                         );
@@ -1061,7 +1061,7 @@ class _ProviderCard extends StatelessWidget {
                         onSendSpecificNotification(
                           recipientType: 'provider',
                           recipientUserID: provider.providerID,
-                          recipientName: provider.providerName,
+                          recipientName: provider.fullName,
                         );
                       },
                     ),

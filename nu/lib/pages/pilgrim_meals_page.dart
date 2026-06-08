@@ -20,6 +20,7 @@ class PilgrimMealsPage extends StatefulWidget {
 }
 
 class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
+  static const bool demoMode = true;
   int _navIndex = 1;
   bool showRecommendedOnly = true;
 
@@ -28,11 +29,16 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
   final MealService _mealService = MealService();
   late Future<List<Meal>> _mealsFuture;
 
-  @override
-  void initState() {
-    super.initState();
+@override
+void initState() {
+  super.initState();
+
+  if (demoMode) {
+    _mealsFuture = Future.value([]);
+  } else {
     _loadAiRecommendedMeals();
   }
+}
 
   void _loadAiRecommendedMeals() {
     final pilgrimID = UserSession.userId;
@@ -105,7 +111,7 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
     required int mealID,
     required String title,
     required String description,
-    required String providerName,
+    required String fullName,
     required String nutritionLine,
     required IconData icon,
   }) {
@@ -116,7 +122,7 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
           mealID: mealID,
           mealName: title,
           mealDescription: description,
-          providerName: providerName,
+          fullName: fullName,
           nutritionLine: nutritionLine,
           mealIcon: icon,
         ),
@@ -264,7 +270,7 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _MealRequestCard(
                           title: mealName,
-                          providerName: meal.providerName,
+                          fullName: meal.fullName,
                           mealType: _localizedMealType(context, mealType),
                           description: description,
                           nutritionLine: nutritionLine,
@@ -280,7 +286,7 @@ class _PilgrimMealsPageState extends State<PilgrimMealsPage> {
                               mealID: meal.mealID,
                               title: mealName,
                               description: description,
-                              providerName: meal.providerName,
+                              fullName: meal.fullName,
                               nutritionLine: nutritionLine,
                               icon: _getMealIcon(
                                 meal.mealTypeEn.isNotEmpty
@@ -576,7 +582,7 @@ class _FilterChipButton extends StatelessWidget {
 
 class _MealRequestCard extends StatelessWidget {
   final String title;
-  final String providerName;
+  final String fullName;
   final String mealType;
   final String description;
   final String nutritionLine;
@@ -587,7 +593,7 @@ class _MealRequestCard extends StatelessWidget {
 
   const _MealRequestCard({
     required this.title,
-    required this.providerName,
+    required this.fullName,
     required this.mealType,
     required this.description,
     required this.nutritionLine,
@@ -724,7 +730,7 @@ class _MealRequestCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '${l10n.providedBy} $providerName',
+                  '${l10n.providedBy} $fullName',
                   style: TextStyle(
                     fontSize: 12.2,
                     color: Colors.black.withOpacity(0.58),
@@ -929,4 +935,69 @@ class _EmptyMealsState extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<List<Meal>> _getDemoMeals() async {
+  return [
+    Meal(
+      mealID: 1,
+      mealName: 'Grilled Chicken',
+      mealType: 'Lunch',
+      description: 'Healthy grilled chicken with rice and vegetables.',
+      mealNameEn: 'Grilled Chicken',
+      mealNameAr: 'دجاج مشوي',
+      mealTypeEn: 'Lunch',
+      mealTypeAr: 'غداء',
+      descriptionEn: 'Healthy grilled chicken with rice and vegetables.',
+      descriptionAr: 'دجاج مشوي صحي مع الأرز والخضروات.',
+      protein: 35,
+      carbohydrates: 40,
+      fat: 10,
+      calories: 450,
+      image: '',
+      providerID: 'PR001',
+      fullName: 'Demo Provider',
+      aiReason: 'Recommended based on your health profile.',
+    ),
+    Meal(
+      mealID: 2,
+      mealName: 'Healthy Salad',
+      mealType: 'Dinner',
+      description: 'Fresh vegetables with light dressing.',
+      mealNameEn: 'Healthy Salad',
+      mealNameAr: 'سلطة صحية',
+      mealTypeEn: 'Dinner',
+      mealTypeAr: 'عشاء',
+      descriptionEn: 'Fresh vegetables with light dressing.',
+      descriptionAr: 'خضروات طازجة مع صوص خفيف.',
+      protein: 12,
+      carbohydrates: 15,
+      fat: 5,
+      calories: 180,
+      image: '',
+      providerID: 'PR001',
+      fullName: 'Demo Provider',
+      aiReason: 'Suitable for weight management.',
+    ),
+    Meal(
+      mealID: 3,
+      mealName: 'Beef Rice Bowl',
+      mealType: 'Lunch',
+      description: 'Lean beef served with brown rice.',
+      mealNameEn: 'Beef Rice Bowl',
+      mealNameAr: 'وعاء لحم مع الأرز',
+      mealTypeEn: 'Lunch',
+      mealTypeAr: 'غداء',
+      descriptionEn: 'Lean beef served with brown rice.',
+      descriptionAr: 'لحم قليل الدهون مع أرز بني.',
+      protein: 30,
+      carbohydrates: 45,
+      fat: 12,
+      calories: 520,
+      image: '',
+      providerID: 'PR001',
+      fullName: 'Demo Provider',
+      aiReason: 'High protein meal recommendation.',
+    ),
+  ];
 }

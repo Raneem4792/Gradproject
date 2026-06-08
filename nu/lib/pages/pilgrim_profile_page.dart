@@ -30,6 +30,8 @@ class PilgrimProfilePage extends StatefulWidget {
 }
 
 class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
+  static const bool demoMode = true;
+
   final HealthService _healthService = HealthService();
   final PilgrimService _pilgrimService = PilgrimService();
 
@@ -153,6 +155,21 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
   }
 
   Future<void> _loadHealthProfile() async {
+    if (demoMode) {
+      setState(() {
+        selectedAge = "35";
+        selectedHealthCondition = "Diabetes";
+        selectedDietaryPreference = "Low Sugar";
+        selectedAllergies = ["Nuts"];
+        otherAllergyText = "";
+        otherAllergyController.clear();
+
+        _rebuildHealthTags();
+        _isHealthLoading = false;
+      });
+      return;
+    }
+
     final pilgrimId = UserSession.userId;
 
     if (pilgrimId == null || pilgrimId.isEmpty) {
@@ -199,6 +216,23 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
   }
 
   Future<void> _loadPersonalProfile() async {
+    if (demoMode) {
+      setState(() {
+        fullName = "Demo Pilgrim";
+        email = "demo.pilgrim@nusuq.com";
+        phone = "0500000001";
+        pilgrimIdText = "P001";
+        campaignName = "Hajj Campaign 2026";
+
+        fullNameController.text = fullName;
+        emailController.text = email;
+        phoneController.text = phone;
+
+        _isPersonalLoading = false;
+      });
+      return;
+    }
+
     final pilgrimId = UserSession.userId;
 
     if (pilgrimId == null || pilgrimId.isEmpty) {
@@ -352,16 +386,30 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
     final l10n = AppLocalizations.of(context)!;
 
     if (isEditingPersonal) {
+      if (!(_personalFormKey.currentState?.validate() ?? false)) {
+        return;
+      }
+
+      if (demoMode) {
+        setState(() {
+          fullName = fullNameController.text.trim();
+          email = emailController.text.trim();
+          phone = phoneController.text.trim();
+          isEditingPersonal = false;
+        });
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.personalDetailsUpdated)));
+        return;
+      }
+
       final pilgrimId = UserSession.userId;
 
       if (pilgrimId == null || pilgrimId.isEmpty) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(l10n.userSessionNotFound)));
-        return;
-      }
-
-      if (!(_personalFormKey.currentState?.validate() ?? false)) {
         return;
       }
 
@@ -416,6 +464,21 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
     final l10n = AppLocalizations.of(context)!;
 
     if (isEditingHealth) {
+      if (demoMode) {
+        setState(() {
+          selectedAllergies = List<String>.from(_finalAllergiesForSaving());
+          otherAllergyText = "";
+          otherAllergyController.clear();
+          _rebuildHealthTags();
+          isEditingHealth = false;
+        });
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.healthInformationUpdated)));
+        return;
+      }
+
       final pilgrimId = UserSession.userId;
 
       if (pilgrimId == null || pilgrimId.isEmpty) {
