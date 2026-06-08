@@ -34,7 +34,7 @@ void initState() {
   super.initState();
 
   if (demoMode) {
-    _mealsFuture = Future.value([]);
+    _mealsFuture = _getDemoMeals();
   } else {
     _loadAiRecommendedMeals();
   }
@@ -153,19 +153,29 @@ void initState() {
     }
   }
 
-  void _selectRecommended() {
-    setState(() {
-      showRecommendedOnly = true;
-      _loadAiRecommendedMeals();
-    });
-  }
+void _selectRecommended() {
+  setState(() {
+    showRecommendedOnly = true;
 
-  void _selectAll() {
-    setState(() {
-      showRecommendedOnly = false;
+    if (demoMode) {
+      _mealsFuture = _getDemoMeals();
+    } else {
+      _loadAiRecommendedMeals();
+    }
+  });
+}
+
+void _selectAll() {
+  setState(() {
+    showRecommendedOnly = false;
+
+    if (demoMode) {
+      _mealsFuture = _getDemoMeals();
+    } else {
       _loadAllMeals();
-    });
-  }
+    }
+  });
+}
 
   String _localizedNutritionLine(
     BuildContext context, {
@@ -310,6 +320,83 @@ void initState() {
       ),
     );
   }
+
+  Future<List<Meal>> _getDemoMeals() async {
+    final meals = [
+      Meal(
+        mealID: 1,
+        mealName: 'Grilled Chicken',
+        mealType: 'Lunch',
+        description: 'Healthy grilled chicken with rice and vegetables.',
+        mealNameEn: 'Grilled Chicken',
+        mealNameAr: 'دجاج مشوي',
+        mealTypeEn: 'Lunch',
+        mealTypeAr: 'غداء',
+        descriptionEn: 'Healthy grilled chicken with rice and vegetables.',
+        descriptionAr: 'دجاج مشوي صحي مع الأرز والخضروات.',
+        protein: 35,
+        carbohydrates: 40,
+        fat: 10,
+        calories: 450,
+        image:
+            'https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=800',
+        providerID: 'PR001',
+        fullName: 'Demo Provider',
+        aiReason: 'Recommended based on your health profile.',
+      ),
+      Meal(
+        mealID: 2,
+        mealName: 'Healthy Salad',
+        mealType: 'Dinner',
+        description: 'Fresh vegetables with light dressing.',
+        mealNameEn: 'Healthy Salad',
+        mealNameAr: 'سلطة صحية',
+        mealTypeEn: 'Dinner',
+        mealTypeAr: 'عشاء',
+        descriptionEn: 'Fresh vegetables with light dressing.',
+        descriptionAr: 'خضروات طازجة مع صوص خفيف.',
+        protein: 12,
+        carbohydrates: 15,
+        fat: 5,
+        calories: 180,
+        image:
+            'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800',
+        providerID: 'PR001',
+        fullName: 'Demo Provider',
+        aiReason: 'Suitable for weight management.',
+      ),
+      Meal(
+        mealID: 3,
+        mealName: 'Beef Rice Bowl',
+        mealType: 'Lunch',
+        description: 'Lean beef served with brown rice.',
+        mealNameEn: 'Beef Rice Bowl',
+        mealNameAr: 'وعاء لحم مع الأرز',
+        mealTypeEn: 'Lunch',
+        mealTypeAr: 'غداء',
+        descriptionEn: 'Lean beef served with brown rice.',
+        descriptionAr: 'لحم قليل الدهون مع أرز بني.',
+        protein: 30,
+        carbohydrates: 45,
+        fat: 12,
+        calories: 520,
+        image:
+            'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
+        providerID: 'PR001',
+        fullName: 'Demo Provider',
+        aiReason: 'High protein meal recommendation.',
+      ),
+    ];
+
+    if (showRecommendedOnly) {
+      return meals.where((meal) {
+        return meal.mealID == 1 || meal.mealID == 2;
+      }).toList();
+    }
+
+    return meals;
+  }
+
 }
 
 class _PilgrimMealsAppBar extends StatelessWidget
@@ -937,67 +1024,4 @@ class _EmptyMealsState extends StatelessWidget {
   }
 }
 
-Future<List<Meal>> _getDemoMeals() async {
-  return [
-    Meal(
-      mealID: 1,
-      mealName: 'Grilled Chicken',
-      mealType: 'Lunch',
-      description: 'Healthy grilled chicken with rice and vegetables.',
-      mealNameEn: 'Grilled Chicken',
-      mealNameAr: 'دجاج مشوي',
-      mealTypeEn: 'Lunch',
-      mealTypeAr: 'غداء',
-      descriptionEn: 'Healthy grilled chicken with rice and vegetables.',
-      descriptionAr: 'دجاج مشوي صحي مع الأرز والخضروات.',
-      protein: 35,
-      carbohydrates: 40,
-      fat: 10,
-      calories: 450,
-      image: '',
-      providerID: 'PR001',
-      fullName: 'Demo Provider',
-      aiReason: 'Recommended based on your health profile.',
-    ),
-    Meal(
-      mealID: 2,
-      mealName: 'Healthy Salad',
-      mealType: 'Dinner',
-      description: 'Fresh vegetables with light dressing.',
-      mealNameEn: 'Healthy Salad',
-      mealNameAr: 'سلطة صحية',
-      mealTypeEn: 'Dinner',
-      mealTypeAr: 'عشاء',
-      descriptionEn: 'Fresh vegetables with light dressing.',
-      descriptionAr: 'خضروات طازجة مع صوص خفيف.',
-      protein: 12,
-      carbohydrates: 15,
-      fat: 5,
-      calories: 180,
-      image: '',
-      providerID: 'PR001',
-      fullName: 'Demo Provider',
-      aiReason: 'Suitable for weight management.',
-    ),
-    Meal(
-      mealID: 3,
-      mealName: 'Beef Rice Bowl',
-      mealType: 'Lunch',
-      description: 'Lean beef served with brown rice.',
-      mealNameEn: 'Beef Rice Bowl',
-      mealNameAr: 'وعاء لحم مع الأرز',
-      mealTypeEn: 'Lunch',
-      mealTypeAr: 'غداء',
-      descriptionEn: 'Lean beef served with brown rice.',
-      descriptionAr: 'لحم قليل الدهون مع أرز بني.',
-      protein: 30,
-      carbohydrates: 45,
-      fat: 12,
-      calories: 520,
-      image: '',
-      providerID: 'PR001',
-      fullName: 'Demo Provider',
-      aiReason: 'High protein meal recommendation.',
-    ),
-  ];
-}
+

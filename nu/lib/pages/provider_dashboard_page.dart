@@ -409,7 +409,7 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
 
 
 class _DemoProviderDashboardReport {
-  final DateTime updatedAt;
+  final String updatedAt;
   final int todayOrders;
   final int campaigns;
   final int mealAcceptance;
@@ -439,7 +439,7 @@ class _DemoProviderDashboardReport {
 
   factory _DemoProviderDashboardReport.sample() {
     return _DemoProviderDashboardReport(
-      updatedAt: DateTime.now(),
+      updatedAt: DateTime.now().toIso8601String(),
       todayOrders: 128,
       campaigns: 4,
       mealAcceptance: 87,

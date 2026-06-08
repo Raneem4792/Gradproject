@@ -47,10 +47,12 @@ class _PilgrimHomeScreenState extends State<PilgrimHomeScreen> {
     super.initState();
     _homeFuture = Future.value({
   'fullName': 'Demo Pilgrim',
-  'latestOrder': {
-    'mealName': 'Grilled Chicken',
-    'status': 'accepted',
-  },
+'latestOrder': {
+  'orderID': 1001,
+  'orderId': 1001,
+  'mealName': 'Grilled Chicken',
+  'status': 'accepted',
+},
 });
     _loadUnreadCount();
   }

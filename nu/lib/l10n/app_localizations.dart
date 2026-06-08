@@ -224,8 +224,6 @@ abstract class AppLocalizations {
   /// No description provided for @fullName.
   ///
   /// In en, this message translates to:
-  /// **'Provider Name'**
-  String get fullName;
 
   /// No description provided for @email.
   ///

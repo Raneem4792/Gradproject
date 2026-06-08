@@ -11,6 +11,8 @@ import '../models/pilgrim_profile.dart';
 import '../services/pilgrim_service.dart';
 import 'login_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'home_page.dart';
+
 
 class PilgrimProfilePage extends StatefulWidget {
   static const String routeName = '/pilgrim-profile';
@@ -661,11 +663,13 @@ class _PilgrimProfilePageState extends State<PilgrimProfilePage> {
 
       if (!mounted) return;
 
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        LoginScreen.routeName,
-        (route) => false,
-      );
+Navigator.pushAndRemoveUntil(
+  context,
+  MaterialPageRoute(
+    builder: (_) => const HomePage(),
+  ),
+  (route) => false,
+);
     }
   }
 

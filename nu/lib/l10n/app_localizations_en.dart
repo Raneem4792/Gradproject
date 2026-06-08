@@ -72,9 +72,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancel => 'Cancel';
 
   @override
-  String get fullName => 'Provider Name';
-
-  @override
   String get email => 'Email';
 
   @override

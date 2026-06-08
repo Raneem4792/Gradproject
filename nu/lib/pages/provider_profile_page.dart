@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
+import 'home_page.dart';
 import '../l10n/app_localizations.dart';
 import '../main.dart';
 import 'provider_home_screen.dart';
@@ -416,13 +416,19 @@ if (providerId == null || providerId.isEmpty) {
       ),
     );
 
-    if (shouldLogout == true) {
-      UserSession.clear();
+if (shouldLogout == true) {
+  UserSession.clear();
 
-      if (!mounted) return;
+  if (!mounted) return;
 
-Navigator.pop(context);
-    }
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const HomePage(),
+    ),
+    (route) => false,
+  );
+}
   }
 
   String _currentLanguageName(AppLocalizations l10n) {

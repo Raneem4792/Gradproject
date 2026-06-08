@@ -25,90 +25,93 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage> {
     _notificationsFuture = _getDemoNotifications();
   }
 
-  Future<List<Map<String, dynamic>>> _getDemoNotifications() async {
-    await Future.delayed(const Duration(milliseconds: 400));
+Future<List<Map<String, dynamic>>> _getDemoNotifications() async {
+  await Future.delayed(const Duration(milliseconds: 400));
 
-    return [
+  return [
+    {
+      "titleEn": "New Meal Request",
+      "titleAr": "طلب وجبة جديد",
+      "messageEn": "A pilgrim has submitted a new request for Grilled Chicken.",
+      "messageAr": "قام حاج بإرسال طلب جديد لوجبة الدجاج المشوي.",
+      "timestamp": DateTime.now()
+          .subtract(const Duration(minutes: 12))
+          .toIso8601String(),
+      "icon": Icons.restaurant_menu_rounded,
+      "isUnread": true,
+      "tone": "success",
+    },
+    {
+      "titleEn": "AI Dashboard Update",
+      "titleAr": "تحديث لوحة التحليلات",
+      "messageEn": "AI detected high demand for healthy lunch meals today.",
+      "messageAr":
+          "اكتشف الذكاء الاصطناعي ارتفاع الطلب على وجبات الغداء الصحية اليوم.",
+      "timestamp": DateTime.now()
+          .subtract(const Duration(hours: 1))
+          .toIso8601String(),
+      "icon": Icons.auto_graph_rounded,
+      "isUnread": true,
+      "tone": "gold",
+    },
+    {
+      "titleEn": "Campaign Meal Plan",
+      "titleAr": "خطة وجبات الحملة",
+      "messageEn": "The meal plan for Hajj Campaign 2026 is ready for review.",
+      "messageAr": "خطة الوجبات لحملة حج 2026 جاهزة للمراجعة.",
+      "timestamp": DateTime.now()
+          .subtract(const Duration(hours: 4))
+          .toIso8601String(),
+      "icon": Icons.groups_rounded,
+      "isUnread": false,
+      "tone": "normal",
+    },
+  ];
+}
+
+Future<void> _refreshNotifications() async {
+  setState(() {
+    _notificationsFuture = Future.value([
       {
         "titleEn": "New Meal Request",
         "titleAr": "طلب وجبة جديد",
         "messageEn": "A pilgrim has submitted a new request for Grilled Chicken.",
         "messageAr": "قام حاج بإرسال طلب جديد لوجبة الدجاج المشوي.",
-        "timestamp": DateTime.now().subtract(const Duration(minutes: 12)),
+        "timestamp": DateTime.now()
+            .subtract(const Duration(minutes: 12))
+            .toIso8601String(),
         "icon": Icons.restaurant_menu_rounded,
-        "isUnread": true,
+        "isUnread": false,
         "tone": "success",
       },
       {
         "titleEn": "AI Dashboard Update",
         "titleAr": "تحديث لوحة التحليلات",
-        "messageEn":
-            "AI detected high demand for healthy lunch meals today.",
+        "messageEn": "AI detected high demand for healthy lunch meals today.",
         "messageAr":
             "اكتشف الذكاء الاصطناعي ارتفاع الطلب على وجبات الغداء الصحية اليوم.",
-        "timestamp": DateTime.now().subtract(const Duration(hours: 1)),
+        "timestamp": DateTime.now()
+            .subtract(const Duration(hours: 1))
+            .toIso8601String(),
         "icon": Icons.auto_graph_rounded,
-        "isUnread": true,
+        "isUnread": false,
         "tone": "gold",
       },
       {
         "titleEn": "Campaign Meal Plan",
         "titleAr": "خطة وجبات الحملة",
-        "messageEn":
-            "The meal plan for Hajj Campaign 2026 is ready for review.",
-        "messageAr":
-            "خطة الوجبات لحملة حج 2026 جاهزة للمراجعة.",
-        "timestamp": DateTime.now().subtract(const Duration(hours: 4)),
+        "messageEn": "The meal plan for Hajj Campaign 2026 is ready for review.",
+        "messageAr": "خطة الوجبات لحملة حج 2026 جاهزة للمراجعة.",
+        "timestamp": DateTime.now()
+            .subtract(const Duration(hours: 4))
+            .toIso8601String(),
         "icon": Icons.groups_rounded,
         "isUnread": false,
         "tone": "normal",
       },
-    ];
-  }
-
-  Future<void> _refreshNotifications() async {
-    setState(() {
-      _notificationsFuture = Future.value(
-        [
-          {
-            "titleEn": "New Meal Request",
-            "titleAr": "طلب وجبة جديد",
-            "messageEn":
-                "A pilgrim has submitted a new request for Grilled Chicken.",
-            "messageAr": "قام حاج بإرسال طلب جديد لوجبة الدجاج المشوي.",
-            "timestamp": DateTime.now().subtract(const Duration(minutes: 12)),
-            "icon": Icons.restaurant_menu_rounded,
-            "isUnread": false,
-            "tone": "success",
-          },
-          {
-            "titleEn": "AI Dashboard Update",
-            "titleAr": "تحديث لوحة التحليلات",
-            "messageEn":
-                "AI detected high demand for healthy lunch meals today.",
-            "messageAr":
-                "اكتشف الذكاء الاصطناعي ارتفاع الطلب على وجبات الغداء الصحية اليوم.",
-            "timestamp": DateTime.now().subtract(const Duration(hours: 1)),
-            "icon": Icons.auto_graph_rounded,
-            "isUnread": false,
-            "tone": "gold",
-          },
-          {
-            "titleEn": "Campaign Meal Plan",
-            "titleAr": "خطة وجبات الحملة",
-            "messageEn":
-                "The meal plan for Hajj Campaign 2026 is ready for review.",
-            "messageAr":
-                "خطة الوجبات لحملة حج 2026 جاهزة للمراجعة.",
-            "timestamp": DateTime.now().subtract(const Duration(hours: 4)),
-            "icon": Icons.groups_rounded,
-            "isUnread": false,
-            "tone": "normal",
-          },
-        ],
-      );
-    });
-  }
+    ]);
+  });
+}
 
   @override
   Widget build(BuildContext context) {
@@ -156,9 +159,9 @@ class _ProviderNotificationsPageState extends State<ProviderNotificationsPage> {
                           title: isAr ? item["titleAr"] : item["titleEn"],
                           message:
                               isAr ? item["messageAr"] : item["messageEn"],
-                          time: DateFormat(
-                            'MMM dd · hh:mm a',
-                          ).format(item["timestamp"]),
+time: DateFormat(
+  'MMM dd · hh:mm a',
+).format(DateTime.parse(item["timestamp"])),
                           icon: item["icon"],
                           isUnread: item["isUnread"],
                           tone: item["tone"],

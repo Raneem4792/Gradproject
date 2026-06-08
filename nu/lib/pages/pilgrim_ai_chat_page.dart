@@ -408,24 +408,35 @@ String _getDemoReply(String message) {
 
   if (msg.contains('diabetes') ||
       msg.contains('سكر') ||
-      msg.contains('سكري')) {
-    return 'Based on your profile, I recommend grilled chicken with vegetables and a low-sugar meal option.';
+      msg.contains('سكري') ||
+      msg.contains('low sugar')) {
+    return 'Based on your health profile, I recommend choosing low-sugar meals that include lean protein, vegetables, and complex carbohydrates. A suitable option for you is Grilled Chicken with brown rice and fresh salad. This meal helps provide stable energy, supports better blood sugar control, and avoids high-sugar ingredients.';
   }
 
-  if (msg.contains('protein') ||
-      msg.contains('بروتين')) {
-    return 'Recommended high-protein meals: grilled chicken, tuna sandwich, and boiled eggs.';
+  if (msg.contains('protein') || msg.contains('بروتين')) {
+    return 'For a high-protein option, I recommend Grilled Chicken or Beef Rice Bowl. These meals provide a good amount of protein to support energy and fullness during the day. They are also balanced with carbohydrates and vegetables, making them suitable for a healthy meal plan.';
   }
 
   if (msg.contains('allergy') ||
-      msg.contains('حساسية')) {
-    return 'Please avoid meals containing nuts and dairy products. Suitable alternatives are available.';
+      msg.contains('حساسية') ||
+      msg.contains('nuts') ||
+      msg.contains('مكسرات')) {
+    return 'Since allergies are important for meal safety, I recommend avoiding any meal that may contain nuts, dairy, or unknown ingredients. A safer option would be Grilled Chicken with rice and vegetables because it is simple, balanced, and easier to customize based on your allergy information.';
+  }
+
+  if (msg.contains('health') ||
+      msg.contains('profile') ||
+      msg.contains('صحة') ||
+      msg.contains('ملفي')) {
+    return 'After reviewing your health profile, NUSUQ recommends balanced meals that match your dietary needs. The best options are meals rich in lean protein, fresh vegetables, and moderate carbohydrates. For today, Grilled Chicken with brown rice and salad is recommended because it supports energy, is nutritionally balanced, and fits a healthy lifestyle.';
   }
 
   if (msg.contains('meal') ||
-      msg.contains('وجبة')) {
-    return 'Today’s recommended meal is grilled chicken with brown rice and fresh salad.';
+      msg.contains('food') ||
+      msg.contains('وجبة') ||
+      msg.contains('اكل')) {
+    return 'Today’s recommended meal is Grilled Chicken with brown rice and fresh salad. This meal was selected because it provides a healthy balance of protein, carbohydrates, and vitamins. It is suitable for maintaining energy during the day and supports a healthier food experience during Hajj or Umrah.';
   }
 
-  return 'Based on your health profile, I recommend a balanced meal rich in protein and vegetables.';
+  return 'NUSUQ AI Assistant can help you choose meals based on your health profile, allergies, and dietary preferences. I recommend starting with balanced meals such as Grilled Chicken, Healthy Salad, or Beef Rice Bowl because they provide good nutrition and are suitable for different health needs.';
 }

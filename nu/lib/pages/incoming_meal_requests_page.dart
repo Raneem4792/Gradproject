@@ -44,45 +44,67 @@ void _loadRequests() {
     _requestsFuture = Future.value([
       MealOrder(
         orderID: 1001,
+        requestDate: DateTime.now(),
+        status: 'pending',
+        pilgrimID: 'P001',
+        pilgrimName: 'Ahmed Ali',
         mealID: 1,
+        mealName: 'Grilled Chicken',
+        mealType: 'Lunch',
         mealNameEn: 'Grilled Chicken',
         mealNameAr: 'دجاج مشوي',
-        fullName: 'Demo Provider',
-        pilgrimName: 'Ahmed Ali',
-        requestDate: DateTime.now().toString(),
-        status: 'pending',
+        mealTypeEn: 'Lunch',
+        mealTypeAr: 'غداء',
+        campaignID: 'C001',
+        campaignName: 'Hajj Campaign 2026',
+        campaignNumber: 'HC-2026',
+        isReviewed: false,
+        reviewRating: null,
       ),
       MealOrder(
         orderID: 1002,
+        requestDate: DateTime.now().subtract(const Duration(hours: 2)),
+        status: 'accepted',
+        pilgrimID: 'P002',
+        pilgrimName: 'Sara Mohamed',
         mealID: 2,
+        mealName: 'Healthy Salad',
+        mealType: 'Dinner',
         mealNameEn: 'Healthy Salad',
         mealNameAr: 'سلطة صحية',
-        fullName: 'Demo Provider',
-        pilgrimName: 'Sara Mohamed',
-        requestDate: DateTime.now()
-            .subtract(const Duration(hours: 2))
-            .toString(),
-        status: 'accepted',
+        mealTypeEn: 'Dinner',
+        mealTypeAr: 'عشاء',
+        campaignID: 'C001',
+        campaignName: 'Hajj Campaign 2026',
+        campaignNumber: 'HC-2026',
+        isReviewed: false,
+        reviewRating: null,
       ),
       MealOrder(
         orderID: 1003,
+        requestDate: DateTime.now().subtract(const Duration(days: 1)),
+        status: 'completed',
+        pilgrimID: 'P003',
+        pilgrimName: 'Omar Hassan',
         mealID: 3,
+        mealName: 'Beef Rice Bowl',
+        mealType: 'Lunch',
         mealNameEn: 'Beef Rice Bowl',
         mealNameAr: 'وعاء لحم مع الأرز',
-        fullName: 'Demo Provider',
-        pilgrimName: 'Omar Hassan',
-        requestDate: DateTime.now()
-            .subtract(const Duration(days: 1))
-            .toString(),
-        status: 'completed',
+        mealTypeEn: 'Lunch',
+        mealTypeAr: 'غداء',
+        campaignID: 'C002',
+        campaignName: 'Umrah Campaign 2026',
+        campaignNumber: 'UC-2026',
+        isReviewed: true,
+        reviewRating: 5,
       ),
     ]);
 
     return;
   }
 
-  _requestsFuture =
-      _mealService.getOrdersByProvider(UserSession.userId!);
+  _requestsFuture = _mealService.getOrdersByProvider(UserSession.userId!);
 }
 
   void _handleBack() {
