@@ -274,7 +274,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Column(
                         children: [
                           const Text(
-                            'NUSUQ - Jenkins Demo',
+                            'NUSUQ - Jenkins Demodd',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 26,
